@@ -246,3 +246,17 @@
         @endforelse
     </div>
 @endsection
+
+@push('scripts')
+    {{-- The APEL C draft autosave backup is cleared here, and only here: reaching
+         this page with a success flash is the first proof the server actually
+         accepted the application. Clearing it at submit time destroyed the
+         student's work whenever validation failed. --}}
+    @if (session('success'))
+        <script>
+            try {
+                localStorage.removeItem('apel_c_autosave_' + '{{ Auth::id() }}');
+            } catch (e) { /* storage unavailable */ }
+        </script>
+    @endif
+@endpush

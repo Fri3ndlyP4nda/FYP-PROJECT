@@ -1119,6 +1119,17 @@
 
         // Tab layout switcher function
         function openTab(evt, tabName) {
+            revealTab(tabName);
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add("active");
+            }
+        }
+
+        /**
+         * Reveal a tab without needing a click event, so validation and error
+         * handling can bring the user to the panel holding the problem.
+         */
+        function revealTab(tabName) {
             const tabContents = document.getElementsByClassName("tab-content");
             for (let i = 0; i < tabContents.length; i++) {
                 tabContents[i].classList.remove("active");
@@ -1129,8 +1140,31 @@
                 tabLinks[i].classList.remove("active");
             }
 
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+            const panel = document.getElementById(tabName);
+            if (panel) {
+                panel.classList.add("active");
+                const link = document.querySelector('.tab-link[onclick*="' + tabName + '"]');
+                if (link) link.classList.add("active");
+            }
+        }
+
+        /**
+         * A control inside a display:none panel cannot be focused, so the browser
+         * silently refuses to submit and shows no message at all - the user clicks
+         * Submit and nothing happens. Reveal the offending panel first, then let
+         * native validation report against a visible control.
+         */
+        function focusFirstInvalid(formEl) {
+            const invalid = formEl.querySelector(':invalid');
+            if (!invalid) return false;
+
+            const panel = invalid.closest('.tab-content');
+            if (panel && panel.id) revealTab(panel.id);
+
+            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { invalid.focus({ preventScroll: true }); } catch (e) { /* non-focusable */ }
+            formEl.reportValidity();
+            return true;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1362,8 +1396,12 @@
                 
                 // If submitType === 'submit' (Submit Application)
                 if (!form.checkValidity()) {
-                    form.reportValidity();
                     e.preventDefault();
+                    // reportValidity alone cannot show a message for a control inside a
+                    // display:none panel, which is why submitting used to appear to do
+                    // nothing at all. Reveal the panel holding the first invalid field
+                    // first, then report against a control the browser can focus.
+                    focusFirstInvalid(form);
                     return;
                 }
                 
@@ -1406,11 +1444,55 @@
                 localStorage.setItem(autosaveKey, JSON.stringify(formData));
             }
 
+            /**
+             * The repeatable sections are built by JavaScript, so on a fresh page
+             * load their rows do not exist yet and restored values would have
+             * nowhere to go. Recreate the rows first, using the highest index
+             * present in the saved payload.
+             */
+            function restoreDynamicRows(formData) {
+                const sections = [
+                    ['formal_learning',        typeof addEducationRow   === 'function' ? addEducationRow   : null],
+                    ['experiential_learning',  typeof addEmploymentRow  === 'function' ? addEmploymentRow  : null],
+                    ['training_activities',    typeof addTrainingRow    === 'function' ? addTrainingRow    : null],
+                    ['other_learning_skills',  typeof addOtherSkillRow  === 'function' ? addOtherSkillRow  : null],
+                ];
+
+                sections.forEach(function (entry) {
+                    const section = entry[0];
+                    const addRow = entry[1];
+                    if (!addRow) return;
+
+                    // Plain string parsing rather than a built RegExp: the bracket
+                    // and \d escapes do not survive being embedded in a Blade file.
+                    const prefix = 'pre_app_data[' + section + '][';
+                    let maxIndex = -1;
+                    Object.keys(formData).forEach(function (key) {
+                        if (key.indexOf(prefix) !== 0) return;
+                        const rest = key.slice(prefix.length);
+                        const end = rest.indexOf(']');
+                        if (end === -1) return;
+                        const idx = parseInt(rest.slice(0, end), 10);
+                        if (!isNaN(idx)) maxIndex = Math.max(maxIndex, idx);
+                    });
+                    if (maxIndex < 1) return;
+
+                    // Index 0 is rendered server-side; add rows until maxIndex exists.
+                    for (let i = 0; i < maxIndex; i++) {
+                        const existing = form.querySelector(
+                            '[name^="pre_app_data[' + section + '][' + (i + 1) + ']"]'
+                        );
+                        if (!existing) addRow();
+                    }
+                });
+            }
+
             function loadFormData() {
                 const saved = localStorage.getItem(autosaveKey);
                 if (!saved) return;
                 try {
                     const formData = JSON.parse(saved);
+                    restoreDynamicRows(formData);
                     const inputs = form.querySelectorAll('input, select, textarea');
                     inputs.forEach(input => {
                         if (input.type === 'file' || input.type === 'password' || input.name === '_token' || input.name === 'submit_type') return;
@@ -1444,10 +1526,19 @@
             // Load pre-existing auto-save data
             loadFormData();
 
-            // Clear auto-save data on form submit
-            form.addEventListener('submit', function() {
-                localStorage.removeItem(autosaveKey);
-            });
+            /*
+             * Deliberately NOT clearing the backup here.
+             *
+             * This listener used to fire on the submit event - before the server
+             * had accepted anything. When validation failed, the repeatable rows
+             * re-rendered blank AND the localStorage copy that would have restored
+             * them was already gone, losing 30+ minutes of work on the one form
+             * where that hurts most.
+             *
+             * The key is now cleared only once the application genuinely exists:
+             * on the applications index after a success redirect, and in the
+             * draft-save AJAX success handler below.
+             */
 
             function showAutoSaveNotice() {
                 const notice = document.getElementById('autosave-notice');

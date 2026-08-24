@@ -1186,6 +1186,17 @@
         }
 
         function openTab(evt, tabName) {
+            revealTab(tabName);
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add("active");
+            }
+        }
+
+        /**
+         * Reveal a tab without needing a click event, so validation and error
+         * handling can bring the user to the panel holding the problem.
+         */
+        function revealTab(tabName) {
             const tabContents = document.getElementsByClassName("tab-content");
             for (let i = 0; i < tabContents.length; i++) {
                 tabContents[i].classList.remove("active");
@@ -1196,8 +1207,31 @@
                 tabLinks[i].classList.remove("active");
             }
 
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+            const panel = document.getElementById(tabName);
+            if (panel) {
+                panel.classList.add("active");
+                const link = document.querySelector('.tab-link[onclick*="' + tabName + '"]');
+                if (link) link.classList.add("active");
+            }
+        }
+
+        /**
+         * A control inside a display:none panel cannot be focused, so the browser
+         * silently refuses to submit and shows no message at all - the user clicks
+         * Submit and nothing happens. Reveal the offending panel first, then let
+         * native validation report against a visible control.
+         */
+        function focusFirstInvalid(formEl) {
+            const invalid = formEl.querySelector(':invalid');
+            if (!invalid) return false;
+
+            const panel = invalid.closest('.tab-content');
+            if (panel && panel.id) revealTab(panel.id);
+
+            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { invalid.focus({ preventScroll: true }); } catch (e) { /* non-focusable */ }
+            formEl.reportValidity();
+            return true;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1346,7 +1380,12 @@
             }
 
             // LocalStorage Auto-Save
-            const autosaveKey = 'apel_c_autosave_' + '{{ Auth::id() }}';
+            /*
+             * Scoped to this application. It previously reused the create page's
+             * key, so opening a draft for editing silently overwrote the backup
+             * belonging to a half-finished new application.
+             */
+            const autosaveKey = 'apel_c_autosave_edit_' + '{{ $application->_id }}';
             const form = document.getElementById('apel-application-form');
 
             form.addEventListener('submit', function(e) {
@@ -1426,8 +1465,12 @@
                 
                 // If submitType === 'submit' (Submit Application)
                 if (!form.checkValidity()) {
-                    form.reportValidity();
                     e.preventDefault();
+                    // reportValidity alone cannot show a message for a control inside a
+                    // display:none panel, which is why submitting used to appear to do
+                    // nothing at all. Reveal the panel holding the first invalid field
+                    // first, then report against a control the browser can focus.
+                    focusFirstInvalid(form);
                     return;
                 }
                 
@@ -1475,7 +1518,8 @@
 
             // Clear auto-save data on form submit
             form.addEventListener('submit', function() {
-                localStorage.removeItem(autosaveKey);
+                // Cleared only after the server confirms the update; see index.blade.php.
+                // Wiping here fired before validation ran and destroyed the student's work.
             });
 
             function showAutoSaveNotice() {
