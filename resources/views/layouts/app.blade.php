@@ -1488,7 +1488,9 @@
             color: #7f1638;
         }
 
-        /* Field-level validation message, rendered by <x-field-error /> */
+        /* Field-level validation message, rendered by the field-error component.
+           Do not write the component tag literally here: Blade compiles x- tags
+           anywhere in the file, including inside a style block. */
         .field-error {
             display: block;
             margin-top: 6px;
