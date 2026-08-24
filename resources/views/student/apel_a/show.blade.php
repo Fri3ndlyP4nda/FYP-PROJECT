@@ -238,7 +238,7 @@
                 @endif
 
                 @if (($application->payment_status ?? 'pending') === 'verified')
-                    <p class="feedback-text" style="color: #059669; font-weight: 500; margin-top: 15px;">
+                    <p class="feedback-text" style="color: #146b45; font-weight: 500; margin-top: 15px;">
                         Your payment has been verified by the Faculty Academic Office.
                     </p>
                 @elseif (($application->payment_status ?? 'pending') === 'submitted')

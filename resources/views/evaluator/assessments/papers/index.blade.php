@@ -95,7 +95,7 @@
                                     <form method="POST" action="{{ route('evaluator.assessment.papers.destroy', $paper->_id) }}" style="display: inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-secondary btn-sm" style="color: #ef4444; border-color: #fca5a5;" onclick="return confirm('Are you sure you want to delete this paper? This action cannot be undone.')">
+                                        <button type="submit" class="btn btn-secondary btn-sm" style="color: #a32a20; border-color: #fca5a5;" onclick="return confirm('Are you sure you want to delete this paper? This action cannot be undone.')">
                                             Delete
                                         </button>
                                     </form>

@@ -22,13 +22,13 @@
         .print-toolbar-logo {
             font-size: 18px;
             font-weight: 800;
-            color: #8B1E3F;
+            color: #6e1730;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .print-preview-shell {
-            background-color: #f3f4f6;
+            background-color: #f1efea;
             min-height: 100vh;
             padding: 40px 20px;
         }
@@ -43,7 +43,7 @@
             box-sizing: border-box;
         }
         .print-header-brand {
-            border-bottom: 3px double #8B1E3F;
+            border-bottom: 3px double #6e1730;
             padding-bottom: 15px;
             margin-bottom: 25px;
             text-align: center;
@@ -51,7 +51,7 @@
         .print-header-brand h2 {
             font-size: 22px;
             font-weight: 800;
-            color: #8B1E3F;
+            color: #6e1730;
             margin: 0;
             text-transform: uppercase;
         }
@@ -68,7 +68,7 @@
             margin-bottom: 30px;
         }
         .stat-box {
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e4e0d8;
             border-radius: 8px;
             padding: 15px;
             text-align: center;
@@ -84,7 +84,7 @@
         }
         .stat-box strong {
             font-size: 22px;
-            color: #8B1E3F;
+            color: #6e1730;
             font-weight: 800;
         }
         .report-table {
@@ -94,13 +94,13 @@
             font-size: 12px;
         }
         .report-table th, .report-table td {
-            border: 1px solid #e5e7eb;
+            border: 1px solid #e4e0d8;
             padding: 8px 10px;
             text-align: left;
         }
         .report-table th {
             background-color: #faf8f9;
-            color: #8B1E3F;
+            color: #6e1730;
             font-weight: 700;
             text-transform: uppercase;
             font-size: 10px;
@@ -142,7 +142,7 @@
             <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">
                 ← Back to List
             </a>
-            <a href="{{ route('admin.reports.apel_c.export') }}" class="btn btn-light" style="border: 1px solid #d1d5db;">
+            <a href="{{ route('admin.reports.apel_c.export') }}" class="btn btn-light" style="border: 1px solid #cfc9be;">
                 📥 Export CSV
             </a>
             <button onclick="window.print()" class="btn">
@@ -177,7 +177,7 @@
                 </div>
                 <div class="stat-box" style="background-color: #fdf6f6; border-color: #ebdbe0;">
                     <span>Total Credits Awarded</span>
-                    <strong style="color: #8B1E3F;">{{ $totalCreditHours }}</strong>
+                    <strong style="color: #6e1730;">{{ $totalCreditHours }}</strong>
                 </div>
             </div>
 
@@ -215,9 +215,9 @@
                             </td>
                             <td>
                                 @if($app->status === 'Final Approved')
-                                    <span style="color: #10b981; font-weight: 700;">Approved (Pass)</span>
+                                    <span style="color: #146b45; font-weight: 700;">Approved (Pass)</span>
                                 @elseif($app->status === 'Final Rejected')
-                                    <span style="color: #ef4444; font-weight: 700;">Rejected (Fail)</span>
+                                    <span style="color: #a32a20; font-weight: 700;">Rejected (Fail)</span>
                                 @else
                                     <span style="color: #f59e0b; font-weight: 700;">{{ $app->status }}</span>
                                 @endif

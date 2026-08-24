@@ -10,18 +10,18 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            color: #7b7274;
+            color: #837e75;
             display: inline-flex;
             align-items: center;
             user-select: none;
         }
         .source-label.active {
             background: #ffffff;
-            color: #8B1E3F;
+            color: #6e1730;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .source-label:hover:not(.active) {
-            color: #8B1E3F;
+            color: #6e1730;
             background: rgba(139, 30, 63, 0.04);
         }
     </style>
@@ -58,7 +58,7 @@
                     enctype="multipart/form-data">
                     @csrf
 
-                    <div class="source-toggle-group" style="display: flex; gap: 10px; margin-bottom: 25px; background: #f3ebee; padding: 4px; border-radius: 10px; width: fit-content;">
+                    <div class="source-toggle-group" style="display: flex; gap: 10px; margin-bottom: 25px; background: #f2e7ea; padding: 4px; border-radius: 10px; width: fit-content;">
                         <label class="source-label active" id="source-library-label">
                             <input type="radio" name="paper_source" value="library" checked style="display: none;" onchange="toggleSource('library')">
                             <x-field-error name="paper_source" />
@@ -86,7 +86,7 @@
 
                         {{-- Preview Box --}}
                         <div id="paper-preview-box" style="display: none; margin-top: 20px; padding: 18px; background: #faf8f9; border: 1px solid #f0e6e9; border-radius: 12px;">
-                            <h4 style="color: #8B1E3F; margin-bottom: 8px; font-weight: 700;">Paper Preview</h4>
+                            <h4 style="color: #6e1730; margin-bottom: 8px; font-weight: 700;">Paper Preview</h4>
                             <p style="margin-bottom: 8px;"><strong>Title:</strong> <span id="preview-title" style="color: #2e2a2b;"></span></p>
                             <p style="margin-bottom: 12px; line-height: 1.5;"><strong>Instructions:</strong> <span id="preview-instructions" style="white-space: pre-wrap; font-size: 13.5px; color: #555;"></span></p>
                             <a href="#" id="preview-file-link" target="_blank" class="link" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px;">
@@ -118,10 +118,10 @@
 
                     {{-- Global Fields --}}
                     <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #f0e6e9;">
-                        <label for="submission_deadline" style="font-weight: 700; color: #8B1E3F;">Submission Deadline</label>
+                        <label for="submission_deadline" style="font-weight: 700; color: #6e1730;">Submission Deadline</label>
                         <input type="datetime-local" name="submission_deadline" id="submission_deadline" min="{{ now()->
-                        <x-field-error name="submission_deadline" />format('Y-m-d\TH:i') }}" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 5px;">
-                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #6b7280;">Specify the date and time by which the student must upload their answer.</p>
+                        <x-field-error name="submission_deadline" />format('Y-m-d\TH:i') }}" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cfc9be; font-size: 14px; margin-top: 5px;">
+                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #837e75;">Specify the date and time by which the student must upload their answer.</p>
                     </div>
 
                     <div class="form-submit-row" style="margin-top: 25px;">

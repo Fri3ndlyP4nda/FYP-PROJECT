@@ -7,8 +7,8 @@
     <style>
         body {
             margin: 0;
-            background: #f3f4f6;
-            color: #111827;
+            background: #f1efea;
+            color: #1a1917;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
             line-height: 1.5;
@@ -23,7 +23,7 @@
             align-items: center;
             padding: 14px 24px;
             background: #ffffff;
-            border-bottom: 1px solid #d1d5db;
+            border-bottom: 1px solid #cfc9be;
         }
 
         .toolbar-title {
@@ -34,9 +34,9 @@
         .btn {
             display: inline-block;
             padding: 7px 14px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #cfc9be;
             border-radius: 6px;
-            color: #374151;
+            color: #4e4b45;
             background: #ffffff;
             font-weight: 700;
             font-size: 12px;
@@ -45,8 +45,8 @@
         }
 
         .btn-primary {
-            background: #8B1E3F;
-            border-color: #8B1E3F;
+            background: #6e1730;
+            border-color: #6e1730;
             color: #ffffff;
         }
 
@@ -64,7 +64,7 @@
             display: flex;
             justify-content: space-between;
             gap: 24px;
-            border-bottom: 3px solid #111827;
+            border-bottom: 3px solid #1a1917;
             padding-bottom: 14px;
             margin-bottom: 18px;
         }
@@ -78,7 +78,7 @@
 
         .header p {
             margin: 0;
-            color: #4b5563;
+            color: #4e4b45;
         }
 
         .score-box {
@@ -110,8 +110,8 @@
         }
 
         .badge-medium {
-            color: #92400e;
-            background: #fef3c7;
+            color: #8a5a0c;
+            background: #f7eedf;
         }
 
         .badge-high {
@@ -126,7 +126,7 @@
         }
 
         .card {
-            border: 1px solid #d1d5db;
+            border: 1px solid #cfc9be;
             border-radius: 8px;
             padding: 12px;
             page-break-inside: avoid;
@@ -136,7 +136,7 @@
             margin: 0 0 8px 0;
             font-size: 14px;
             text-transform: uppercase;
-            color: #111827;
+            color: #1a1917;
         }
 
         .meta-table {
@@ -147,7 +147,7 @@
 
         .meta-table td,
         .meta-table th {
-            border: 1px solid #d1d5db;
+            border: 1px solid #cfc9be;
             padding: 7px;
             text-align: left;
             vertical-align: top;
@@ -155,8 +155,8 @@
 
         .meta-table th {
             width: 165px;
-            background: #f9fafb;
-            color: #374151;
+            background: #fbfaf8;
+            color: #4e4b45;
         }
 
         .section {
@@ -167,7 +167,7 @@
         .section h2 {
             margin: 0 0 8px 0;
             padding-bottom: 5px;
-            border-bottom: 1px solid #111827;
+            border-bottom: 1px solid #1a1917;
             font-size: 15px;
             text-transform: uppercase;
         }
@@ -188,14 +188,14 @@
 
         .criteria-table th,
         .criteria-table td {
-            border: 1px solid #d1d5db;
+            border: 1px solid #cfc9be;
             padding: 7px;
             vertical-align: top;
             text-align: left;
         }
 
         .criteria-table th {
-            background: #f9fafb;
+            background: #fbfaf8;
         }
 
         .status-pass {
@@ -204,20 +204,20 @@
         }
 
         .status-warning {
-            color: #b45309;
+            color: #8a5a0c;
             font-weight: 800;
         }
 
         .status-fail {
-            color: #dc2626;
+            color: #a32a20;
             font-weight: 800;
         }
 
         .footer {
             margin-top: 28px;
             padding-top: 10px;
-            border-top: 1px solid #d1d5db;
-            color: #6b7280;
+            border-top: 1px solid #cfc9be;
+            color: #837e75;
             font-size: 11px;
             display: flex;
             justify-content: space-between;
