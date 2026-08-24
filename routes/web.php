@@ -20,6 +20,9 @@ Route::get('/', function () {
 /*
  | Throttles on every credential-accepting endpoint.
  |
+ | Named limiters are defined in AppServiceProvider::configureRateLimiters(); they
+ | key on identity as well as IP so a shared campus NAT is not one bucket.
+ |
  | The arithmetic captcha is the only anti-automation control here and a script
  | solves it with one regex plus an addition, so without these the six-digit OTP
  | is brute-forceable inside its own ten-minute window, passwords can be sprayed
@@ -28,19 +31,19 @@ Route::get('/', function () {
  */
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])
-    ->middleware('throttle:5,10')
+    ->middleware('throttle:register')
     ->name('register.submit');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:login')
     ->name('login.submit');
 
 Route::get('/2fa', [AuthController::class, 'showTwoFactor'])
     ->name('2fa.show');
 
 Route::post('/2fa', [AuthController::class, 'verifyTwoFactor'])
-    ->middleware('throttle:5,10')
+    ->middleware('throttle:two-factor')
     ->name('2fa.verify');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -49,14 +52,14 @@ Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'
     ->name('password.request');
 
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
-    ->middleware('throttle:3,10')
+    ->middleware('throttle:password-reset')
     ->name('password.email');
 
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])
     ->name('password.reset');
 
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
-    ->middleware('throttle:5,10')
+    ->middleware('throttle:password-reset')
     ->name('password.update');
 
 Route::middleware('role:student')->group(function () {
