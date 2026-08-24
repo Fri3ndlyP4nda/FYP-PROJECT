@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers\Evaluator;
+
+use App\Http\Controllers\Controller;
+use App\Models\Application;
+use App\Models\AssessmentPaper;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\GenericQueueMail;
+
+class AssessmentPaperController extends Controller
+{
+    public function index()
+    {
+        $papers = AssessmentPaper::where('evaluator_id', (string) Auth::id())
+            ->whereNull('parent_paper_id')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('question_file');
+
+        return view('evaluator.assessments.papers.index', compact('papers'));
+    }
+
+    public function create($applicationId)
+    {
+        $application = Application::where('_id', $applicationId)
+            ->where(function($query) {
+                $query->where('evaluator_id', (string) Auth::id())
+                      ->orWhere('evaluator_2_id', (string) Auth::id());
+            })
+            ->firstOrFail();
+
+        $libraryPapers = AssessmentPaper::where('evaluator_id', (string) Auth::id())
+            ->where('status', 'active')
+            ->whereNull('parent_paper_id')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('question_file');
+
+        return view('evaluator.assessments.papers.create', compact('application', 'libraryPapers'));
+    }
+
+    public function store(Request $request, $applicationId)
+    {
+        $application = Application::where('_id', $applicationId)
+            ->where(function($query) {
+                $query->where('evaluator_id', (string) Auth::id())
+                      ->orWhere('evaluator_2_id', (string) Auth::id());
+            })
+            ->firstOrFail();
+
+        $request->validate([
+            'paper_source' => 'required|in:library,upload',
+            'library_paper_id' => 'required_if:paper_source,library|nullable|string',
+            'title' => 'required_if:paper_source,upload|nullable|string|max:255',
+            'instructions' => 'nullable|string',
+            'question_file' => 'required_if:paper_source,upload|nullable|file|mimes:pdf|max:10240',
+            'submission_deadline' => 'required|date|after:now',
+        ]);
+
+        if ($request->paper_source === 'library') {
+            $libraryPaper = AssessmentPaper::where('_id', $request->library_paper_id)
+                ->where('evaluator_id', (string) Auth::id())
+                ->firstOrFail();
+
+             AssessmentPaper::create([
+                'application_id' => (string) $application->_id,
+                'evaluator_id' => (string) Auth::id(),
+                'title' => $libraryPaper->title,
+                'instructions' => $libraryPaper->instructions,
+                'question_file' => $libraryPaper->question_file,
+                'status' => 'active',
+                'parent_paper_id' => (string) $libraryPaper->_id,
+                'submission_deadline' => $request->submission_deadline,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $paperTitle = $libraryPaper->title;
+        } else {
+            $filePath = $request->file('question_file')->store('assessment_papers', 'public');
+
+            AssessmentPaper::create([
+                'application_id' => (string) $application->_id,
+                'evaluator_id' => (string) Auth::id(),
+                'title' => $request->title,
+                'instructions' => $request->instructions,
+                'question_file' => $filePath,
+                'status' => 'active',
+                'submission_deadline' => $request->submission_deadline,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $paperTitle = $request->title;
+        }
+
+        Application::where('_id', $application->_id)->update([
+            'status' => 'Assessment In Progress',
+            'credit_status' => 'assessment_paper_uploaded',
+            'status_updated_at' => now(),
+        ]);
+
+        $this->sendMail(
+            $application->user_id,
+            'UTM APEL C Assessment Paper Uploaded',
+            "Your APEL C assessment paper has been uploaded by the evaluator.\n\n" .
+                "Course: {$application->program_applied}\n" .
+                "Assessment Title: {$paperTitle}\n\n" .
+                "Please log in to the APEL Management System and submit your assessment answer."
+        );
+
+        return redirect()->route('evaluator.assessment.papers.index')
+            ->with('success', 'Assessment paper assigned successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $paper = AssessmentPaper::where('_id', $id)
+            ->where('evaluator_id', (string) Auth::id())
+            ->firstOrFail();
+
+        // Check if there are other templates/clones using this exact file
+        $otherReferences = AssessmentPaper::where('question_file', $paper->question_file)
+            ->where('_id', '!=', $paper->_id)
+            ->exists();
+
+        if ($paper->question_file && !$otherReferences) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($paper->question_file);
+        }
+
+        $paper->delete();
+
+        return redirect()->route('evaluator.assessment.papers.index')
+            ->with('success', 'Assessment paper deleted successfully from the library.');
+    }
+
+    private function sendMail($userId, $subject, $body)
+    {
+        $user = User::where('_id', (string) $userId)->first();
+
+        if (!$user || !$user->email) {
+            return;
+        }
+
+        try {
+            Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
+        } catch (\Exception $e) {
+            Log::error('Assessment paper mail error: ' . $e->getMessage());
+        }
+    }
+}
