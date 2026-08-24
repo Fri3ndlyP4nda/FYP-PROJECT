@@ -250,15 +250,15 @@
                         enctype="multipart/form-data" style="margin-top: 15px;">
                         @csrf
 
-                        <label>Upload Payment Receipt</label>
-                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <label for="f-payment-receipt">Upload Payment Receipt</label>
+                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required id="f-payment-receipt">
 
                         <small style="display:block; margin-top:5px; color:#666;">
                             Allowed format: PDF, JPG, JPEG, PNG. Maximum size: 5MB.
                         </small>
 
-                        <label>Payment Remarks</label>
-                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub.">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
+                        <label for="f-payment-remarks">Payment Remarks</label>
+                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub." id="f-payment-remarks">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
 
                         <div class="form-submit-row">
                             <button type="submit" class="btn">

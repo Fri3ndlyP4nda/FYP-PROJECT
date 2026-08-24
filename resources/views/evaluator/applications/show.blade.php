@@ -597,8 +597,8 @@
                             <form method="POST" action="{{ route('evaluator.applications.update', $application->_id) }}">
                                 @csrf
 
-                                <label>Admission Decision</label>
-                                <select name="admission_decision" required>
+                                <label for="f-admission-decision">Admission Decision</label>
+                                <select name="admission_decision" required id="f-admission-decision">
                                     <option value="pending"
                                         {{ $userDecision == 'pending' ? 'selected' : '' }}>
                                         Pending
@@ -613,8 +613,8 @@
                                     </option>
                                 </select>
 
-                                <label>Evaluator Feedback</label>
-                                <textarea name="evaluator_feedback" rows="8" placeholder="Write your review comments here...">{{ $userFeedback }}</textarea>
+                                <label for="f-evaluator-feedback">Evaluator Feedback</label>
+                                <textarea name="evaluator_feedback" rows="8" placeholder="Write your review comments here..." id="f-evaluator-feedback">{{ $userFeedback }}</textarea>
 
                                 <div class="form-submit-row">
                                     <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary">Cancel</a>

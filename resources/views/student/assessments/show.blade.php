@@ -148,9 +148,9 @@
                                     enctype="multipart/form-data" style="margin-top: 18px;">
                                     @csrf
 
-                                    <label>Upload Answer File</label>
+                                    <label for="f-answer-file">Upload Answer File</label>
                                     <div class="upload-box">
-                                        <input type="file" name="answer_file" required>
+                                        <input type="file" name="answer_file" required id="f-answer-file">
                                         <p>Upload your completed answer file here.</p>
                                         <small>Use a clear filename before submitting.</small>
                                     </div>

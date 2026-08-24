@@ -1535,13 +1535,13 @@
     @stack('scripts')
 
     @if (session('success') || session('error'))
-        <div id="toast-notification-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; pointer-events: none; font-family: inherit;">
+        <div id="toast-notification-container" role="status" aria-live="polite" aria-atomic="true" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; pointer-events: none; font-family: inherit;">
             <div class="toast-card" style="pointer-events: auto; min-width: 320px; max-width: 380px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 14px; padding: 16px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-left: 5px solid {{ session('success') ? '#10b981' : '#ef4444' }}; display: flex; align-items: center; justify-content: space-between; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); gap: 12px;">
                 <div style="flex: 1;">
                     <strong style="display: block; font-size: 13.5px; color: #1f2937; margin-bottom: 2px;">{{ session('success') ? 'Success' : 'Error' }}</strong>
                     <span style="font-size: 13px; color: #4b5563; line-height: 1.4;">{{ session('success') ?? session('error') }}</span>
                 </div>
-                <button type="button" onclick="this.parentElement.style.transform = 'translateX(120%)'" style="background: none; border: none; font-size: 20px; color: #9ca3af; cursor: pointer; padding: 0; line-height: 1; font-weight: 500;">&times;</button>
+                <button type="button" aria-label="Dismiss notification" onclick="this.parentElement.style.transform = 'translateX(120%)'" style="background: none; border: none; font-size: 20px; color: #9ca3af; cursor: pointer; padding: 0; line-height: 1; font-weight: 500;">&times;</button>
             </div>
         </div>
         <script>
@@ -1557,11 +1557,9 @@
                 }
             });
         </script>
-        @if (session('success') && str_contains(strtolower(session('success')), 'draft'))
-            <script>
-                alert("{{ session('success') }}");
-            </script>
-        @endif
+        {{-- The blocking alert() that used to fire here duplicated the toast, forcing
+             the user to dismiss the same message twice. The toast is announced via
+             role="status" aria-live, so the alert added nothing but friction. --}}
     @endif
 </body>
 

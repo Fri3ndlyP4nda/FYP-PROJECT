@@ -313,7 +313,7 @@
 
                     <div class="form-row">
                         <div>
-                            <label>Application Type</label>
+                            <label for="application-type-select">Application Type</label>
                             <select name="application_type" id="application-type-select" required>
                                 <option value="">-- Select --</option>
                                 <option value="APEL A" {{ old('application_type', $application->application_type) == 'APEL A' ? 'selected' : '' }}>APEL A</option>
@@ -323,8 +323,8 @@
                         </div>
 
                         <div id="apel-a-programme-box" style="display: none;">
-                            <label>Programme Applied</label>
-                            <select name="program_applied">
+                            <label for="f-program-applied">Programme Applied</label>
+                            <select name="program_applied" id="f-program-applied">
                                 <option value="">-- Select Master Programme --</option>
                                 @foreach ($programmes as $programme)
                                     <option value="{{ $programme->name }}"
@@ -337,8 +337,8 @@
                         </div>
 
                         <div id="apel-c-course-box" style="display: none;">
-                            <label>APEL C Course</label>
-                            <select name="course_id">
+                            <label for="f-course-id">APEL C Course</label>
+                            <select name="course_id" id="f-course-id">
                                 <option value="">-- Select Course --</option>
                                 @foreach ($courses as $course)
                                     <option value="{{ $course->_id }}"
@@ -356,29 +356,29 @@
                         <hr>
                         <h3>APEL A Internal Application Form</h3>
 
-                        <label>Identity Card (IC) No.</label>
+                        <label for="ic-no-input">Identity Card (IC) No.</label>
                         <input type="text" name="ic_no" id="ic-no-input" value="{{ old('ic_no', $application->
                         <x-field-error name="ic_no" />ic_no) }}" placeholder="Example: 951020-10-5033" style="margin-bottom: 4px !important;">
                         <div id="citizenship-indicator" style="font-size: 12px; font-weight: 600; margin-bottom: 15px; display: block;">
                             Please enter your 12-digit IC number.
                         </div>
 
-                        <label>Age</label>
+                        <label for="age-input">Age</label>
                         <input type="number" name="age" id="age-input" value="{{ old('age', $application->
                         <x-field-error name="age" />age) }}" min="18" max="100" placeholder="Example: 25" style="margin-bottom: 4px !important;">
                         <div id="age-warning" style="font-size: 12px; color: #ef4444; font-weight: 600; margin-bottom: 15px; display: none;">
                             ⚠️ Alert: APEL A for Master level access requires candidates to be at least 30 years of age.
                         </div>
 
-                        <label>Name of University (Highest Qualification)</label>
-                        <input type="text" name="university_name" value="{{ old('university_name', $application->
+                        <label for="f-university-name">Name of University (Highest Qualification)</label>
+                        <input type="text" name="university_name" value="{{ old('university_name', $application- id="f-university-name">
                         <x-field-error name="university_name" />university_name) }}" placeholder="Example: Universiti Teknologi Malaysia">
 
-                        <label>Name of Company (Current Employment)</label>
-                        <input type="text" name="company_name" value="{{ old('company_name', $application->
+                        <label for="f-company-name">Name of Company (Current Employment)</label>
+                        <input type="text" name="company_name" value="{{ old('company_name', $application- id="f-company-name">
                         <x-field-error name="company_name" />company_name) }}" placeholder="Example: Google Inc.">
 
-                        <label>Highest Academic Qualification</label>
+                        <label for="qualification-input">Highest Academic Qualification</label>
                         <input type="text" name="highest_qualification" id="qualification-input" value="{{ old('highest_qualification', $application->
                         <x-field-error name="highest_qualification" />highest_qualification) }}"
                             placeholder="Example: Diploma in Computer Science" style="margin-bottom: 4px !important;">
@@ -386,23 +386,23 @@
                             ⚠️ Alert: The highest qualification for APEL A must start exactly with "Diploma" (e.g., Diploma in Computer Science).
                         </div>
 
-                        <label>Current Job / Position</label>
-                        <input type="text" name="current_job" value="{{ old('current_job', $application->
+                        <label for="f-current-job">Current Job / Position</label>
+                        <input type="text" name="current_job" value="{{ old('current_job', $application- id="f-current-job">
                         <x-field-error name="current_job" />current_job) }}"
                             placeholder="Example: IT Executive / Software Developer">
 
-                        <label>Years of Working Experience</label>
-                        <input type="number" name="working_experience_years" value="{{ old('working_experience_years', $application->
+                        <label for="f-working-experience-years">Years of Working Experience</label>
+                        <input type="number" name="working_experience_years" value="{{ old('working_experience_years', $application- id="f-working-experience-years">
                         <x-field-error name="working_experience_years" />working_experience_years) }}"
                             min="0" placeholder="Example: 5">
 
-                        <label>Relevant Working Experience</label>
+                        <label for="f-working-experience-details">Relevant Working Experience</label>
                         <textarea name="working_experience_details" rows="4"
-                            placeholder="Briefly describe your working experience related to the selected programme.">{{ old('working_experience_details', $application->working_experience_details) }}</textarea>
+                            placeholder="Briefly describe your working experience related to the selected programme." id="f-working-experience-details">{{ old('working_experience_details', $application->working_experience_details) }}</textarea>
                         <x-field-error name="working_experience_details" />
 
-                        <label>Reason for Applying APEL A</label>
-                        <textarea name="reason_applying" rows="4" placeholder="Explain why you are applying through APEL A.">{{ old('reason_applying', $application->reason_applying) }}</textarea>
+                        <label for="f-reason-applying">Reason for Applying APEL A</label>
+                        <textarea name="reason_applying" rows="4" placeholder="Explain why you are applying through APEL A." id="f-reason-applying">{{ old('reason_applying', $application->reason_applying) }}</textarea>
                         <x-field-error name="reason_applying" />
                     </div>
 
@@ -422,8 +422,8 @@
                         {{-- TAB 1: Particulars & Education --}}
                         <div id="tab-particulars" class="tab-content active">
                             <!-- Target Semester has been disabled for now
-                            <label>Target Semester</label>
-                            <select name="target_semester">
+                            <label for="f-target-semester">Target Semester</label>
+                            <select name="target_semester" id="f-target-semester">
                                 <option value="">-- Select Semester --</option>
                                 <option value="Semester 1" {{ old('target_semester', $application->target_semester) == 'Semester 1' ? 'selected' : '' }}>Semester 1</option>
                                 <option value="Semester 2" {{ old('target_semester', $application->target_semester) == 'Semester 2' ? 'selected' : '' }}>Semester 2</option>
@@ -433,23 +433,23 @@
                             -->
 
                             <h4 style="color: #8B1E3F; margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
-                            <label>Full Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', $application->
+                            <label for="f-pre-app-data-personal-particulars-name">Full Name (As per IC)</label>
+                            <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', $application- id="f-pre-app-data-personal-particulars-name">
                             <x-field-error name="pre_app_data.personal_particulars.name" />pre_app_data['personal_particulars']['name'] ?? auth()->user()->name) }}" required>
 
-                            <label>Matric No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" value="{{ old('pre_app_data.personal_particulars.matric_no', $application->
+                            <label for="f-pre-app-data-personal-particulars-matric-no">Matric No.</label>
+                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" value="{{ old('pre_app_data.personal_particulars.matric_no', $application- id="f-pre-app-data-personal-particulars-matric-no">
                             <x-field-error name="pre_app_data.personal_particulars.matric_no" />pre_app_data['personal_particulars']['matric_no'] ?? '') }}" placeholder="e.g. MEC244062">
 
-                            <label>Identity Card No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" value="{{ old('pre_app_data.personal_particulars.ic_no', $application->
+                            <label for="f-pre-app-data-personal-particulars-ic-no">Identity Card No.</label>
+                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" value="{{ old('pre_app_data.personal_particulars.ic_no', $application- id="f-pre-app-data-personal-particulars-ic-no">
                             <x-field-error name="pre_app_data.personal_particulars.ic_no" />pre_app_data['personal_particulars']['ic_no'] ?? '') }}" placeholder="e.g. 851020105033" required>
 
-                            <label>Highest Academic Qualification</label>
+                            <label for="f-pre-app-data-personal-particulars-highest-qualification">Highest Academic Qualification</label>
                             @php
                                 $hq = $application->pre_app_data['personal_particulars']['highest_qualification'] ?? '';
                             @endphp
-                            <select name="pre_app_data[personal_particulars][highest_qualification]" required>
+                            <select name="pre_app_data[personal_particulars][highest_qualification]" required id="f-pre-app-data-personal-particulars-highest-qualification">
                                 <option value="">-- Select Qualification --</option>
                                 <option value="PhD" {{ $hq === 'PhD' ? 'selected' : '' }}>PhD / Doctoral Degree</option>
                                 <option value="Master" {{ $hq === 'Master' ? 'selected' : '' }}>Master's Degree</option>
@@ -742,38 +742,38 @@
                                 <h4>Referee 1</h4>
                                 <div class="referee-grid">
                                     <div>
-                                        <label>Name</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_name]" value="{{ $ref1['referee_name'] ?? '' }}" placeholder="Full Name" required>
+                                        <label for="f-pre-app-data-referees-0-referee-name">Name</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_name]" value="{{ $ref1['referee_name'] ?? '' }}" placeholder="Full Name" required id="f-pre-app-data-referees-0-referee-name">
                                         <x-field-error name="pre_app_data.referees.0.referee_name" />
                                     </div>
                                     <div>
-                                        <label>Position</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_position]" value="{{ $ref1['referee_position'] ?? '' }}" placeholder="Position/Designation" required>
+                                        <label for="f-pre-app-data-referees-0-referee-position">Position</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_position]" value="{{ $ref1['referee_position'] ?? '' }}" placeholder="Position/Designation" required id="f-pre-app-data-referees-0-referee-position">
                                         <x-field-error name="pre_app_data.referees.0.referee_position" />
                                     </div>
                                     <div>
-                                        <label>Organisation</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_organisation]" value="{{ $ref1['referee_organisation'] ?? '' }}" placeholder="Organisation" required>
+                                        <label for="f-pre-app-data-referees-0-referee-organisation">Organisation</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_organisation]" value="{{ $ref1['referee_organisation'] ?? '' }}" placeholder="Organisation" required id="f-pre-app-data-referees-0-referee-organisation">
                                         <x-field-error name="pre_app_data.referees.0.referee_organisation" />
                                     </div>
                                     <div>
-                                        <label>Office Phone</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_phone_office]" value="{{ $ref1['referee_phone_office'] ?? '' }}" placeholder="Office No.">
+                                        <label for="f-pre-app-data-referees-0-referee-phone-office">Office Phone</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_phone_office]" value="{{ $ref1['referee_phone_office'] ?? '' }}" placeholder="Office No." id="f-pre-app-data-referees-0-referee-phone-office">
                                         <x-field-error name="pre_app_data.referees.0.referee_phone_office" />
                                     </div>
                                     <div>
-                                        <label>Mobile Phone</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_phone_mobile]" value="{{ $ref1['referee_phone_mobile'] ?? '' }}" placeholder="Mobile No." required>
+                                        <label for="f-pre-app-data-referees-0-referee-phone-mobile">Mobile Phone</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_phone_mobile]" value="{{ $ref1['referee_phone_mobile'] ?? '' }}" placeholder="Mobile No." required id="f-pre-app-data-referees-0-referee-phone-mobile">
                                         <x-field-error name="pre_app_data.referees.0.referee_phone_mobile" />
                                     </div>
                                     <div>
-                                        <label>Email Address</label>
-                                        <input type="email" name="pre_app_data[referees][0][referee_email]" value="{{ $ref1['referee_email'] ?? '' }}" placeholder="email@address.com" required>
+                                        <label for="f-pre-app-data-referees-0-referee-email">Email Address</label>
+                                        <input type="email" name="pre_app_data[referees][0][referee_email]" value="{{ $ref1['referee_email'] ?? '' }}" placeholder="email@address.com" required id="f-pre-app-data-referees-0-referee-email">
                                         <x-field-error name="pre_app_data.referees.0.referee_email" />
                                     </div>
                                     <div style="grid-column: span 2;">
-                                        <label>Relationship</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_relationship]" value="{{ $ref1['referee_relationship'] ?? '' }}" placeholder="e.g. Ex-Supervisor" required>
+                                        <label for="f-pre-app-data-referees-0-referee-relationship">Relationship</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_relationship]" value="{{ $ref1['referee_relationship'] ?? '' }}" placeholder="e.g. Ex-Supervisor" required id="f-pre-app-data-referees-0-referee-relationship">
                                         <x-field-error name="pre_app_data.referees.0.referee_relationship" />
                                     </div>
                                 </div>
@@ -783,38 +783,38 @@
                                 <h4>Referee 2</h4>
                                 <div class="referee-grid">
                                     <div>
-                                        <label>Name</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_name]" value="{{ $ref2['referee_name'] ?? '' }}" placeholder="Full Name" required>
+                                        <label for="f-pre-app-data-referees-1-referee-name">Name</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_name]" value="{{ $ref2['referee_name'] ?? '' }}" placeholder="Full Name" required id="f-pre-app-data-referees-1-referee-name">
                                         <x-field-error name="pre_app_data.referees.1.referee_name" />
                                     </div>
                                     <div>
-                                        <label>Position</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_position]" value="{{ $ref2['referee_position'] ?? '' }}" placeholder="Position/Designation" required>
+                                        <label for="f-pre-app-data-referees-1-referee-position">Position</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_position]" value="{{ $ref2['referee_position'] ?? '' }}" placeholder="Position/Designation" required id="f-pre-app-data-referees-1-referee-position">
                                         <x-field-error name="pre_app_data.referees.1.referee_position" />
                                     </div>
                                     <div>
-                                        <label>Organisation</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_organisation]" value="{{ $ref2['referee_organisation'] ?? '' }}" placeholder="Organisation" required>
+                                        <label for="f-pre-app-data-referees-1-referee-organisation">Organisation</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_organisation]" value="{{ $ref2['referee_organisation'] ?? '' }}" placeholder="Organisation" required id="f-pre-app-data-referees-1-referee-organisation">
                                         <x-field-error name="pre_app_data.referees.1.referee_organisation" />
                                     </div>
                                     <div>
-                                        <label>Office Phone</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_phone_office]" value="{{ $ref2['referee_phone_office'] ?? '' }}" placeholder="Office No.">
+                                        <label for="f-pre-app-data-referees-1-referee-phone-office">Office Phone</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_phone_office]" value="{{ $ref2['referee_phone_office'] ?? '' }}" placeholder="Office No." id="f-pre-app-data-referees-1-referee-phone-office">
                                         <x-field-error name="pre_app_data.referees.1.referee_phone_office" />
                                     </div>
                                     <div>
-                                        <label>Mobile Phone</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_phone_mobile]" value="{{ $ref2['referee_phone_mobile'] ?? '' }}" placeholder="Mobile No." required>
+                                        <label for="f-pre-app-data-referees-1-referee-phone-mobile">Mobile Phone</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_phone_mobile]" value="{{ $ref2['referee_phone_mobile'] ?? '' }}" placeholder="Mobile No." required id="f-pre-app-data-referees-1-referee-phone-mobile">
                                         <x-field-error name="pre_app_data.referees.1.referee_phone_mobile" />
                                     </div>
                                     <div>
-                                        <label>Email Address</label>
-                                        <input type="email" name="pre_app_data[referees][1][referee_email]" value="{{ $ref2['referee_email'] ?? '' }}" placeholder="email@address.com" required>
+                                        <label for="f-pre-app-data-referees-1-referee-email">Email Address</label>
+                                        <input type="email" name="pre_app_data[referees][1][referee_email]" value="{{ $ref2['referee_email'] ?? '' }}" placeholder="email@address.com" required id="f-pre-app-data-referees-1-referee-email">
                                         <x-field-error name="pre_app_data.referees.1.referee_email" />
                                     </div>
                                     <div style="grid-column: span 2;">
-                                        <label>Relationship</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_relationship]" value="{{ $ref2['referee_relationship'] ?? '' }}" placeholder="e.g. Manager" required>
+                                        <label for="f-pre-app-data-referees-1-referee-relationship">Relationship</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_relationship]" value="{{ $ref2['referee_relationship'] ?? '' }}" placeholder="e.g. Manager" required id="f-pre-app-data-referees-1-referee-relationship">
                                         <x-field-error name="pre_app_data.referees.1.referee_relationship" />
                                     </div>
                                 </div>
@@ -825,20 +825,20 @@
                                 For each Course Learning Outcome (CLO), describe how you have learned this outcome through your former studies or working career.
                             </p>
 
-                            <label><strong>CLO1:</strong> Analyse IT information security governance, risk management frameworks, policies, and standards.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo1]" rows="3" placeholder="Describe your experience/certifications related to CLO1..." required>{{ $application->self_assessment['clo_descriptions']['clo1'] ?? '' }}</textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo1"><strong>CLO1:</strong> Analyse IT information security governance, risk management frameworks, policies, and standards.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo1]" rows="3" placeholder="Describe your experience/certifications related to CLO1..." required id="f-self-assessment-clo-descriptions-clo1">{{ $application->self_assessment['clo_descriptions']['clo1'] ?? '' }}</textarea>
                             <x-field-error name="self_assessment.clo_descriptions.clo1" />
 
-                            <label><strong>CLO2:</strong> Evaluate applications of security and management, providing justifications based on fundamental concepts.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo2]" rows="3" placeholder="Describe your experience/certifications related to CLO2..." required>{{ $application->self_assessment['clo_descriptions']['clo2'] ?? '' }}</textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo2"><strong>CLO2:</strong> Evaluate applications of security and management, providing justifications based on fundamental concepts.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo2]" rows="3" placeholder="Describe your experience/certifications related to CLO2..." required id="f-self-assessment-clo-descriptions-clo2">{{ $application->self_assessment['clo_descriptions']['clo2'] ?? '' }}</textarea>
                             <x-field-error name="self_assessment.clo_descriptions.clo2" />
 
-                            <label><strong>CLO3:</strong> Complete the cycle of risk identification, analysis, assessment, and control of security management systems.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo3]" rows="3" placeholder="Describe your experience/certifications related to CLO3..." required>{{ $application->self_assessment['clo_descriptions']['clo3'] ?? '' }}</textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo3"><strong>CLO3:</strong> Complete the cycle of risk identification, analysis, assessment, and control of security management systems.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo3]" rows="3" placeholder="Describe your experience/certifications related to CLO3..." required id="f-self-assessment-clo-descriptions-clo3">{{ $application->self_assessment['clo_descriptions']['clo3'] ?? '' }}</textarea>
                             <x-field-error name="self_assessment.clo_descriptions.clo3" />
 
-                            <label><strong>CLO4:</strong> Construct detailed organisation-wide security plans/policies, and measure safeguards using appropriate tools.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo4]" rows="3" placeholder="Describe your experience/certifications related to CLO4..." required>{{ $application->self_assessment['clo_descriptions']['clo4'] ?? '' }}</textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo4"><strong>CLO4:</strong> Construct detailed organisation-wide security plans/policies, and measure safeguards using appropriate tools.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo4]" rows="3" placeholder="Describe your experience/certifications related to CLO4..." required id="f-self-assessment-clo-descriptions-clo4">{{ $application->self_assessment['clo_descriptions']['clo4'] ?? '' }}</textarea>
                             <x-field-error name="self_assessment.clo_descriptions.clo4" />
                         </div>
 
@@ -857,7 +857,7 @@
                                 </p>
                             </div>
 
-                            <label><strong>Upload Complete Portfolio PDF</strong> <span style="color: #ef4444;">*</span></label>
+                            <label for="portfolio-input"><strong>Upload Complete Portfolio PDF</strong> <span style="color: #ef4444;">*</span></label>
                             <input type="file" name="portfolio_file[]" id="portfolio-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                             <x-field-error name="portfolio_file" />
                             <div id="portfolio-preview-list" style="margin-top: 8px; font-size: 13px; color: #4b5563;">
@@ -884,12 +884,12 @@
                                 </label>
                             </div>
 
-                            <label>Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" value="{{ $application->
+                            <label for="f-pre-app-data-self-declaration-name-as-per-ic">Name (As per IC)</label>
+                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" value="{{ $application- id="f-pre-app-data-self-declaration-name-as-per-ic">
                             <x-field-error name="pre_app_data.self_declaration.name_as_per_ic" />pre_app_data['self_declaration']['name_as_per_ic'] ?? '' }}" placeholder="Full Name as per IC" required>
 
-                            <label>Date Declared</label>
-                            <input type="date" name="pre_app_data[self_declaration][date_declared]" value="{{ $application->
+                            <label for="f-pre-app-data-self-declaration-date-declared">Date Declared</label>
+                            <input type="date" name="pre_app_data[self_declaration][date_declared]" value="{{ $application- id="f-pre-app-data-self-declaration-date-declared">
                             <x-field-error name="pre_app_data.self_declaration.date_declared" />pre_app_data['self_declaration']['date_declared'] ?? date('Y-m-d') }}" required>
                         </div>
                     </div>
@@ -1058,20 +1058,20 @@
                 </div>
                 <div class="row-card-body education-grid">
                     <div class="field-col">
-                        <label>Year Awarded</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][year_awarded]" placeholder="e.g. 2024">
+                        <label for="f-formal-learning-${educationIndex}-year-awarded">Year Awarded</label>
+                        <input id="f-formal-learning-${educationIndex}-year-awarded" type="text" name="pre_app_data[formal_learning][${educationIndex}][year_awarded]" placeholder="e.g. 2024">
                     </div>
                     <div class="field-col">
-                        <label>Title of Certification</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][title_of_certification]" placeholder="e.g. Cert">
+                        <label for="f-formal-learning-${educationIndex}-title-of-certification">Title of Certification</label>
+                        <input id="f-formal-learning-${educationIndex}-title-of-certification" type="text" name="pre_app_data[formal_learning][${educationIndex}][title_of_certification]" placeholder="e.g. Cert">
                     </div>
                     <div class="field-col">
-                        <label>Level of Award</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][level_of_award]" placeholder="e.g. Certificate">
+                        <label for="f-formal-learning-${educationIndex}-level-of-award">Level of Award</label>
+                        <input id="f-formal-learning-${educationIndex}-level-of-award" type="text" name="pre_app_data[formal_learning][${educationIndex}][level_of_award]" placeholder="e.g. Certificate">
                     </div>
                     <div class="field-col">
-                        <label>Awarding Body</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][awarding_body]" placeholder="Awarding Body">
+                        <label for="f-formal-learning-${educationIndex}-awarding-body">Awarding Body</label>
+                        <input id="f-formal-learning-${educationIndex}-awarding-body" type="text" name="pre_app_data[formal_learning][${educationIndex}][awarding_body]" placeholder="Awarding Body">
                     </div>
                 </div>
             `;
@@ -1092,12 +1092,12 @@
                 </div>
                 <div class="row-card-body employment-grid">
                     <div class="field-col employer-name">
-                        <label>Employer Name</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][employer_name]" placeholder="e.g. Roche">
+                        <label for="f-experiential-learning-${employmentIndex}-employer-name">Employer Name</label>
+                        <input id="f-experiential-learning-${employmentIndex}-employer-name" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][employer_name]" placeholder="e.g. Roche">
                     </div>
                     <div class="field-col contact-address">
-                        <label>Contact Address</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][contact_address]" placeholder="Address">
+                        <label for="f-experiential-learning-${employmentIndex}-contact-address">Contact Address</label>
+                        <input id="f-experiential-learning-${employmentIndex}-contact-address" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][contact_address]" placeholder="Address">
                     </div>
                     <div class="field-col time-from">
                         <label>From (Month/Year)</label>
@@ -1137,12 +1137,12 @@
                         </div>
                     </div>
                     <div class="field-col position-held">
-                        <label>Position Held</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][position_held]" placeholder="Position">
+                        <label for="f-experiential-learning-${employmentIndex}-position-held">Position Held</label>
+                        <input id="f-experiential-learning-${employmentIndex}-position-held" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][position_held]" placeholder="Position">
                     </div>
                     <div class="field-col job-roles">
-                        <label>Job Roles / Performed</label>
-                        <textarea name="pre_app_data[experiential_learning][${employmentIndex}][job_roles]" placeholder="Roles / Duties" rows="3"></textarea>
+                        <label for="f-experiential-learning-${employmentIndex}-job-roles">Job Roles / Performed</label>
+                        <textarea id="f-experiential-learning-${employmentIndex}-job-roles" name="pre_app_data[experiential_learning][${employmentIndex}][job_roles]" placeholder="Roles / Duties" rows="3"></textarea>
                     </div>
                 </div>
             `;
@@ -1163,20 +1163,20 @@
                 </div>
                 <div class="row-card-body training-grid">
                     <div class="field-col course-name">
-                        <label>Course/Training Name</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][course_name]" placeholder="Course Title">
+                        <label for="f-training-activities-${trainingIndex}-course-name">Course/Training Name</label>
+                        <input id="f-training-activities-${trainingIndex}-course-name" type="text" name="pre_app_data[training_activities][${trainingIndex}][course_name]" placeholder="Course Title">
                     </div>
                     <div class="field-col location">
-                        <label>Location</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][location]" placeholder="Location">
+                        <label for="f-training-activities-${trainingIndex}-location">Location</label>
+                        <input id="f-training-activities-${trainingIndex}-location" type="text" name="pre_app_data[training_activities][${trainingIndex}][location]" placeholder="Location">
                     </div>
                     <div class="field-col date-duration">
-                        <label>Date & Duration</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][date_duration]" placeholder="e.g. Nov 2024">
+                        <label for="f-training-activities-${trainingIndex}-date-duration">Date & Duration</label>
+                        <input id="f-training-activities-${trainingIndex}-date-duration" type="text" name="pre_app_data[training_activities][${trainingIndex}][date_duration]" placeholder="e.g. Nov 2024">
                     </div>
                     <div class="field-col activity-type">
-                        <label>Activity Type</label>
-                        <select name="pre_app_data[training_activities][${trainingIndex}][activity_type]">
+                        <label for="f-training-activities-${trainingIndex}-activity-type">Activity Type</label>
+                        <select id="f-training-activities-${trainingIndex}-activity-type" name="pre_app_data[training_activities][${trainingIndex}][activity_type]">
                             <option value="Technical">Technical</option>
                             <option value="Managerial">Managerial</option>
                             <option value="Both">Both</option>
@@ -1206,12 +1206,12 @@
                 </div>
                 <div class="row-card-body other-skills-grid">
                     <div class="field-col other-activities">
-                        <label>Other Activity Description</label>
-                        <input type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][other_activities]" placeholder="Description">
+                        <label for="f-other-learning-skills-${otherSkillIndex}-other-activities">Other Activity Description</label>
+                        <input id="f-other-learning-skills-${otherSkillIndex}-other-activities" type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][other_activities]" placeholder="Description">
                     </div>
                     <div class="field-col year">
-                        <label>Year</label>
-                        <input type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][year]" placeholder="Year">
+                        <label for="f-other-learning-skills-${otherSkillIndex}-year">Year</label>
+                        <input id="f-other-learning-skills-${otherSkillIndex}-year" type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][year]" placeholder="Year">
                     </div>
                     <div class="field-col skills-learnt">
                         <label>What Have I Learnt? (Skills Checklist)</label>

@@ -818,8 +818,8 @@
                         <form method="POST" action="{{ route('admin.applications.advisor_approve', $application->_id) }}">
                             @csrf
                             
-                            <label>Advisor Name</label>
-                            <select name="advisor_name" required>
+                            <label for="f-advisor-name">Advisor Name</label>
+                            <select name="advisor_name" required id="f-advisor-name">
                                 <option value="">-- Select Advisor --</option>
                                 <option value="Ts Dr. Maheyzah Md Siraj">Ts Dr. Maheyzah Md Siraj</option>
                                 <option value="Dr. Hajar">Dr. Hajar</option>
@@ -852,20 +852,20 @@
                                 </tbody>
                             </table>
                             
-                            <label>Recommendation</label>
+                            <label for="recommendation_status">Recommendation</label>
                             <select name="recommendation_status" id="recommendation_status" required>
                                 <option value="Recommended">Recommended (All CLOs >= 3)</option>
                                 <option value="NOT recommended">NOT recommended</option>
                             </select>
                             
-                            <label style="margin-top: 15px; display: block;">Recommended Mode of Assessment</label>
-                            <select name="mode_of_assessment" required>
+                            <label for="f-mode-of-assessment" style="margin-top: 15px; display: block;">Recommended Mode of Assessment</label>
+                            <select name="mode_of_assessment" required id="f-mode-of-assessment">
                                 <option value="portfolio">Portfolio Submission</option>
                                 <option value="test">Challenge Test</option>
                             </select>
                             
-                            <label style="margin-top: 15px; display: block;">Advisor Remarks</label>
-                            <textarea name="advisor_remarks" rows="3" placeholder="Write advisor evaluation comments..."></textarea>
+                            <label for="f-advisor-remarks" style="margin-top: 15px; display: block;">Advisor Remarks</label>
+                            <textarea name="advisor_remarks" rows="3" placeholder="Write advisor evaluation comments..." id="f-advisor-remarks"></textarea>
                             
                             <div class="form-submit-row">
                                 <button type="submit" class="btn">Submit Advisor Recommendation</button>
@@ -916,8 +916,8 @@
                             <p class="feedback-text">No payment receipt uploaded yet.</p>
                         @endif
 
-                        <label>Payment Remarks</label>
-                        <textarea name="payment_remarks" rows="4" placeholder="Write payment verification remarks..." {{ ($application->payment_status ?? '') === 'verified' ? 'readonly' : '' }}>{{ $application->payment_remarks ?? '' }}</textarea>
+                        <label for="f-payment-remarks">Payment Remarks</label>
+                        <textarea name="payment_remarks" rows="4" placeholder="Write payment verification remarks..." {{ ($application- id="f-payment-remarks">payment_status ?? '') === 'verified' ? 'readonly' : '' }}>{{ $application->payment_remarks ?? '' }}</textarea>
 
                         @if (($application->payment_status ?? '') !== 'verified')
                             <div class="form-submit-row">
@@ -1006,8 +1006,8 @@
                             </div>
                         @endif
 
-                        <label>Select First Evaluator</label>
-                        <select name="evaluator_id" required>
+                        <label for="f-evaluator-id">Select First Evaluator</label>
+                        <select name="evaluator_id" required id="f-evaluator-id">
                             <option value="">-- Select Evaluator 1 --</option>
                             @foreach ($evaluators as $evaluator)
                                 @php
@@ -1025,8 +1025,8 @@
                             @endforeach
                         </select>
 
-                        <label style="margin-top: 15px; display: block;">Select Second Evaluator</label>
-                        <select name="evaluator_2_id">
+                        <label for="f-evaluator-2-id" style="margin-top: 15px; display: block;">Select Second Evaluator</label>
+                        <select name="evaluator_2_id" id="f-evaluator-2-id">
                             <option value="">-- Select Evaluator 2 (Optional) --</option>
                             @foreach ($evaluators as $evaluator)
                                 @php
@@ -1044,8 +1044,8 @@
                         </select>
 
                         @if ($application->application_type === 'APEL C')
-                            <label style="margin-top: 15px; display: block;">Select Assessment Type</label>
-                            <select name="assessment_type" required>
+                            <label for="f-assessment-type" style="margin-top: 15px; display: block;">Select Assessment Type</label>
+                            <select name="assessment_type" required id="f-assessment-type">
                                 <option value="">-- Select Assessment Type --</option>
                                 <option value="portfolio" {{ ($application->assessment_type ?? '') === 'portfolio' ? 'selected' : '' }}>
                                     Portfolio
@@ -1097,8 +1097,8 @@
                             action="{{ route('admin.applications.finalize_apel_a', $application->_id) }}">
                             @csrf
 
-                            <label>Final Decision</label>
-                            <select name="final_decision" required {{ !$canFinalizeA || in_array($application->final_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
+                            <label for="f-final-decision">Final Decision</label>
+                            <select name="final_decision" required {{ !$canFinalizeA || in_array($application- id="f-final-decision">final_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
                                 <option value="pending"
                                     {{ ($application->final_decision ?? 'pending') === 'pending' ? 'selected' : '' }}>
                                     Pending
@@ -1113,8 +1113,8 @@
                                 </option>
                             </select>
 
-                            <label>Final Decision Remarks</label>
-                            <textarea name="final_decision_remarks" rows="6" placeholder="Write final admin remarks here..." {{ !$canFinalizeA || in_array($application->final_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ $application->final_decision_remarks }}</textarea>
+                            <label for="f-final-decision-remarks">Final Decision Remarks</label>
+                            <textarea name="final_decision_remarks" rows="6" placeholder="Write final admin remarks here..." {{ !$canFinalizeA || in_array($application- id="f-final-decision-remarks">final_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ $application->final_decision_remarks }}</textarea>
 
                             <div class="tip-box tip-box-light">
                                 <strong>Important</strong>
@@ -1192,14 +1192,14 @@
                             action="{{ route('admin.applications.finalize_apel_c', $application->_id) }}">
                             @csrf
 
-                            <label>Credit Decision</label>
+                            <label for="f-credit-decision">Credit Decision</label>
                             @php
                                 $defaultDecision = $application->credit_decision ?? 'pending';
                                 if ($submission && $submission->result === 'fail' && $defaultDecision === 'pending') {
                                     $defaultDecision = 'rejected';
                                 }
                             @endphp
-                            <select name="credit_decision" required {{ !$bothReviewedC || in_array($application->credit_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
+                            <select name="credit_decision" required {{ !$bothReviewedC || in_array($application- id="f-credit-decision">credit_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
                                 <option value="pending"
                                     {{ $defaultDecision === 'pending' ? 'selected' : '' }}>
                                     Pending
@@ -1214,23 +1214,23 @@
                                 </option>
                             </select>
 
-                            <label>Approved Credit Hours</label>
+                            <label for="credit_hours_approved">Approved Credit Hours</label>
                             @php
                                 $hours = \App\Http\Controllers\Admin\ApplicationManagementController::getCreditHoursFromCourseCode($application->credit_course_code);
                             @endphp
                             <input type="number" name="credit_hours_approved" id="credit_hours_approved" readonly
                                 value="{{ $application->credit_hours_approved ?? $hours }}">
 
-                            <label>Course Code</label>
+                            <label for="f-credit-course-code">Course Code</label>
                             <input type="text" name="credit_course_code" readonly
-                                value="{{ old('credit_course_code', $application->credit_course_code) }}">
+                                value="{{ old('credit_course_code', $application- id="f-credit-course-code">credit_course_code) }}">
 
-                            <label>Course Name</label>
+                            <label for="f-credit-course-name">Course Name</label>
                             <input type="text" name="credit_course_name" readonly
-                                value="{{ old('credit_course_name', $application->credit_course_name) }}">
+                                value="{{ old('credit_course_name', $application- id="f-credit-course-name">credit_course_name) }}">
 
-                            <label>Credit Remarks</label>
-                            <textarea name="credit_remarks" rows="6" placeholder="Write final credit decision remarks here..." {{ !$bothReviewedC || in_array($application->credit_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ old('credit_remarks', $application->credit_remarks) }}</textarea>
+                            <label for="f-credit-remarks">Credit Remarks</label>
+                            <textarea name="credit_remarks" rows="6" placeholder="Write final credit decision remarks here..." {{ !$bothReviewedC || in_array($application- id="f-credit-remarks">credit_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ old('credit_remarks', $application->credit_remarks) }}</textarea>
 
                             <div class="tip-box tip-box-light">
                                 <strong>Important</strong>

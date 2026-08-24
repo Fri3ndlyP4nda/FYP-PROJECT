@@ -73,7 +73,7 @@
 
                     {{-- 1. LIBRARY SECTION --}}
                     <div id="section-library">
-                        <label>Select Paper from Library</label>
+                        <label for="library_paper_select">Select Paper from Library</label>
                         <select name="library_paper_id" id="library_paper_select" required style="width: 100%; max-width: 100%;">
                             <option value="">-- Select a Paper --</option>
                             @foreach ($libraryPapers as $paper)
@@ -97,17 +97,17 @@
 
                     {{-- 2. UPLOAD SECTION --}}
                     <div id="section-upload" style="display: none;">
-                        <label>Paper Title</label>
+                        <label for="upload_title">Paper Title</label>
                         <input type="text" name="title" id="upload_title" value="{{ old('title') }}"
                             placeholder="Example: APEL Assessment Paper 1">
                         <x-field-error name="title" />
 
-                        <label>Instructions</label>
+                        <label for="upload_instructions">Instructions</label>
                         <textarea name="instructions" id="upload_instructions" rows="7"
                             placeholder="Write instructions for the student before they begin the assessment...">{{ old('instructions') }}</textarea>
                         <x-field-error name="instructions" />
 
-                        <label>Question PDF</label>
+                        <label for="upload_file">Question PDF</label>
                         <div class="upload-box">
                             <input type="file" name="question_file" id="upload_file" accept=".pdf,application/pdf">
                             <x-field-error name="question_file" />
@@ -118,7 +118,7 @@
 
                     {{-- Global Fields --}}
                     <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #f0e6e9;">
-                        <label style="font-weight: 700; color: #8B1E3F;">Submission Deadline</label>
+                        <label for="submission_deadline" style="font-weight: 700; color: #8B1E3F;">Submission Deadline</label>
                         <input type="datetime-local" name="submission_deadline" id="submission_deadline" min="{{ now()->
                         <x-field-error name="submission_deadline" />format('Y-m-d\TH:i') }}" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 5px;">
                         <p style="margin: 5px 0 0 0; font-size: 12px; color: #6b7280;">Specify the date and time by which the student must upload their answer.</p>

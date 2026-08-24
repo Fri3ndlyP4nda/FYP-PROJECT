@@ -139,14 +139,14 @@
 
                     <!-- Security Verification Captcha -->
                     <div class="form-input-group">
-                        <label>Security Check</label>
+                        <label for="f-captcha-answer">Security Check</label>
                         <div class="captcha-box">
                             <div class="captcha-question-tag">
                                 <span class="verify-label">Verify</span>
                                 <span>{{ session('captcha_question') }}</span>
                             </div>
                             <input type="text" name="captcha_answer" class="input-field captcha-input" 
-                                placeholder="Answer" required autocomplete="off">
+                                placeholder="Answer" required autocomplete="off" id="f-captcha-answer">
                             <x-field-error name="captcha_answer" />
                         </div>
                     </div>

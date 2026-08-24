@@ -135,45 +135,45 @@
 
                     <!-- CLO 1 -->
                     <div style="margin-bottom: 18px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
-                        <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 1 Score (0 - 10)</label>
+                        <label for="f-clo1" style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 1 Score (0 - 10)</label>
                         <p style="font-size: 11px; color: #6b7280; margin-bottom: 8px; line-height: 1.3;">
                             Analyze IT security frameworks/standards: <strong>0-1</strong> (1 evidence / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
                         </p>
                         <input type="number" name="clo1" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo1', $hasGradedThisUser ? $existingClo1 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                            value="{{ old('clo1', $hasGradedThisUser ? $existingClo1 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo1">
                         <x-field-error name="clo1" />
                     </div>
 
                     <!-- CLO 2 -->
                     <div style="margin-bottom: 18px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
-                        <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 2 Score (0 - 10)</label>
+                        <label for="f-clo2" style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 2 Score (0 - 10)</label>
                         <p style="font-size: 11px; color: #6b7280; margin-bottom: 8px; line-height: 1.3;">
                             Evaluate security & management applications: <strong>0-1</strong> (1 evidence of tools / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4 evidences).
                         </p>
                         <input type="number" name="clo2" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo2', $hasGradedThisUser ? $existingClo2 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                            value="{{ old('clo2', $hasGradedThisUser ? $existingClo2 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo2">
                         <x-field-error name="clo2" />
                     </div>
 
                     <!-- CLO 3 -->
                     <div style="margin-bottom: 18px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
-                        <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 3 Score (0 - 10)</label>
+                        <label for="f-clo3" style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 3 Score (0 - 10)</label>
                         <p style="font-size: 11px; color: #6b7280; margin-bottom: 8px; line-height: 1.3;">
                             Complete risk identification cycle: <strong>0-1</strong> (1 evidence of strategies / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
                         </p>
                         <input type="number" name="clo3" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo3', $hasGradedThisUser ? $existingClo3 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                            value="{{ old('clo3', $hasGradedThisUser ? $existingClo3 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo3">
                         <x-field-error name="clo3" />
                     </div>
 
                     <!-- CLO 4 -->
                     <div style="margin-bottom: 18px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
-                        <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 4 Score (0 - 10)</label>
+                        <label for="f-clo4" style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">CLO 4 Score (0 - 10)</label>
                         <p style="font-size: 11px; color: #6b7280; margin-bottom: 8px; line-height: 1.3;">
                             Construct organization-wide security plans: <strong>0-1</strong> (1 evidence of skills / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
                         </p>
                         <input type="number" name="clo4" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo4', $hasGradedThisUser ? $existingClo4 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                            value="{{ old('clo4', $hasGradedThisUser ? $existingClo4 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo4">
                         <x-field-error name="clo4" />
                     </div>
 
@@ -194,8 +194,8 @@
                         </div>
                     </div>
 
-                    <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">Grader Feedback</label>
-                    <textarea name="grader_feedback" rows="4" placeholder="Write your grading comments here..." {{ $hasGradedThisUser ? 'readonly' : '' }} style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; margin-bottom: 15px;">{{ old('grader_feedback', $hasGradedThisUser ? $existingFeedback : '') }}</textarea>
+                    <label for="f-grader-feedback" style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">Grader Feedback</label>
+                    <textarea name="grader_feedback" rows="4" placeholder="Write your grading comments here..." {{ $hasGradedThisUser ? 'readonly' : '' }} style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; margin-bottom: 15px;" id="f-grader-feedback">{{ old('grader_feedback', $hasGradedThisUser ? $existingFeedback : '') }}</textarea>
                     <x-field-error name="grader_feedback" />
 
                     <div class="tip-box tip-box-light" style="margin-top: 0; margin-bottom: 14px; background: #fefbeb; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11.5px; border-radius: 4px; line-height: 1.4; color: #856404;">
