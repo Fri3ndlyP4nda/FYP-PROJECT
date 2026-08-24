@@ -141,6 +141,7 @@
                         </p>
                         <input type="number" name="clo1" class="clo-score-input" min="0" max="10" 
                             value="{{ old('clo1', $hasGradedThisUser ? $existingClo1 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                        <x-field-error name="clo1" />
                     </div>
 
                     <!-- CLO 2 -->
@@ -151,6 +152,7 @@
                         </p>
                         <input type="number" name="clo2" class="clo-score-input" min="0" max="10" 
                             value="{{ old('clo2', $hasGradedThisUser ? $existingClo2 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                        <x-field-error name="clo2" />
                     </div>
 
                     <!-- CLO 3 -->
@@ -161,6 +163,7 @@
                         </p>
                         <input type="number" name="clo3" class="clo-score-input" min="0" max="10" 
                             value="{{ old('clo3', $hasGradedThisUser ? $existingClo3 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                        <x-field-error name="clo3" />
                     </div>
 
                     <!-- CLO 4 -->
@@ -171,6 +174,7 @@
                         </p>
                         <input type="number" name="clo4" class="clo-score-input" min="0" max="10" 
                             value="{{ old('clo4', $hasGradedThisUser ? $existingClo4 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }}>
+                        <x-field-error name="clo4" />
                     </div>
 
                     <!-- Calculator Output Panel -->
@@ -192,6 +196,7 @@
 
                     <label style="font-weight: 700; font-size: 13px; display: block; color: #1f2937; margin-bottom: 4px;">Grader Feedback</label>
                     <textarea name="grader_feedback" rows="4" placeholder="Write your grading comments here..." {{ $hasGradedThisUser ? 'readonly' : '' }} style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; margin-bottom: 15px;">{{ old('grader_feedback', $hasGradedThisUser ? $existingFeedback : '') }}</textarea>
+                    <x-field-error name="grader_feedback" />
 
                     <div class="tip-box tip-box-light" style="margin-top: 0; margin-bottom: 14px; background: #fefbeb; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11.5px; border-radius: 4px; line-height: 1.4; color: #856404;">
                         <strong>UTM APEL C Rules:</strong>

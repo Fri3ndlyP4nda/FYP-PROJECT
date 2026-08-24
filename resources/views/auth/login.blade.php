@@ -101,6 +101,7 @@
                         <div class="input-wrapper">
                             <input id="email" type="email" name="email" class="input-field" 
                                 placeholder="name@domain.com" required autofocus autocomplete="off">
+                            <x-field-error name="email" />
                         </div>
                     </div>
 
@@ -110,6 +111,7 @@
                         <div class="input-wrapper">
                             <input id="login-password" type="password" name="password" class="input-field" 
                                 placeholder="••••••••" required style="padding-right: 45px;" autocomplete="off">
+                            <x-field-error name="password" />
                             
                             <button type="button" onclick="togglePassword('login-password', this)" class="eye-toggle-btn">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -128,6 +130,7 @@
                             </div>
                             <input type="text" name="captcha_answer" class="input-field captcha-input" 
                                 placeholder="Answer" required autocomplete="off">
+                            <x-field-error name="captcha_answer" />
                         </div>
                     </div>
 

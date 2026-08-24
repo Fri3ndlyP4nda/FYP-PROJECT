@@ -45,6 +45,7 @@
                     <div class="input-wrapper">
                         <input id="email" type="email" name="email" class="input-field"
                             value="{{ old('email') }}" placeholder="name@domain.com" required autofocus>
+                        <x-field-error name="email" />
                     </div>
                 </div>
 

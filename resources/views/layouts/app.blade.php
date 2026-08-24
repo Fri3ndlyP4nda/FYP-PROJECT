@@ -1487,6 +1487,28 @@
             margin-bottom: 8px;
             color: #7f1638;
         }
+
+        /* Field-level validation message, rendered by <x-field-error /> */
+        .field-error {
+            display: block;
+            margin-top: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            line-height: 1.4;
+            /* 4.9:1 on white - passes WCAG AA for normal text */
+            color: #b3261e;
+        }
+
+        /* Mark the control itself, so the error is not signalled by text alone */
+        .has-error input,
+        .has-error select,
+        .has-error textarea,
+        input.has-error,
+        select.has-error,
+        textarea.has-error {
+            border-color: #b3261e !important;
+            background-color: #fdf6f5;
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('css/app-style.css') }}">
     @stack('styles')

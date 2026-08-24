@@ -61,10 +61,12 @@
                     <div class="source-toggle-group" style="display: flex; gap: 10px; margin-bottom: 25px; background: #f3ebee; padding: 4px; border-radius: 10px; width: fit-content;">
                         <label class="source-label active" id="source-library-label">
                             <input type="radio" name="paper_source" value="library" checked style="display: none;" onchange="toggleSource('library')">
+                            <x-field-error name="paper_source" />
                             Choose from Library
                         </label>
                         <label class="source-label" id="source-upload-label">
                             <input type="radio" name="paper_source" value="upload" style="display: none;" onchange="toggleSource('upload')">
+                            <x-field-error name="paper_source" />
                             Upload New File
                         </label>
                     </div>
@@ -80,6 +82,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <x-field-error name="library_paper_id" />
 
                         {{-- Preview Box --}}
                         <div id="paper-preview-box" style="display: none; margin-top: 20px; padding: 18px; background: #faf8f9; border: 1px solid #f0e6e9; border-radius: 12px;">
@@ -97,14 +100,17 @@
                         <label>Paper Title</label>
                         <input type="text" name="title" id="upload_title" value="{{ old('title') }}"
                             placeholder="Example: APEL Assessment Paper 1">
+                        <x-field-error name="title" />
 
                         <label>Instructions</label>
                         <textarea name="instructions" id="upload_instructions" rows="7"
                             placeholder="Write instructions for the student before they begin the assessment...">{{ old('instructions') }}</textarea>
+                        <x-field-error name="instructions" />
 
                         <label>Question PDF</label>
                         <div class="upload-box">
                             <input type="file" name="question_file" id="upload_file" accept=".pdf,application/pdf">
+                            <x-field-error name="question_file" />
                             <p>Only PDF format is allowed for assessment papers.</p>
                             <small>Make sure the uploaded file is the final version before submission.</small>
                         </div>
@@ -113,7 +119,8 @@
                     {{-- Global Fields --}}
                     <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #f0e6e9;">
                         <label style="font-weight: 700; color: #8B1E3F;">Submission Deadline</label>
-                        <input type="datetime-local" name="submission_deadline" id="submission_deadline" min="{{ now()->format('Y-m-d\TH:i') }}" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 5px;">
+                        <input type="datetime-local" name="submission_deadline" id="submission_deadline" min="{{ now()->
+                        <x-field-error name="submission_deadline" />format('Y-m-d\TH:i') }}" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 5px;">
                         <p style="margin: 5px 0 0 0; font-size: 12px; color: #6b7280;">Specify the date and time by which the student must upload their answer.</p>
                     </div>
 
