@@ -1432,7 +1432,9 @@
                 }
                 
                 // Enforce portfolio file upload validation on final submit
-                const typeSelect = document.getElementById('application-type-select');
+                // NOTE: typeSelect is already declared in the enclosing scope.
+                // Re-declaring it here with const put the whole listener body in a
+                // temporal dead zone, so the reference above threw on every submit.
                 if (typeSelect && typeSelect.value === 'APEL C') {
                     const portfolioPreview = document.getElementById('portfolio-preview-list');
                     const portfolioInput = document.getElementById('portfolio-input');
