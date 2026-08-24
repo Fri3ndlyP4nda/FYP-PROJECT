@@ -25,3 +25,6 @@ Thumbs.db
 
 # Personal files that don't belong in the repo
 /New Resume*.pdf
+
+# Database snapshots contain applicant PII and must never be committed
+/storage/backups
