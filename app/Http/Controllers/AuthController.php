@@ -97,8 +97,17 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Check if 2FA was verified within the last 30 minutes
-        if ($user->last_2fa_verified_at && $user->last_2fa_verified_at->isAfter(now()->subMinutes(30))) {
+        // Two-factor disabled: the password and captcha checks are the whole
+        // gate, so complete the login here. See config/apel.php.
+        if (! config('apel.two_factor.enabled')) {
+            $request->session()->regenerate();
+
+            return $this->redirectUserByRole($user->role);
+        }
+
+        // A recent verification is honoured without issuing a new code.
+        $rememberMinutes = (int) config('apel.two_factor.remember_minutes', 30);
+        if ($user->last_2fa_verified_at && $user->last_2fa_verified_at->isAfter(now()->subMinutes($rememberMinutes))) {
             $request->session()->regenerate();
             return $this->redirectUserByRole($user->role);
         }
@@ -114,13 +123,15 @@ class AuthController extends Controller
          */
         $otp = (string) random_int(100000, 999999);
 
+        $codeLifetime = (int) config('apel.two_factor.code_lifetime_minutes', 10);
+
         User::where('_id', $user->_id)->update([
             'two_factor_code' => Hash::make($otp),
-            'two_factor_expires_at' => now()->addMinutes(10),
+            'two_factor_expires_at' => now()->addMinutes($codeLifetime),
         ]);
 
         try {
-            Mail::raw("Your UTM APEL verification code is: {$otp}. This code will expire in 10 minutes.", function ($message) use ($user) {
+            Mail::raw("Your UTM APEL verification code is: {$otp}. This code will expire in {$codeLifetime} minutes.", function ($message) use ($user) {
                 $message->to($user->email)
                     ->subject('UTM APEL Two-Factor Verification Code');
             });
@@ -139,6 +150,10 @@ class AuthController extends Controller
 
     public function showTwoFactor()
     {
+        if (! config('apel.two_factor.enabled')) {
+            return redirect()->route('login');
+        }
+
         if (!session('2fa_user_id')) {
             return redirect()->route('login');
         }
@@ -148,6 +163,10 @@ class AuthController extends Controller
 
     public function verifyTwoFactor(Request $request)
     {
+        if (! config('apel.two_factor.enabled')) {
+            return redirect()->route('login');
+        }
+
         $request->validate([
             'two_factor_code' => 'required|digits:6',
         ]);
