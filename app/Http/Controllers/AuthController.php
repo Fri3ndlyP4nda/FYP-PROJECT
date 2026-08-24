@@ -103,10 +103,19 @@ class AuthController extends Controller
             return $this->redirectUserByRole($user->role);
         }
 
-        $otp = rand(100000, 999999);
+        /**
+         * random_int() rather than rand(): rand() is Mersenne Twister, seeded
+         * once per PHP worker, so an attacker who can trigger OTPs to accounts
+         * they control can recover the generator state and predict the code
+         * issued to someone else.
+         *
+         * The code is stored hashed, not in cleartext, so read access to the
+         * users collection does not hand over live verification codes.
+         */
+        $otp = (string) random_int(100000, 999999);
 
         User::where('_id', $user->_id)->update([
-            'two_factor_code' => $otp,
+            'two_factor_code' => Hash::make($otp),
             'two_factor_expires_at' => now()->addMinutes(10),
         ]);
 
@@ -150,15 +159,19 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Session expired. Please login again.']);
         }
 
-        if ($user->two_factor_code != $request->two_factor_code) {
-            return back()->withErrors([
-                'two_factor_code' => 'Invalid verification code.',
-            ]);
-        }
-
+        // Expiry is checked before the code so an expired attempt never reveals
+        // whether the submitted digits were otherwise correct.
         if (!$user->two_factor_expires_at || now()->greaterThan($user->two_factor_expires_at)) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'Verification code expired. Please login again.']);
+        }
+
+        // Hash::check is constant-time; the previous loose != compared a secret
+        // with PHP's numeric-string juggling rules.
+        if (!$user->two_factor_code || !Hash::check($request->two_factor_code, $user->two_factor_code)) {
+            return back()->withErrors([
+                'two_factor_code' => 'Invalid verification code.',
+            ]);
         }
 
         Auth::login($user);

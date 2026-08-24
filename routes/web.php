@@ -17,16 +17,30 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+/*
+ | Throttles on every credential-accepting endpoint.
+ |
+ | The arithmetic captcha is the only anti-automation control here and a script
+ | solves it with one regex plus an addition, so without these the six-digit OTP
+ | is brute-forceable inside its own ten-minute window, passwords can be sprayed
+ | across the whole user collection, and /forgot-password can be used to mail-bomb
+ | any account and burn the sending quota.
+ */
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+Route::post('/register', [AuthController::class, 'register'])
+    ->middleware('throttle:5,10')
+    ->name('register.submit');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1')
+    ->name('login.submit');
 
 Route::get('/2fa', [AuthController::class, 'showTwoFactor'])
     ->name('2fa.show');
 
 Route::post('/2fa', [AuthController::class, 'verifyTwoFactor'])
+    ->middleware('throttle:5,10')
     ->name('2fa.verify');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -35,12 +49,14 @@ Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'
     ->name('password.request');
 
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+    ->middleware('throttle:3,10')
     ->name('password.email');
 
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])
     ->name('password.reset');
 
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+    ->middleware('throttle:5,10')
     ->name('password.update');
 
 Route::middleware('role:student')->group(function () {
