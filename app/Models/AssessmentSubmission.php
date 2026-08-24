@@ -42,4 +42,15 @@ class AssessmentSubmission extends Model
         'evaluator_2_clo3',
         'evaluator_2_clo4',
     ];
+
+    /**
+     * Mirrors the discipline already applied on Application. Without these the
+     * BSON dates reach Blade unconverted and render as epoch milliseconds.
+     */
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
+        'evaluator_1_graded_at' => 'datetime',
+        'evaluator_2_graded_at' => 'datetime',
+    ];
 }

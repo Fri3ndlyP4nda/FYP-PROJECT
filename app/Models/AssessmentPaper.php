@@ -21,4 +21,8 @@ class AssessmentPaper extends Model
         'created_at',
         'updated_at',
     ];
+
+    protected $casts = [
+        'submission_deadline' => 'datetime',
+    ];
 }
