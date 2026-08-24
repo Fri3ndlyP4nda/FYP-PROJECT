@@ -24,6 +24,8 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -64,6 +66,8 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',

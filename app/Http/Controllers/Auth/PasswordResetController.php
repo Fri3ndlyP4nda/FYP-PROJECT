@@ -22,6 +22,8 @@ class PasswordResetController extends Controller
 
     public function sendResetLink(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'email' => 'required|email',
         ]);
@@ -75,6 +77,8 @@ class PasswordResetController extends Controller
 
     public function resetPassword(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'email' => 'required|email',
             'token' => 'required',
