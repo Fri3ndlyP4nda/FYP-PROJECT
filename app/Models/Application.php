@@ -38,9 +38,15 @@ class Application extends Model
         'payment_verified_at',
         'payment_receipt',
 
+        // Advisor (APEL C pre-application) review
+        'advisor_name',
+        'advisor_approved_at',
+        'mode_of_assessment',
+
         // APEL A workflow
         'review_stage',
         'admission_decision',
+        'admission_remarks',
         'reviewed_at',
         'final_decision',
         'final_decision_remarks',
@@ -99,6 +105,7 @@ class Application extends Model
         'submission_date' => 'datetime',
         'status_updated_at' => 'datetime',
         'assigned_at' => 'datetime',
+        'advisor_approved_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'evaluator_1_reviewed_at' => 'datetime',
         'evaluator_2_reviewed_at' => 'datetime',
