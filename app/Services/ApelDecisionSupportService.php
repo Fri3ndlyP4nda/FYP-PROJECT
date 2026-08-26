@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\Eligibility;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
@@ -30,15 +32,17 @@ class ApelDecisionSupportService
         $criteria = [];
 
         $age = (int) ($application->age ?? 0);
+        $minimumAge = Eligibility::minimumAge();
+        $agePass = $age >= $minimumAge;
         $criteria[] = $this->criterion(
             'Minimum age requirement',
-            $age >= 30 ? 'pass' : 'fail',
-            $age >= 30 ? 20 : 0,
+            $agePass ? 'pass' : 'fail',
+            $agePass ? 20 : 0,
             20,
             $age > 0 ? "{$age} years old" : 'Not provided',
-            $age >= 30
+            $agePass
                 ? 'Candidate meets the minimum age requirement.'
-                : 'Candidate must be at least 30 years old for APEL A.',
+                : "Candidate must be at least {$minimumAge} years old for APEL A.",
             true
         );
 
@@ -55,8 +59,15 @@ class ApelDecisionSupportService
             true
         );
 
+        /*
+         | This was stripos($qualification, 'diploma') === 0 — a duplicate of
+         | the rule in Student\ApplicationController, and wrong in the same way:
+         | the text had to *begin* with "Diploma", so a Bachelor's degree scored
+         | zero on the qualification criterion. Both now read the one rule in
+         | App\Domain\Apel\Eligibility.
+         */
         $qualification = trim((string) ($application->highest_qualification ?? ''));
-        $qualificationPass = stripos($qualification, 'diploma') === 0;
+        $qualificationPass = Eligibility::qualificationAccepted($qualification);
         $criteria[] = $this->criterion(
             'Highest qualification',
             $qualificationPass ? 'pass' : 'fail',
@@ -64,8 +75,8 @@ class ApelDecisionSupportService
             20,
             $qualification !== '' ? $qualification : 'Not provided',
             $qualificationPass
-                ? 'Highest qualification starts with Diploma, matching the current APEL A rule.'
-                : 'Highest qualification should begin with Diploma for this APEL A workflow.',
+                ? 'Highest qualification meets the APEL A entry floor.'
+                : Eligibility::qualificationMessage($qualification),
             true
         );
 
@@ -272,14 +283,18 @@ class ApelDecisionSupportService
             return $lastUpdate && $lastUpdate->lt(now()->subDays(7));
         });
 
-        $unassignedReady = $activeApplications->filter(function ($application) {
-            return empty($application->evaluator_id)
-                && ($application->payment_status ?? 'pending') === 'verified';
-        });
+        // Read from the stage rather than payment_status, which used to be
+        // written independently and could disagree with where the application
+        // actually stood.
+        $unassignedReady = $activeApplications->filter(
+            fn ($application) => $application->stage() === ApelStage::PAYMENT_VERIFIED
+        );
 
-        $pendingPayment = $activeApplications->filter(function ($application) {
-            return in_array($application->payment_status ?? 'pending', ['pending', 'submitted']);
-        });
+        $pendingPayment = $activeApplications->filter(fn ($application) => in_array(
+            $application->stage(),
+            [ApelStage::PAYMENT_DUE, ApelStage::PAYMENT_SUBMITTED, ApelStage::PAYMENT_REJECTED],
+            true,
+        ));
 
         $completedDurations = $applications
             ->filter(function ($application) {

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\IllegalStageTransition;
+use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\User;
@@ -9,6 +12,7 @@ use App\Models\AssessmentSubmission;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\GenericQueueMail;
@@ -22,7 +26,7 @@ class ApplicationManagementController extends Controller
 
     public function index()
     {
-        $all = Application::where('status', '!=', 'Draft')->get();
+        $all = Application::where('stage', '!=', ApelStage::DRAFT->value)->get();
         
         $apelA = $all->where('application_type', 'APEL A')
             ->sortByDesc(function ($app) {
@@ -100,9 +104,17 @@ class ApplicationManagementController extends Controller
 
         $request->validate($rules);
 
-        if (($application->payment_status ?? 'pending') !== 'verified') {
+        /*
+         | The precondition is now the stage itself rather than a separate
+         | payment_status field that could disagree with it. This also blocks
+         | the case the old check missed entirely: reassigning an application
+         | that has already been decided.
+         */
+        if (! StageMachine::can($application, ApelStage::EVALUATOR_ASSIGNED)) {
             return redirect()->back()->withErrors([
-                'payment_status' => 'Payment must be verified before assigning an evaluator.',
+                'evaluator_id' => $application->stage() === ApelStage::PAYMENT_VERIFIED
+                    ? 'This application cannot be assigned at its current stage.'
+                    : 'Payment must be verified before an evaluator can be assigned. This application is at "' . $application->stageLabel() . '".',
             ]);
         }
 
@@ -133,35 +145,44 @@ class ApplicationManagementController extends Controller
             'evaluator_id' => (string) $evaluator->_id,
             'evaluator_2_id' => $evaluator2 ? (string) $evaluator2->_id : null,
             'assigned_at' => now(),
-            'status' => 'Evaluator Assigned',
-            'status_updated_at' => now(),
         ];
 
         if ($isApelC) {
             $updateData['assessment_type'] = $request->assessment_type;
-            $updateData['credit_status'] = 'assigned_for_assessment';
-        } else {
-            $updateData['review_stage'] = 'assigned_for_review';
         }
 
-        $application->update($updateData);
+        $application = StageMachine::transition(
+            $application,
+            ApelStage::EVALUATOR_ASSIGNED,
+            $updateData,
+            $evaluator2
+                ? "Assigned to {$evaluator->name} and {$evaluator2->name}."
+                : "Assigned to {$evaluator->name}.",
+        );
 
-        if ($isApelC) {
-            if ($request->assessment_type === 'portfolio') {
-                \App\Models\AssessmentSubmission::updateOrCreate(
-                    ['application_id' => (string) $application->_id],
-                    [
-                        'student_id' => (string) $application->user_id,
-                        'status' => 'submitted',
-                        'submitted_at' => now(),
-                        'answer_file' => null,
-                    ]
-                );
-            } elseif ($request->assessment_type === 'test') {
-                \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)
-                    ->whereNull('answer_file')
-                    ->delete();
-            }
+        /*
+         | Portfolio mode needs nothing further from the evaluator, so the
+         | candidate can begin at once.
+         |
+         | The old code instead created an AssessmentSubmission here with
+         | status 'submitted' and submitted_at = now() — before the candidate
+         | had written a word. That put an empty portfolio into the evaluator's
+         | grading queue as though it were finished work, and it is why an
+         | application could be graded against nothing at all.
+         */
+        if ($isApelC && $request->assessment_type === 'portfolio') {
+            $application = StageMachine::transition(
+                $application,
+                ApelStage::ASSESSMENT_SET,
+                [],
+                'Portfolio assessment opened for the candidate.',
+            );
+        }
+
+        if ($isApelC && $request->assessment_type === 'test') {
+            \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)
+                ->whereNull('answer_file')
+                ->delete();
         }
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
@@ -225,12 +246,27 @@ class ApplicationManagementController extends Controller
         ]);
 
         $recommended = $request->recommendation_status === 'Recommended';
-        
-        $status = $recommended ? 'Advisor Approved' : 'Advisor Rejected';
-        
-        $application->update([
-            'status' => $status,
-            'status_updated_at' => now(),
+        $target = $recommended ? ApelStage::ADVISOR_APPROVED : ApelStage::ADVISOR_REJECTED;
+
+        /*
+         | Neither guard existed. The Blade template hid this form for anything
+         | that was not an APEL C pre-application, but the route itself accepted
+         | any application id — so an APEL A case could be "advisor approved",
+         | and an already-decided one could be re-decided, overwriting its stage.
+         */
+        if (! $application->isApelC()) {
+            return redirect()->route('admin.applications.index')->withErrors([
+                'advisor_name' => 'Advisor review applies to APEL C pre-applications only.',
+            ]);
+        }
+
+        if (! StageMachine::can($application, $target)) {
+            return redirect()->back()->withErrors([
+                'advisor_name' => 'This pre-application is at "' . $application->stageLabel() . '" and is no longer awaiting an advisor recommendation.',
+            ]);
+        }
+
+        $application = StageMachine::transition($application, $target, [
             'advisor_name' => $request->advisor_name,
             'advisor_approved_at' => now(),
             'mode_of_assessment' => $request->mode_of_assessment,
@@ -239,8 +275,20 @@ class ApplicationManagementController extends Controller
                 'recommendation' => $request->recommendation_status,
                 'remarks' => $request->advisor_remarks,
             ],
-            'payment_status' => $recommended ? 'pending' : 'cancelled',
-        ]);
+        ], "Advisor {$request->advisor_name} recorded: {$request->recommendation_status}.");
+
+        // A recommendation is what makes the fee payable. Until now
+        // payment_status was 'pending' from the moment the record was created,
+        // so candidates were chased for money before anyone had read their
+        // pre-application — and were still chased after being turned down.
+        if ($recommended) {
+            $application = StageMachine::transition(
+                $application,
+                ApelStage::PAYMENT_DUE,
+                [],
+                'Processing fee opened following the advisor recommendation.',
+            );
+        }
 
         $studentName = $application->pre_app_data['personal_particulars']['name'] ?? 'Student';
         ActivityLog::create([
@@ -254,11 +302,12 @@ class ApplicationManagementController extends Controller
 
         $this->sendMail(
             $application->user_id,
-            "UTM APEL C Pre-Application Decision",
-            "Your pre-application has been reviewed by Advisor '{$request->advisor_name}'.\n\n" .
+            'UTM APEL C Pre-Application Decision',
+            "Your pre-application has been reviewed by Advisor {$request->advisor_name}.\n\n" .
+                "Reference: {$application->reference()}\n" .
                 "Decision: {$request->recommendation_status}\n" .
-                "Recommended Assessment Mode: " . ucfirst($request->mode_of_assessment) . "\n" .
-                "Status: {$status}\n\n" .
+                "Assessment mode: " . ucfirst($request->mode_of_assessment) . "\n\n" .
+                $application->stageExplanation() . "\n\n" .
                 "Thank you.\nFaculty of Computing, UTM"
         );
 
@@ -266,94 +315,118 @@ class ApplicationManagementController extends Controller
             ->with('success', 'Advisor review submitted successfully.');
     }
 
+    /**
+     * Move an application to another stage by hand.
+     *
+     * This used to validate 'status' => 'required|string' — literally any text
+     * was written straight onto the record, so a typo produced a status no view
+     * could interpret and no code could act on. Passing 'Assessment In
+     * Progress' additionally deleted both evaluators' decisions and every grade,
+     * with no confirmation and no way back.
+     *
+     * A manual move is now restricted to the stages the process actually allows
+     * from where the application currently stands, and reopening a decided case
+     * is a named action with its own reason, not a side effect of a status
+     * change.
+     */
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|string',
-        ]);
-
         $application = Application::where('_id', $id)->firstOrFail();
 
-        $updateData = [
-            'status' => $request->status,
-            'status_updated_at' => now(),
-        ];
+        $request->validate([
+            'stage' => ['required', 'string', Rule::in(
+                array_map(fn (ApelStage $stage) => $stage->value, StageMachine::nextStages($application))
+            )],
+            'reason' => 'required|string|max:500',
+        ], [
+            'stage.in' => 'That is not a move this application can make from "' . $application->stageLabel() . '".',
+            'reason.required' => 'Record why you are moving this application by hand — it becomes part of the audit trail.',
+        ]);
 
-        if ($request->status === 'Assessment In Progress') {
-            $updateData['appeal_status'] = 'under_review';
-            
-            // Clear previous decisions to allow re-evaluation
-            if ($application->application_type === 'APEL A') {
-                $updateData['final_decision'] = 'pending';
-                $updateData['final_decision_remarks'] = null;
-                $updateData['review_stage'] = 'assigned_for_review';
-                $updateData['evaluator_1_decision'] = null;
-                $updateData['evaluator_1_feedback'] = null;
-                $updateData['evaluator_1_reviewed_at'] = null;
-                $updateData['evaluator_2_decision'] = null;
-                $updateData['evaluator_2_feedback'] = null;
-                $updateData['evaluator_2_reviewed_at'] = null;
-                $updateData['reviewed_at'] = null;
-            } else {
-                $updateData['credit_decision'] = 'pending';
-                $updateData['credit_remarks'] = null;
-                $updateData['credit_hours_approved'] = null;
-                $updateData['credit_status'] = 'assigned_for_assessment';
-                $updateData['reviewed_at'] = null;
+        $target = ApelStage::from($request->stage);
+        $reopening = in_array($target, [ApelStage::UNDER_REVIEW, ApelStage::ASSESSMENT_SET], true)
+            && $application->stage() === ApelStage::AWAITING_DECISION;
 
-                // Clear previous evaluator assessment grade
-                AssessmentSubmission::where('application_id', (string) $application->_id)->update([
-                    'evaluator_1_score' => null,
-                    'evaluator_1_result' => null,
-                    'evaluator_1_feedback' => null,
-                    'evaluator_1_graded_at' => null,
-                    'evaluator_2_score' => null,
-                    'evaluator_2_result' => null,
-                    'evaluator_2_feedback' => null,
-                    'evaluator_2_graded_at' => null,
-                    'score' => null,
-                    'result' => null,
-                    'grade' => null,
-                    'grader_feedback' => null,
-                    'graded_by' => null,
-                    'graded_at' => null,
-                    'status' => 'submitted', // Reset status to submitted so it can be re-graded
-                ]);
-            }
-        } else {
-            $updateData['appeal_status'] = $application->appeal_status;
+        $attributes = [];
+
+        if ($reopening) {
+            $attributes = $this->clearedDecisionFields($application);
+
+            AssessmentSubmission::where('application_id', (string) $application->_id)->update([
+                'evaluator_1_score' => null,
+                'evaluator_1_result' => null,
+                'evaluator_1_feedback' => null,
+                'evaluator_1_graded_at' => null,
+                'evaluator_2_score' => null,
+                'evaluator_2_result' => null,
+                'evaluator_2_feedback' => null,
+                'evaluator_2_graded_at' => null,
+                'score' => null,
+                'result' => null,
+                'grader_feedback' => null,
+                'graded_by' => null,
+                'graded_at' => null,
+                'status' => 'submitted',
+            ]);
         }
 
-        $application->update($updateData);
+        try {
+            $application = StageMachine::transition($application, $target, $attributes, $request->reason);
+        } catch (IllegalStageTransition $e) {
+            return redirect()->back()->withErrors(['stage' => $e->forHumans()]);
+        }
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
-        $logAction = ($request->status === 'Assessment In Progress') ? 'Reopened Assessment' : 'Updated Status';
-        $logDesc = ($request->status === 'Assessment In Progress')
-            ? "Reopened assessment for {$application->application_type} application for '{$application->program_applied}' (Student: {$studentName})"
-            : "Updated status of {$application->application_type} application for '{$application->program_applied}' to '{$request->status}' (Student: {$studentName})";
-            
+
         ActivityLog::create([
             'user_id' => (string) Auth::id(),
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
-            'action' => $logAction,
-            'description' => $logDesc,
+            'action' => $reopening ? 'Reopened Assessment' : 'Moved Stage',
+            'description' => ($reopening ? 'Reopened' : 'Moved')
+                . " {$application->application_type} application for '{$application->program_applied}' to '{$application->stageLabel()}' (Student: {$studentName}). Reason: {$request->reason}",
             'ip_address' => $request->ip(),
         ]);
 
-        $application = Application::where('_id', $id)->firstOrFail();
-
         $this->sendMail(
             $application->user_id,
-            'UTM APEL Application Status Update',
-            "Your application status has been updated.\n\n" .
-                "Application: {$application->application_type}\n" .
+            'UTM APEL Application Update',
+            "There has been an update to your application.\n\n" .
+                "Reference: {$application->reference()}\n" .
                 "Programme / Course: {$application->program_applied}\n" .
-                "Current Status: {$application->status}"
+                "Stage: {$application->stageLabel()}\n\n" .
+                $application->stageExplanation()
         );
 
         return redirect()->back()
-            ->with('success', 'Application status updated successfully.');
+            ->with('success', 'Application moved to "' . $application->stageLabel() . '".');
+    }
+
+    /** The decision fields a reopening clears, by application type. */
+    private function clearedDecisionFields(Application $application): array
+    {
+        if ($application->isApelC()) {
+            return [
+                'credit_decision' => null,
+                'credit_remarks' => null,
+                'credit_hours_approved' => null,
+                'reviewed_at' => null,
+            ];
+        }
+
+        return [
+            'final_decision' => null,
+            'final_decision_remarks' => null,
+            'admission_decision' => null,
+            'panel_split' => false,
+            'evaluator_1_decision' => null,
+            'evaluator_1_feedback' => null,
+            'evaluator_1_reviewed_at' => null,
+            'evaluator_2_decision' => null,
+            'evaluator_2_feedback' => null,
+            'evaluator_2_reviewed_at' => null,
+            'reviewed_at' => null,
+        ];
     }
 
     public function finalizeApelA(Request $request, $id)
@@ -384,26 +457,22 @@ class ApplicationManagementController extends Controller
         }
 
         $request->validate([
-            'final_decision' => 'required|in:pending,approved,rejected',
+            'final_decision' => 'required|in:approved,rejected',
             'final_decision_remarks' => 'nullable|string|max:1000',
         ]);
 
         $finalDecision = $request->final_decision;
 
-        $application->update([
-            'final_decision' => $finalDecision,
-            'final_decision_remarks' => $request->final_decision_remarks,
-            'finalized_at' => now(),
-            'review_stage' => $finalDecision === 'pending'
-                ? 'awaiting_final_decision'
-                : 'final_decision_completed',
-            'status' => match ($finalDecision) {
-                'approved' => 'Final Approved',
-                'rejected' => 'Final Rejected',
-                default => 'Awaiting Final Decision',
-            },
-            'status_updated_at' => now(),
-        ]);
+        $application = StageMachine::transition(
+            $application,
+            $finalDecision === 'approved' ? ApelStage::APPROVED : ApelStage::REJECTED,
+            [
+                'final_decision' => $finalDecision,
+                'final_decision_remarks' => $request->final_decision_remarks,
+                'finalized_at' => now(),
+            ],
+            'Final decision: ' . ucfirst($finalDecision) . '.',
+        );
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
         ActivityLog::create([
@@ -468,7 +537,7 @@ class ApplicationManagementController extends Controller
         }
 
         $request->validate([
-            'credit_decision' => 'required|in:pending,approved,rejected',
+            'credit_decision' => 'required|in:approved,rejected',
             'credit_remarks' => 'nullable|string|max:1000',
             'credit_course_code' => 'nullable|string|max:100',
             'credit_course_name' => 'nullable|string|max:255',
@@ -486,27 +555,30 @@ class ApplicationManagementController extends Controller
             $approvedHours = self::getCreditHoursFromCourseCode($application->credit_course_code);
         }
 
-        $application->update([
-            'credit_decision' => $decision,
-            'credit_remarks' => $request->credit_remarks,
-            'credit_hours_approved' => $approvedHours,
-            'credit_course_code' => $request->credit_course_code,
-            'credit_course_name' => $request->credit_course_name,
-            'credit_decided_at' => now(),
-            'reviewed_at' => $application->reviewed_at ?? now(),
-            'credit_status' => $decision === 'pending'
-                ? 'awaiting_credit_decision'
-                : 'credit_decision_completed',
-            'review_stage' => $decision === 'pending'
-                ? 'awaiting_credit_decision'
-                : 'completed',
-            'status' => match ($decision) {
-                'approved' => 'Final Approved',
-                'rejected' => 'Final Rejected',
-                default => 'Awaiting Final Decision',
-            },
-            'status_updated_at' => now(),
-        ]);
+        $application = StageMachine::transition(
+            $application,
+            $decision === 'approved' ? ApelStage::APPROVED : ApelStage::REJECTED,
+            [
+                'credit_decision' => $decision,
+                'credit_remarks' => $request->credit_remarks,
+                'credit_hours_approved' => $approvedHours,
+
+                /*
+                 | Only overwrite the course when a replacement was actually
+                 | supplied. Both fields are nullable in the rules, so when the
+                 | form omitted them this wrote null over the course the credit
+                 | was being awarded for — while $approvedHours had already been
+                 | computed from the old value, leaving hours and course
+                 | contradicting each other on the finished record.
+                 */
+                'credit_course_code' => $request->credit_course_code ?: $application->credit_course_code,
+                'credit_course_name' => $request->credit_course_name ?: $application->credit_course_name,
+
+                'credit_decided_at' => now(),
+                'reviewed_at' => $application->reviewed_at ?? now(),
+            ],
+            'Credit decision: ' . ucfirst($decision) . ($decision === 'approved' ? " ({$approvedHours} credit hours)." : '.'),
+        );
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
         ActivityLog::create([
@@ -514,7 +586,14 @@ class ApplicationManagementController extends Controller
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
             'action' => 'Finalized APEL C',
-            'description' => "Completed credit transfer decision as '" . ucfirst($decision) . "' with " . ($request->credit_hours_approved ?? '0') . " approved hours for course '{$application->program_applied}' (Student: {$studentName})",
+
+            /*
+             | This read $request->credit_hours_approved, which is not a field
+             | on this form and never has been — so every credit award in the
+             | audit trail was recorded as "0 approved hours" regardless of what
+             | was actually granted. The value is computed from the course code.
+             */
+            'description' => "Completed credit transfer decision as '" . ucfirst($decision) . "' with {$approvedHours} approved hours for course '{$application->program_applied}' (Student: {$studentName})",
             'ip_address' => $request->ip(),
         ]);
 
@@ -538,34 +617,47 @@ class ApplicationManagementController extends Controller
     public function updatePayment(Request $request, $id)
     {
         $request->validate([
-            'payment_status' => 'required|in:pending,submitted,verified,rejected',
-            'payment_reference' => 'nullable|string|max:255',
-            'payment_remarks' => 'nullable|string|max:1000',
+            'payment_status' => 'required|in:verified,rejected',
+            'payment_reference' => 'required_if:payment_status,verified|nullable|string|max:255',
+            'payment_remarks' => 'required_if:payment_status,rejected|nullable|string|max:1000',
+        ], [
+            'payment_reference.required_if' => 'Record the faculty receipt reference you verified this against.',
+            'payment_remarks.required_if' => 'Tell the candidate why the receipt was not accepted, so they can correct it.',
         ]);
 
         $application = Application::where('_id', $id)->firstOrFail();
 
-        if (($application->payment_status ?? '') === 'verified') {
+        $verifying = $request->payment_status === 'verified';
+        $target = $verifying ? ApelStage::PAYMENT_VERIFIED : ApelStage::PAYMENT_REJECTED;
+
+        /*
+         | This method used to write `status` unconditionally from the payment
+         | outcome. Because it could be called at any time, verifying a late or
+         | corrected receipt threw away whatever the application had actually
+         | reached — an application in "Assessment In Progress" would silently
+         | become "Payment Verified" and the evaluator's work would vanish from
+         | every queue that filtered on status.
+         |
+         | Payment is now a stage like any other, and the machine only allows it
+         | while the application is genuinely at the payment step.
+         */
+        if (! StageMachine::can($application, $target)) {
             return redirect()->back()->withErrors([
-                'payment_status' => 'Payment has already been verified and cannot be updated.',
+                'payment_status' => $application->stage() === ApelStage::PAYMENT_VERIFIED
+                    ? 'This payment has already been verified.'
+                    : 'This application is at "' . $application->stageLabel() . '", so there is no payment awaiting verification.',
             ]);
         }
 
-        $paymentStatus = $request->payment_status;
-
-        $application->update([
-            'payment_status' => $paymentStatus,
-            'payment_reference' => $request->payment_reference,
+        $application = StageMachine::transition($application, $target, [
+            'payment_reference' => $request->payment_reference ?: $application->payment_reference,
             'payment_remarks' => $request->payment_remarks,
-            'payment_verified_at' => $paymentStatus === 'verified' ? now() : null,
-            'status' => match ($paymentStatus) {
-                'submitted' => 'Payment Submitted',
-                'verified' => 'Payment Verified',
-                'rejected' => 'Payment Rejected',
-                default => 'Payment Pending',
-            },
-            'status_updated_at' => now(),
-        ]);
+            'payment_verified_at' => $verifying ? now() : null,
+        ], $verifying
+            ? "Receipt verified against reference {$request->payment_reference}."
+            : 'Receipt not accepted.');
+
+        $paymentStatus = $request->payment_status;
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
         ActivityLog::create([

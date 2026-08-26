@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
@@ -64,7 +66,12 @@ class AssessmentSubmissionController extends Controller
             'answer_file' => 'required|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
-        $answerPath = $request->file('answer_file')->store('assessment_answers', 'public');
+        if (! StageMachine::can($application, ApelStage::SUBMITTED_FOR_GRADING)) {
+            return redirect()->route('student.assessment.show', $application->_id)
+                ->with('error', 'This assessment is not open for submission at the moment.');
+        }
+
+        $answerPath = $request->file('answer_file')->store('assessment_answers', 'private');
 
         if ($existing) {
             $existing->update([
@@ -89,26 +96,38 @@ class AssessmentSubmissionController extends Controller
             ]);
         }
 
-        Application::where('_id', $applicationId)->update([
-            'credit_status' => 'submitted_for_grading',
-            'status' => 'Awaiting Final Decision',
-            'status_updated_at' => now(),
-        ]);
+        /*
+         | This wrote status = 'Awaiting Final Decision' the instant the answer
+         | landed — before a single mark existed. The admin queue therefore
+         | showed ungraded work as ready to decide, and the student was told
+         | their application was awaiting a decision that could not yet be made.
+         |
+         | An answer that has been handed in is awaiting *grading*. The machine
+         | will not let it reach a decision until an evaluator has graded it.
+         */
+        $application = StageMachine::transition(
+            $application,
+            ApelStage::SUBMITTED_FOR_GRADING,
+            [],
+            'Answer script submitted by the candidate.',
+        );
 
         $this->sendMail(
             Auth::id(),
-            'UTM APEL C Assessment Submitted',
-            "Your APEL C assessment answer has been submitted successfully.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Status: Submitted for Grading"
+            'UTM APEL C Assessment Received',
+            "Your answer has been received.\n\n" .
+                "Reference: {$application->reference()}\n" .
+                "Course: {$application->program_applied}\n\n" .
+                $application->stageExplanation()
         );
 
         $this->sendMail(
             $application->evaluator_id,
-            'UTM APEL C Assessment Answer Submitted',
-            "A student has submitted an assessment answer for grading.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Please log in to the APEL Management System to grade the submission."
+            'UTM APEL C Answer Ready for Grading',
+            "A candidate has submitted an answer script for grading.\n\n" .
+                "Reference: {$application->reference()}\n" .
+                "Course: {$application->program_applied}\n\n" .
+                "Please sign in to the APEL Management System to grade it."
         );
 
         return redirect()->route('student.assessment.show', $application->_id)

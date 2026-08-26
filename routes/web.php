@@ -12,6 +12,7 @@ use App\Http\Controllers\Evaluator\AssessmentGradingController;
 use App\Http\Controllers\Student\ApelAController;
 use App\Http\Controllers\Student\ApelCController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\SecureFileController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -171,14 +172,30 @@ Route::middleware('role:admin')->group(function () {
     Route::get('/admin/apel-a', [ApplicationManagementController::class, 'apelAIndex'])
         ->name('admin.apel_a.index');
 
-    // Route::get('/admin/users', [UserManagementController::class, 'index'])
-    //     ->name('admin.users.index');
+    /*
+     | Account administration.
+     |
+     | These three routes were commented out, which left no way to create an
+     | evaluator or an administrator anywhere in the system — registration
+     | hardcodes the student role, so staff accounts could only be inserted by
+     | hand in MongoDB. A fresh deployment could therefore accept applications
+     | it had nobody to assess. The store route below is new: it is the only
+     | supported way to create a member of staff.
+     */
+    Route::get('/admin/users', [UserManagementController::class, 'index'])
+        ->name('admin.users.index');
 
-    // Route::get('/admin/users/{id}/edit', [UserManagementController::class, 'edit'])
-    //     ->name('admin.users.edit');
+    Route::get('/admin/users/create', [UserManagementController::class, 'create'])
+        ->name('admin.users.create');
 
-    // Route::put('/admin/users/{id}', [UserManagementController::class, 'update'])
-    //     ->name('admin.users.update');
+    Route::post('/admin/users', [UserManagementController::class, 'store'])
+        ->name('admin.users.store');
+
+    Route::get('/admin/users/{id}/edit', [UserManagementController::class, 'edit'])
+        ->name('admin.users.edit');
+
+    Route::put('/admin/users/{id}', [UserManagementController::class, 'update'])
+        ->name('admin.users.update');
 
     Route::post('/admin/applications/{id}/finalize-apel-c', [ApplicationManagementController::class, 'finalizeApelC'])
         ->name('admin.applications.finalize_apel_c');
@@ -203,6 +220,26 @@ Route::middleware('role:admin')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/student/applications/{id}/print', [ApplicationController::class, 'printPortfolio'])
         ->name('student.applications.print');
+
+    /*
+     | Uploaded documents.
+     |
+     | These files used to sit on the public disk behind asset('storage/...'),
+     | which meant every careful ownership check in the controllers stopped at
+     | the page and never reached the document. Anyone holding the URL could
+     | read another candidate's payment receipt, portfolio or answer script.
+     |
+     | They are now on a private disk with no public URL, and every read is
+     | authorised against the owning application by SecureFileController.
+     */
+    Route::get('/files/application/{application}', [SecureFileController::class, 'application'])
+        ->name('files.application');
+
+    Route::get('/files/paper/{paper}', [SecureFileController::class, 'paper'])
+        ->name('files.paper');
+
+    Route::get('/files/submission/{submission}', [SecureFileController::class, 'submission'])
+        ->name('files.submission');
 });
 
 

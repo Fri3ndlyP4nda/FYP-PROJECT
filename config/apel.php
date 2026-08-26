@@ -5,6 +5,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | APEL A entry rules
+    |--------------------------------------------------------------------------
+    |
+    | These were hard-coded in two places that could disagree: the submission
+    | check in Student\ApplicationController and the scorecard in
+    | ApelDecisionSupportService. Both now read from here, through
+    | App\Domain\Apel\Eligibility.
+    |
+    | minimum_qualification is a floor, not an exact match. The previous rule
+    | required the candidate's highest qualification to literally begin with
+    | the word "Diploma", which rejected anyone holding a Bachelor's or higher.
+    |
+    */
+    'eligibility' => [
+        'minimum_age' => env('APEL_A_MINIMUM_AGE', 30),
+        'minimum_qualification' => env('APEL_A_MINIMUM_QUALIFICATION', 'diploma'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Two-Factor Authentication
     |--------------------------------------------------------------------------
     |

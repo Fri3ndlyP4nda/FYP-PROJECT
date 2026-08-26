@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Evaluator;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
@@ -79,6 +81,12 @@ class AssessmentGradingController extends Controller
         }
         $isEvaluator1 = (string) $application->evaluator_id === (string) Auth::id();
         $isEvaluator2 = (string) ($application->evaluator_2_id ?? '') === (string) Auth::id();
+
+        // Belt and braces behind authorizeSubmissionAccess: neither branch below
+        // has anything to write for someone who is neither evaluator, and the
+        // old code fell through such a request into an empty update that still
+        // emailed the candidate a grade.
+        abort_unless($isEvaluator1 || $isEvaluator2, 403, 'You are not assigned to this application.');
 
         if ($isEvaluator1 && !empty($submission->evaluator_1_graded_at)) {
             return redirect()->back()->with('error', 'You have already graded this submission.');
@@ -175,18 +183,22 @@ class AssessmentGradingController extends Controller
                 $evaluatorFeedback = "Evaluator 1 Feedback: {$submission->evaluator_1_feedback}\nEvaluator 2 Feedback: {$submission->evaluator_2_feedback}";
             }
 
-            $application->update([
-                'credit_status' => 'awaiting_credit_decision',
-                'status' => 'Awaiting Final Decision',
-                'status_updated_at' => now(),
-                'reviewed_at' => now(),
-                'evaluator_feedback' => $evaluatorFeedback,
-            ]);
-        } else {
-            $application->update([
-                'status' => 'Assessment In Progress',
-                'status_updated_at' => now(),
-            ]);
+            $application = StageMachine::transition(
+                $application,
+                ApelStage::AWAITING_DECISION,
+                [
+                    'reviewed_at' => now(),
+                    'evaluator_feedback' => $evaluatorFeedback,
+                ],
+                'Grading complete.',
+            );
+        } elseif (StageMachine::can($application, ApelStage::PARTIALLY_REVIEWED)) {
+            $application = StageMachine::transition(
+                $application,
+                ApelStage::PARTIALLY_REVIEWED,
+                [],
+                Auth::user()->name . ' graded this submission; awaiting the second evaluator.',
+            );
         }
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
@@ -219,23 +231,32 @@ class AssessmentGradingController extends Controller
             ->with('success', 'Submission graded successfully.');
     }
 
+    /**
+     * Grading rights follow the *assignment*, never the paper.
+     *
+     * This used to pass on `$ownsApplication || $ownsPaper`, where $ownsPaper
+     * matched only AssessmentPaper.evaluator_id. Once an admin reassigned an
+     * application, the previous evaluator still owned the paper row and kept
+     * full grading access to a candidate who was no longer theirs — and because
+     * grade() computed $isEvaluator1/$isEvaluator2 *after* this check, that
+     * evaluator either graded a single-evaluator case outright or, on a
+     * two-evaluator case, wrote an empty update, reset the application, and
+     * still triggered the "your assessment has been graded" email for a grade
+     * that was never saved.
+     */
     private function authorizeSubmissionAccess(AssessmentSubmission $submission): void
     {
         $evaluatorId = (string) Auth::id();
 
-        $ownsApplication = Application::where('_id', $submission->application_id)
+        $isAssigned = Application::where('_id', $submission->application_id)
             ->where('application_type', 'APEL C')
-            ->where(function($query) use ($evaluatorId) {
+            ->where(function ($query) use ($evaluatorId) {
                 $query->where('evaluator_id', $evaluatorId)
                       ->orWhere('evaluator_2_id', $evaluatorId);
             })
             ->exists();
 
-        $ownsPaper = AssessmentPaper::where('_id', $submission->assessment_paper_id)
-            ->where('evaluator_id', $evaluatorId)
-            ->exists();
-
-        abort_unless($ownsApplication || $ownsPaper, 404);
+        abort_unless($isAssigned, 404);
     }
 
     private function sendMail($userId, $subject, $body)
