@@ -28,3 +28,6 @@ Thumbs.db
 
 # Database snapshots contain applicant PII and must never be committed
 /storage/backups
+
+# Graphify code-graph output (regenerate with: graphify . --code-only)
+/graphify-out
