@@ -31,7 +31,12 @@ jobs:
         with:
           php-version: '8.2'
           # mongodb is not bundled with PHP; without it every model fails to boot.
-          extensions: mbstring, bcmath, curl, dom, fileinfo, mongodb
+          #
+          # Pinned to 1.x deliberately. composer.lock resolves mongodb/mongodb
+          # 1.21.3, which requires ext-mongodb ^1.21.0 - so the 2.x that setup-php
+          # would otherwise install is rejected and `composer install` fails before
+          # a single test runs. Bump this together with the lockfile, not before it.
+          extensions: mbstring, bcmath, curl, dom, fileinfo, mongodb-1.21.5
           coverage: none
 
       - name: Cache Composer packages
@@ -64,7 +69,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, mongodb
+          extensions: mbstring, mongodb-1.21.5   # see the note in the test job
           coverage: none
 
       - name: Install PHP dependencies
