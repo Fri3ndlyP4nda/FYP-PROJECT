@@ -10,27 +10,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     {{--
-        Legacy component styles load first, then the design system, so the
-        system wins wherever the two define the same class. The 1,480-line
-        inline <style> block that used to live here has been replaced by
-        resources/css/app.css, compiled through Vite — which also puts the
-        previously unused Tailwind/Vite toolchain to work.
-    --}}
-    <link rel="stylesheet" href="{{ asset('css/app-style.css') }}">
+        One stylesheet. There used to be four - this file's inline block,
+        public/css/app-style.css loaded here, auth.css loaded by five auth
+        views, and dashboard.css loaded by three dashboards and two reports.
+        The same class was defined in more than one of them with different
+        values, so which rule won depended on link order, and the interface
+        looked assembled rather than designed. Everything now lives in
+        resources/css/app.css, compiled through Vite.
 
-    {{--
-        Page-specific stylesheets load before the design system, so the system
-        wins on shared primitives (buttons, inputs, badges, type) while those
-        files keep providing whatever page-specific layout they own. Loading
-        them afterwards let the old auth stylesheet reimpose 12px radii and its
-        own heading colour on top of the new system.
+        @stack('styles') is kept for genuinely page-specific rules, and is
+        loaded AFTER the system so a page can extend it - but no page should
+        be redefining a shared primitive there.
     --}}
-    @stack('styles')
-
     @vite(['resources/css/app.css'])
 </head>
 

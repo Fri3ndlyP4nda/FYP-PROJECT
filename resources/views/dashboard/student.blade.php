@@ -1,8 +1,5 @@
 @extends('layouts.app')
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-@endpush
 
 @section('content')
     <div class="container dashboard-shell">

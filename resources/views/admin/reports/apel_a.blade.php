@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APEL.A Candidate Summary Report</title>
-    <link rel="stylesheet" href="{{ asset('css/app-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <style>
         .print-toolbar {
             background: #ffffff;

@@ -1,8 +1,5 @@
 @extends('layouts.app')
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
-@endpush
 
 @section('content')
     <div class="auth-main" style="min-height: 100vh; background: radial-gradient(circle at center, var(--surface-sunk) 0%, #f7eff2 100%);">
