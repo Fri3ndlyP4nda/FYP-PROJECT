@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -22,6 +23,8 @@ class PasswordResetController extends Controller
 
     public function sendResetLink(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'email' => 'required|email',
         ]);
@@ -29,40 +32,51 @@ class PasswordResetController extends Controller
         $email = strtolower($request->email);
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
-            return back()->withErrors([
-                'email' => 'No user found with that email address.',
-            ])->withInput();
+        /**
+         * The response is deliberately identical whether or not the address is
+         * registered. Returning "No user found with that email address." turned
+         * this endpoint into a membership oracle for the entire user base, which
+         * an attacker can use to enumerate staff and student accounts before
+         * targeting them. The login form is already generic; this matches it.
+         */
+        if ($user) {
+            $plainToken = Str::random(64);
+
+            PasswordResetToken::where('email', $email)->delete();
+
+            PasswordResetToken::create([
+                'email' => $email,
+                'token' => Hash::make($plainToken),
+                'created_at' => now(),
+            ]);
+
+            $resetLink = url('/reset-password/'.$plainToken.'?email='.urlencode($email));
+
+            try {
+                Mail::to($email)->send(new ResetPasswordMail($user, $resetLink));
+            } catch (\Exception $e) {
+                /**
+                 * Never surface the transport exception. Symfony Mailer embeds the
+                 * SMTP host, port, auth mechanism and raw server dialogue in these
+                 * messages, and this endpoint is unauthenticated. Every other mail
+                 * call in the application already logs and swallows; this one was
+                 * the sole leak.
+                 */
+                Log::error('Password reset mail error: '.$e->getMessage());
+            }
         }
 
-        $plainToken = Str::random(64);
-
-        PasswordResetToken::where('email', $email)->delete();
-
-        PasswordResetToken::create([
-            'email' => $email,
-            'token' => Hash::make($plainToken),
-            'created_at' => now(),
-        ]);
-
-        $resetLink = url('/reset-password/' . $plainToken . '?email=' . urlencode($email));
-
-        try {
-            Mail::to($email)->send(new ResetPasswordMail($user, $resetLink));
-        } catch (\Exception $e) {
-            return back()->withErrors([
-                'email' => $e->getMessage(),
-            ])->withInput();
-        }
-
-        return back()->with('success', 'Password reset link has been sent to your email.');
+        return back()->with(
+            'success',
+            'If that email address has an account, a password reset link has been sent to it.'
+        );
     }
 
     public function showResetForm(Request $request, $token)
     {
         $email = $request->query('email');
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request')
                 ->withErrors(['email' => 'Invalid reset link.']);
         }
@@ -75,6 +89,8 @@ class PasswordResetController extends Controller
 
     public function resetPassword(Request $request)
     {
+        $this->normalizeEmail($request);
+
         $request->validate([
             'email' => 'required|email',
             'token' => 'required',
@@ -92,7 +108,7 @@ class PasswordResetController extends Controller
 
         $record = PasswordResetToken::where('email', $email)->first();
 
-        if (!$record) {
+        if (! $record) {
             return back()->withErrors([
                 'email' => 'Invalid or expired password reset request.',
             ])->withInput();
@@ -108,7 +124,7 @@ class PasswordResetController extends Controller
             ])->withInput();
         }
 
-        if (!Hash::check($request->token, $record->token)) {
+        if (! Hash::check($request->token, $record->token)) {
             return back()->withErrors([
                 'email' => 'Invalid reset token.',
             ])->withInput();
@@ -116,13 +132,26 @@ class PasswordResetController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'email' => 'User account not found.',
             ])->withInput();
         }
 
         $user->password = Hash::make($request->password);
+
+        /**
+         * Resetting a password is how someone recovers a compromised account, so
+         * it has to actually evict the intruder. Cycling remember_token
+         * invalidates any "remember me" cookie, and clearing last_2fa_verified_at
+         * closes the 30-minute window during which a second login skips the OTP
+         * entirely - without this, an attacker holding a live session simply kept
+         * it, and kept the 2FA bypass with it.
+         */
+        $user->remember_token = Str::random(60);
+        $user->last_2fa_verified_at = null;
+        $user->two_factor_code = null;
+        $user->two_factor_expires_at = null;
         $user->save();
 
         $record->delete();

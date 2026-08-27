@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\StageMachine;
 use MongoDB\Laravel\Eloquent\Model;
 
 class Application extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'applications';
 
     protected $fillable = [
@@ -15,6 +18,17 @@ class Application extends Model
         'application_type',
         'program_applied',
         'submission_date',
+
+        /*
+         | The canonical workflow position. Everything below it that looks like
+         | state — status, review_stage, credit_status, payment_status — is now
+         | derived from this by StageMachine and kept only so the older print
+         | and export views keep rendering. New code reads stage().
+         */
+        'stage',
+        'stage_entered_at',
+        'stage_history',
+
         'status',
         'status_updated_at',
 
@@ -38,9 +52,15 @@ class Application extends Model
         'payment_verified_at',
         'payment_receipt',
 
+        // Advisor (APEL C pre-application) review
+        'advisor_name',
+        'advisor_approved_at',
+        'mode_of_assessment',
+
         // APEL A workflow
         'review_stage',
         'admission_decision',
+        'admission_remarks',
         'reviewed_at',
         'final_decision',
         'final_decision_remarks',
@@ -52,6 +72,14 @@ class Application extends Model
         'evaluator_1_decision',
         'evaluator_1_feedback',
         'evaluator_1_reviewed_at',
+
+        /*
+         | True when two evaluators reported and disagreed. The old code
+         | silently resolved a split panel as "not recommended", so a single
+         | dissenting evaluator sank the candidate and nobody was told a
+         | disagreement had happened at all.
+         */
+        'panel_split',
 
         // APEL A evaluator 2 specific
         'evaluator_2_decision',
@@ -97,8 +125,11 @@ class Application extends Model
     protected $casts = [
         'supporting_docs' => 'array',
         'submission_date' => 'datetime',
+        'stage_entered_at' => 'datetime',
+        'stage_history' => 'array',
         'status_updated_at' => 'datetime',
         'assigned_at' => 'datetime',
+        'advisor_approved_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'evaluator_1_reviewed_at' => 'datetime',
         'evaluator_2_reviewed_at' => 'datetime',
@@ -113,4 +144,58 @@ class Application extends Model
         'advisor_evaluation' => 'array',
         'portfolio_essays' => 'array',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reading the workflow
+    |--------------------------------------------------------------------------
+    |
+    | Views used to decide what to show by matching substrings against the
+    | status string — str_contains($status, 'approved') painted "Advisor
+    | Approved" in the same green as a final award, and the progress tracker
+    | listed stages no code ever wrote. Everything the interface needs to know
+    | now comes from these four methods.
+    |
+    */
+
+    public function stage(): ApelStage
+    {
+        return StageMachine::current($this);
+    }
+
+    /** The application type, normalised to one of the two known values. */
+    public function type(): string
+    {
+        return StageMachine::type($this);
+    }
+
+    /** Ordered progress nodes for the stage rail. */
+    public function rail(): array
+    {
+        return $this->stage()->rail($this->type());
+    }
+
+    public function stageLabel(): string
+    {
+        return $this->stage()->label($this->type());
+    }
+
+    public function stageExplanation(): string
+    {
+        return $this->stage()->studentExplanation($this->type());
+    }
+
+    public function isApelC(): bool
+    {
+        return $this->type() === ApelStage::APEL_C;
+    }
+
+    /** A short, stable reference students and staff can quote. */
+    public function reference(): string
+    {
+        $year = $this->submission_date?->format('Y') ?? date('Y');
+        $shortId = strtoupper(substr((string) $this->_id, -6));
+
+        return sprintf('APL-%s-%s', $year, $shortId);
+    }
 }

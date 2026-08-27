@@ -93,6 +93,7 @@
                         <div class="input-wrapper">
                             <input id="two_factor_code" type="text" name="two_factor_code" class="input-field" 
                                 maxlength="6" placeholder="000000" style="text-align: center; letter-spacing: 6px; font-size: 20px; font-weight: 700;" required autofocus>
+                            <x-field-error name="two_factor_code" />
                         </div>
                     </div>
 

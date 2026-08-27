@@ -5,7 +5,7 @@
 @endpush
 
 @section('content')
-    <div class="auth-main" style="min-height: 100vh; background: radial-gradient(circle at center, #fdfbfb 0%, #f7eff2 100%);">
+    <div class="auth-main" style="min-height: 100vh; background: radial-gradient(circle at center, var(--surface-sunk) 0%, #f7eff2 100%);">
         <div class="auth-form-card">
             <!-- Header -->
             <div class="auth-header">
@@ -45,6 +45,7 @@
                     <div class="input-wrapper">
                         <input id="email" type="email" name="email" class="input-field"
                             value="{{ old('email') }}" placeholder="name@domain.com" required autofocus>
+                        <x-field-error name="email" />
                     </div>
                 </div>
 

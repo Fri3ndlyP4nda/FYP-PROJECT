@@ -238,7 +238,7 @@
                 @endif
 
                 @if (($application->payment_status ?? 'pending') === 'verified')
-                    <p class="feedback-text" style="color: #059669; font-weight: 500; margin-top: 15px;">
+                    <p class="feedback-text" style="color: var(--good); font-weight: 500; margin-top: 15px;">
                         Your payment has been verified by the Faculty Academic Office.
                     </p>
                 @elseif (($application->payment_status ?? 'pending') === 'submitted')
@@ -250,15 +250,15 @@
                         enctype="multipart/form-data" style="margin-top: 15px;">
                         @csrf
 
-                        <label>Upload Payment Receipt</label>
-                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <label for="f-payment-receipt">Upload Payment Receipt</label>
+                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required id="f-payment-receipt">
 
-                        <small style="display:block; margin-top:5px; color:#666;">
+                        <small style="display:block; margin-top:5px; color:var(--ink-3);">
                             Allowed format: PDF, JPG, JPEG, PNG. Maximum size: 5MB.
                         </small>
 
-                        <label>Payment Remarks</label>
-                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub.">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
+                        <label for="f-payment-remarks">Payment Remarks</label>
+                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub." id="f-payment-remarks">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
 
                         <div class="form-submit-row">
                             <button type="submit" class="btn">

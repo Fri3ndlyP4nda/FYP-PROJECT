@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers\Evaluator;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class AssessmentPaperController extends Controller
 {
@@ -28,9 +32,9 @@ class AssessmentPaperController extends Controller
     public function create($applicationId)
     {
         $application = Application::where('_id', $applicationId)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
@@ -47,9 +51,9 @@ class AssessmentPaperController extends Controller
     public function store(Request $request, $applicationId)
     {
         $application = Application::where('_id', $applicationId)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
@@ -67,7 +71,7 @@ class AssessmentPaperController extends Controller
                 ->where('evaluator_id', (string) Auth::id())
                 ->firstOrFail();
 
-             AssessmentPaper::create([
+            AssessmentPaper::create([
                 'application_id' => (string) $application->_id,
                 'evaluator_id' => (string) Auth::id(),
                 'title' => $libraryPaper->title,
@@ -82,7 +86,7 @@ class AssessmentPaperController extends Controller
 
             $paperTitle = $libraryPaper->title;
         } else {
-            $filePath = $request->file('question_file')->store('assessment_papers', 'public');
+            $filePath = $request->file('question_file')->store('assessment_papers', 'private');
 
             AssessmentPaper::create([
                 'application_id' => (string) $application->_id,
@@ -99,19 +103,32 @@ class AssessmentPaperController extends Controller
             $paperTitle = $request->title;
         }
 
-        Application::where('_id', $application->_id)->update([
-            'status' => 'Assessment In Progress',
-            'credit_status' => 'assessment_paper_uploaded',
-            'status_updated_at' => now(),
-        ]);
+        /*
+         | Publishing the paper is what makes it the candidate's turn. The old
+         | code wrote 'Assessment In Progress', which reads as though staff are
+         | working on it — the candidate had no way to tell that the system was
+         | in fact waiting on them.
+         */
+        $application = StageMachine::transition(
+            $application,
+            ApelStage::ASSESSMENT_SET,
+            [],
+            "Assessment paper \"{$paperTitle}\" published by ".Auth::user()->name.'.',
+        );
+
+        $deadline = $application->stage_entered_at
+            ? Carbon::parse($request->submission_deadline)->format('j F Y, g:ia')
+            : null;
 
         $this->sendMail(
             $application->user_id,
-            'UTM APEL C Assessment Paper Uploaded',
-            "Your APEL C assessment paper has been uploaded by the evaluator.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Assessment Title: {$paperTitle}\n\n" .
-                "Please log in to the APEL Management System and submit your assessment answer."
+            'UTM APEL C Assessment Ready',
+            "Your assessment paper has been published and it is now your turn to act.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Course: {$application->program_applied}\n".
+                "Assessment: {$paperTitle}\n".
+                ($deadline ? "Submit by: {$deadline}\n" : '').
+                "\nSign in to the APEL Management System to download the paper and upload your answer."
         );
 
         return redirect()->route('evaluator.assessment.papers.index')
@@ -129,8 +146,8 @@ class AssessmentPaperController extends Controller
             ->where('_id', '!=', $paper->_id)
             ->exists();
 
-        if ($paper->question_file && !$otherReferences) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($paper->question_file);
+        if ($paper->question_file && ! $otherReferences) {
+            Storage::disk('private')->delete($paper->question_file);
         }
 
         $paper->delete();
@@ -143,14 +160,14 @@ class AssessmentPaperController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Assessment paper mail error: ' . $e->getMessage());
+            Log::error('Assessment paper mail error: '.$e->getMessage());
         }
     }
 }

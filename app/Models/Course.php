@@ -15,6 +15,6 @@ class Course extends Model
         'course_name',
         'faculty',
         'programme',
-        'status'
+        'status',
     ];
 }

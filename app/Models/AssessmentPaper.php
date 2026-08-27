@@ -7,6 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class AssessmentPaper extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'assessment_papers';
 
     protected $fillable = [
@@ -20,5 +21,9 @@ class AssessmentPaper extends Model
         'submission_deadline',
         'created_at',
         'updated_at',
+    ];
+
+    protected $casts = [
+        'submission_deadline' => 'datetime',
     ];
 }

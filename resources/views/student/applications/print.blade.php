@@ -17,7 +17,7 @@
         
         .print-toolbar {
             background: #ffffff;
-            border-bottom: 2px solid #8B1E3F;
+            border-bottom: 2px solid #6e1730;
             padding: 15px 24px;
             display: flex;
             justify-content: space-between;
@@ -31,7 +31,7 @@
         .print-toolbar-logo {
             font-size: 16px;
             font-weight: bold;
-            color: #8B1E3F;
+            color: #6e1730;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -45,19 +45,19 @@
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
-            border: 1px solid #d1d5db;
+            border: 1px solid #cfc9be;
             background: #ffffff;
-            color: #374151;
+            color: #4e4b45;
         }
 
         .btn-primary {
-            background: #8B1E3F;
-            border-color: #8B1E3F;
+            background: #6e1730;
+            border-color: #6e1730;
             color: #ffffff;
         }
 
         .print-preview-shell {
-            background-color: #f3f4f6;
+            background-color: #f1efea;
             min-height: 100vh;
             padding: 30px 10px;
         }

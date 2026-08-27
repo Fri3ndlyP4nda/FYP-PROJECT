@@ -6,14 +6,14 @@
             display: flex;
             gap: 8px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #e5e7eb;
+            border-bottom: 2px solid var(--line);
             padding-bottom: 8px;
             flex-wrap: wrap;
         }
         .tab-link {
             border: none;
             background: transparent;
-            color: #6b7280;
+            color: var(--ink-3);
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -22,7 +22,7 @@
             font-size: 13.5px;
         }
         .tab-link.active {
-            background: #8B1E3F;
+            background: var(--maroon);
             color: #ffffff;
         }
         .tab-content {
@@ -36,7 +36,7 @@
             border-collapse: collapse !important;
             margin-bottom: 24px !important;
             background: #ffffff !important;
-            border: 1px solid #e2d7da !important;
+            border: 1px solid var(--line) !important;
             border-radius: 8px !important;
             overflow: hidden !important;
         }
@@ -44,11 +44,11 @@
             table-layout: fixed !important;
         }
         .dynamic-table th {
-            background: #fdfafb !important;
-            color: #8B1E3F !important;
+            background: var(--surface-sunk) !important;
+            color: var(--maroon) !important;
             font-weight: 700 !important;
             padding: 10px 8px !important;
-            border: 1px solid #e2d7da !important;
+            border: 1px solid var(--line) !important;
             font-size: 11px !important;
             text-transform: uppercase !important;
             letter-spacing: 0.3px !important;
@@ -57,7 +57,7 @@
         }
         .dynamic-table td {
             padding: 10px 12px !important;
-            border: 1px solid #e2d7da !important;
+            border: 1px solid var(--line) !important;
             vertical-align: middle !important;
         }
         .dynamic-table td input,
@@ -65,7 +65,7 @@
             width: 100% !important;
             padding: 8px 10px !important;
             margin-bottom: 0 !important;
-            border: 1px solid #d1d5db !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 8px !important;
             font-size: 13px !important;
             background-color: #ffffff !important;
@@ -78,7 +78,7 @@
             resize: vertical !important;
             padding: 8px 10px !important;
             margin-bottom: 0 !important;
-            border: 1px solid #d1d5db !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 8px !important;
             font-size: 13px !important;
             background-color: #ffffff !important;
@@ -90,9 +90,9 @@
             gap: 6px !important;
             max-height: 140px !important;
             overflow-y: auto !important;
-            border: 1px solid #e2d7da !important;
+            border: 1px solid var(--line) !important;
             padding: 8px !important;
-            background: #faf9fa !important;
+            background: var(--surface-sunk) !important;
             border-radius: 6px !important;
             box-sizing: border-box !important;
         }
@@ -102,7 +102,7 @@
             gap: 6px !important;
             font-size: 11.5px !important;
             font-weight: 500 !important;
-            color: #4b5563 !important;
+            color: var(--ink-2) !important;
             margin-bottom: 0 !important;
             cursor: pointer !important;
         }
@@ -142,25 +142,25 @@
             padding: 6px 8px !important;
             font-size: 13px !important;
             border-radius: 6px !important;
-            border: 1px solid #d1d5db !important;
+            border: 1px solid var(--line-strong) !important;
             background-color: #ffffff !important;
             margin-bottom: 0 !important;
             box-sizing: border-box !important;
         }
 
         .referee-card {
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--line);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
-            background: #f9fafb;
+            background: var(--surface-sunk);
         }
         .referee-card h4 {
             margin-top: 0;
-            color: #8B1E3F;
+            color: var(--maroon);
             font-weight: 600;
             font-size: 14.5px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--line);
             padding-bottom: 6px;
             margin-bottom: 12px;
         }
@@ -181,20 +181,20 @@
         }
         .row-card {
             background: #ffffff;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--line);
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
         }
         .row-card-header {
             background: #fafafb;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--line);
             padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-            color: #8B1E3F;
+            color: var(--maroon);
         }
         .row-card-body {
             padding: 16px;
@@ -210,7 +210,7 @@
         .row-card-body label {
             font-size: 11px;
             font-weight: 600;
-            color: #4b5563;
+            color: var(--ink-2);
             margin-bottom: 0 !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -221,7 +221,7 @@
             width: 100% !important;
             box-sizing: border-box !important;
             padding: 8px 12px !important;
-            border: 1px solid #d1d5db !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 6px !important;
             font-size: 13px !important;
             margin-bottom: 0 !important;
@@ -253,9 +253,9 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            background: #f9fafb;
+            background: var(--surface-sunk);
             padding: 12px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--line);
             border-radius: 8px;
             max-height: 160px;
             overflow-y: auto;
@@ -267,7 +267,7 @@
             gap: 6px;
             font-size: 11.5px !important;
             font-weight: normal !important;
-            color: #374151 !important;
+            color: var(--ink-2) !important;
             text-transform: none !important;
             letter-spacing: normal !important;
             cursor: pointer;
@@ -312,17 +312,18 @@
 
                     <div class="form-row">
                         <div>
-                            <label>Application Type</label>
+                            <label for="application-type-select">Application Type</label>
                             <select name="application_type" id="application-type-select" required>
                                 <option value="">-- Select --</option>
                                 <option value="APEL A" {{ old('application_type') == 'APEL A' ? 'selected' : '' }}>APEL A</option>
                                 <option value="APEL C" {{ old('application_type') == 'APEL C' ? 'selected' : '' }}>APEL C</option>
                             </select>
+                            <x-field-error name="application_type" />
                         </div>
 
                         <div id="apel-a-programme-box">
-                            <label>Programme Applied</label>
-                            <select name="program_applied">
+                            <label for="f-program-applied">Programme Applied</label>
+                            <select name="program_applied" id="f-program-applied">
                                 <option value="">-- Select Master Programme --</option>
                                 @foreach ($programmes as $programme)
                                     <option value="{{ $programme->name }}"
@@ -331,11 +332,12 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <x-field-error name="program_applied" />
                         </div>
 
                         <div id="apel-c-course-box" style="display: none;">
-                            <label>APEL C Course</label>
-                            <select name="course_id">
+                            <label for="f-course-id">APEL C Course</label>
+                            <select name="course_id" id="f-course-id">
                                 <option value="">-- Select Course --</option>
                                 @foreach ($courses as $course)
                                     <option value="{{ $course->_id }}"
@@ -344,6 +346,7 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <x-field-error name="course_id" />
                         </div>
                     </div>
 
@@ -352,45 +355,54 @@
                         <hr>
                         <h3>APEL A Internal Application Form</h3>
 
-                        <label>Identity Card (IC) No.</label>
+                        <label for="ic-no-input">Identity Card (IC) No.</label>
                         <input type="text" name="ic_no" id="ic-no-input" value="{{ old('ic_no') }}" placeholder="Example: 951020-10-5033" style="margin-bottom: 4px !important;">
+                        <x-field-error name="ic_no" />
                         <div id="citizenship-indicator" style="font-size: 12px; font-weight: 600; margin-bottom: 15px; display: block;">
                             Please enter your 12-digit IC number.
                         </div>
 
-                        <label>Age</label>
+                        <label for="age-input">Age</label>
                         <input type="number" name="age" id="age-input" value="{{ old('age') }}" min="18" max="100" placeholder="Example: 25" style="margin-bottom: 4px !important;">
-                        <div id="age-warning" style="font-size: 12px; color: #ef4444; font-weight: 600; margin-bottom: 15px; display: none;">
+                        <x-field-error name="age" />
+                        <div id="age-warning" style="font-size: 12px; color: var(--bad); font-weight: 600; margin-bottom: 15px; display: none;">
                             ⚠️ Alert: APEL A for Master level access requires candidates to be at least 30 years of age.
                         </div>
 
-                        <label>Name of University (Highest Qualification)</label>
-                        <input type="text" name="university_name" value="{{ old('university_name') }}" placeholder="Example: Universiti Teknologi Malaysia">
+                        <label for="f-university-name">Name of University (Highest Qualification)</label>
+                        <input type="text" name="university_name" value="{{ old('university_name') }}" placeholder="Example: Universiti Teknologi Malaysia" id="f-university-name">
+                        <x-field-error name="university_name" />
 
-                        <label>Name of Company (Current Employment)</label>
-                        <input type="text" name="company_name" value="{{ old('company_name') }}" placeholder="Example: Google Inc.">
+                        <label for="f-company-name">Name of Company (Current Employment)</label>
+                        <input type="text" name="company_name" value="{{ old('company_name') }}" placeholder="Example: Google Inc." id="f-company-name">
+                        <x-field-error name="company_name" />
 
-                        <label>Highest Academic Qualification</label>
+                        <label for="qualification-input">Highest Academic Qualification</label>
                         <input type="text" name="highest_qualification" id="qualification-input" value="{{ old('highest_qualification') }}"
                             placeholder="Example: Diploma in Computer Science" style="margin-bottom: 4px !important;">
-                        <div id="qualification-warning" style="font-size: 12px; color: #ef4444; font-weight: 600; margin-bottom: 15px; display: none;">
+                        <x-field-error name="highest_qualification" />
+                        <div id="qualification-warning" style="font-size: 12px; color: var(--bad); font-weight: 600; margin-bottom: 15px; display: none;">
                             ⚠️ Alert: The highest qualification for APEL A must start exactly with "Diploma" (e.g., Diploma in Computer Science).
                         </div>
 
-                        <label>Current Job / Position</label>
+                        <label for="f-current-job">Current Job / Position</label>
                         <input type="text" name="current_job" value="{{ old('current_job') }}"
-                            placeholder="Example: IT Executive / Software Developer">
+                            placeholder="Example: IT Executive / Software Developer" id="f-current-job">
+                        <x-field-error name="current_job" />
 
-                        <label>Years of Working Experience</label>
+                        <label for="f-working-experience-years">Years of Working Experience</label>
                         <input type="number" name="working_experience_years" value="{{ old('working_experience_years') }}"
-                            min="0" placeholder="Example: 5">
+                            min="0" placeholder="Example: 5" id="f-working-experience-years">
+                        <x-field-error name="working_experience_years" />
 
-                        <label>Relevant Working Experience</label>
+                        <label for="f-working-experience-details">Relevant Working Experience</label>
                         <textarea name="working_experience_details" rows="4"
-                            placeholder="Briefly describe your working experience related to the selected programme.">{{ old('working_experience_details') }}</textarea>
+                            placeholder="Briefly describe your working experience related to the selected programme." id="f-working-experience-details">{{ old('working_experience_details') }}</textarea>
+                        <x-field-error name="working_experience_details" />
 
-                        <label>Reason for Applying APEL A</label>
-                        <textarea name="reason_applying" rows="4" placeholder="Explain why you are applying through APEL A.">{{ old('reason_applying') }}</textarea>
+                        <label for="f-reason-applying">Reason for Applying APEL A</label>
+                        <textarea name="reason_applying" rows="4" placeholder="Explain why you are applying through APEL A." id="f-reason-applying">{{ old('reason_applying') }}</textarea>
+                        <x-field-error name="reason_applying" />
                     </div>
 
                     {{-- APEL C Form (Wizard Tabs) --}}
@@ -409,27 +421,31 @@
                         {{-- TAB 1: Particulars & Education --}}
                         <div id="tab-particulars" class="tab-content active">
                             <!-- Target Semester has been disabled for now
-                            <label>Target Semester</label>
-                            <select name="target_semester">
+                            <label for="f-target-semester">Target Semester</label>
+                            <select name="target_semester" id="f-target-semester">
                                 <option value="">-- Select Semester --</option>
                                 <option value="Semester 1" {{ old('target_semester') == 'Semester 1' ? 'selected' : '' }}>Semester 1</option>
                                 <option value="Semester 2" {{ old('target_semester') == 'Semester 2' ? 'selected' : '' }}>Semester 2</option>
                                 <option value="Semester 3" {{ old('target_semester') == 'Semester 3' ? 'selected' : '' }}>Semester 3</option>
                             </select>
+                            <x-field-error name="target_semester" />
                             -->
 
-                            <h4 style="color: #8B1E3F; margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
-                            <label>Full Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', auth()->user()->name) }}" required>
+                            <h4 style="color: var(--maroon); margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
+                            <label for="f-pre-app-data-personal-particulars-name">Full Name (As per IC)</label>
+                            <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', auth()- id="f-pre-app-data-personal-particulars-name">
+                            <x-field-error name="pre_app_data.personal_particulars.name" />user()->name) }}" required>
 
-                            <label>Matric No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" value="{{ old('pre_app_data.personal_particulars.matric_no') }}" placeholder="e.g. MEC244062">
+                            <label for="f-pre-app-data-personal-particulars-matric-no">Matric No.</label>
+                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" value="{{ old('pre_app_data.personal_particulars.matric_no') }}" placeholder="e.g. MEC244062" id="f-pre-app-data-personal-particulars-matric-no">
+                            <x-field-error name="pre_app_data.personal_particulars.matric_no" />
 
-                            <label>Identity Card No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" value="{{ old('pre_app_data.personal_particulars.ic_no') }}" placeholder="e.g. 851020105033" required>
+                            <label for="f-pre-app-data-personal-particulars-ic-no">Identity Card No.</label>
+                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" value="{{ old('pre_app_data.personal_particulars.ic_no') }}" placeholder="e.g. 851020105033" required id="f-pre-app-data-personal-particulars-ic-no">
+                            <x-field-error name="pre_app_data.personal_particulars.ic_no" />
 
-                            <label>Highest Academic Qualification</label>
-                            <select name="pre_app_data[personal_particulars][highest_qualification]" required>
+                            <label for="f-pre-app-data-personal-particulars-highest-qualification">Highest Academic Qualification</label>
+                            <select name="pre_app_data[personal_particulars][highest_qualification]" required id="f-pre-app-data-personal-particulars-highest-qualification">
                                 <option value="">-- Select Qualification --</option>
                                 <option value="PhD">PhD / Doctoral Degree</option>
                                 <option value="Master">Master's Degree</option>
@@ -438,8 +454,9 @@
                                 <option value="Certificate">Certificate</option>
                                 <option value="Other">Other</option>
                             </select>
+                            <x-field-error name="pre_app_data.personal_particulars.highest_qualification" />
 
-                            <h4 style="color: #8B1E3F; margin-top: 20px; margin-bottom: 10px;">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEducationRow()">+ Add Education</button>
                             </div>
@@ -450,20 +467,24 @@
                                     </div>
                                     <div class="row-card-body education-grid">
                                         <div class="field-col">
-                                            <label>Year Awarded</label>
-                                            <input type="text" name="pre_app_data[formal_learning][0][year_awarded]" placeholder="e.g. 2024">
+                                            <label for="f-pre-app-data-formal-learning-0-year-awarded">Year Awarded</label>
+                                            <input type="text" name="pre_app_data[formal_learning][0][year_awarded]" placeholder="e.g. 2024" id="f-pre-app-data-formal-learning-0-year-awarded">
+                                            <x-field-error name="pre_app_data.formal_learning.0.year_awarded" />
                                         </div>
                                         <div class="field-col">
-                                            <label>Title of Certification</label>
-                                            <input type="text" name="pre_app_data[formal_learning][0][title_of_certification]" placeholder="e.g. Certificate of Cloud Security Knowledge">
+                                            <label for="f-pre-app-data-formal-learning-0-title-of-certification">Title of Certification</label>
+                                            <input type="text" name="pre_app_data[formal_learning][0][title_of_certification]" placeholder="e.g. Certificate of Cloud Security Knowledge" id="f-pre-app-data-formal-learning-0-title-of-certification">
+                                            <x-field-error name="pre_app_data.formal_learning.0.title_of_certification" />
                                         </div>
                                         <div class="field-col">
-                                            <label>Level of Award</label>
-                                            <input type="text" name="pre_app_data[formal_learning][0][level_of_award]" placeholder="e.g. Certificate">
+                                            <label for="f-pre-app-data-formal-learning-0-level-of-award">Level of Award</label>
+                                            <input type="text" name="pre_app_data[formal_learning][0][level_of_award]" placeholder="e.g. Certificate" id="f-pre-app-data-formal-learning-0-level-of-award">
+                                            <x-field-error name="pre_app_data.formal_learning.0.level_of_award" />
                                         </div>
                                         <div class="field-col">
-                                            <label>Awarding Body</label>
-                                            <input type="text" name="pre_app_data[formal_learning][0][awarding_body]" placeholder="e.g. Cloud Security Alliance">
+                                            <label for="f-pre-app-data-formal-learning-0-awarding-body">Awarding Body</label>
+                                            <input type="text" name="pre_app_data[formal_learning][0][awarding_body]" placeholder="e.g. Cloud Security Alliance" id="f-pre-app-data-formal-learning-0-awarding-body">
+                                            <x-field-error name="pre_app_data.formal_learning.0.awarding_body" />
                                         </div>
                                     </div>
                                 </div>
@@ -472,7 +493,7 @@
 
                         {{-- TAB 2: Experience & Training --}}
                         <div id="tab-experience" class="tab-content">
-                            <h4 style="color: #8B1E3F; margin-bottom: 10px;">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEmploymentRow()">+ Add Employer</button>
                             </div>
@@ -483,12 +504,14 @@
                                     </div>
                                     <div class="row-card-body employment-grid">
                                         <div class="field-col employer-name">
-                                            <label>Employer Name</label>
-                                            <input type="text" name="pre_app_data[experiential_learning][0][employer_name]" placeholder="e.g. Roche">
+                                            <label for="f-pre-app-data-experiential-learning-0-employer-name">Employer Name</label>
+                                            <input type="text" name="pre_app_data[experiential_learning][0][employer_name]" placeholder="e.g. Roche" id="f-pre-app-data-experiential-learning-0-employer-name">
+                                            <x-field-error name="pre_app_data.experiential_learning.0.employer_name" />
                                         </div>
                                         <div class="field-col contact-address">
-                                            <label>Contact Address</label>
-                                            <input type="text" name="pre_app_data[experiential_learning][0][contact_address]" placeholder="Address">
+                                            <label for="f-pre-app-data-experiential-learning-0-contact-address">Contact Address</label>
+                                            <input type="text" name="pre_app_data[experiential_learning][0][contact_address]" placeholder="Address" id="f-pre-app-data-experiential-learning-0-contact-address">
+                                            <x-field-error name="pre_app_data.experiential_learning.0.contact_address" />
                                         </div>
                                         <div class="field-col time-from">
                                             <label>From (Month/Year)</label>
@@ -527,9 +550,9 @@
                                                         @endfor
                                                     </select>
                                                 </div>
-                                                <div id="to-current-display-0" style="display: none; font-weight: 600; color: #8B1E3F; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; background: #faf9fa; border-radius: 6px; text-align: center;">Current</div>
+                                                <div id="to-current-display-0" style="display: none; font-weight: 600; color: var(--maroon); font-size: 13px; padding: 6px 8px; border: 1px solid var(--line-strong); background: var(--surface-sunk); border-radius: 6px; text-align: center;">Current</div>
                                                 <input type="hidden" name="pre_app_data[experiential_learning][0][time_to]" value="" id="time-to-hidden-0">
-                                                <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: #4b5563; cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
+                                                <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: var(--ink-2); cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
                                                     <input type="checkbox" 
                                                            id="time-to-current-0" 
                                                            onclick="toggleCurrentWorkCheckbox(this, 0)" 
@@ -539,18 +562,20 @@
                                             </div>
                                         </div>
                                         <div class="field-col position-held">
-                                            <label>Position Held</label>
-                                            <input type="text" name="pre_app_data[experiential_learning][0][position_held]" placeholder="Position">
+                                            <label for="f-pre-app-data-experiential-learning-0-position-held">Position Held</label>
+                                            <input type="text" name="pre_app_data[experiential_learning][0][position_held]" placeholder="Position" id="f-pre-app-data-experiential-learning-0-position-held">
+                                            <x-field-error name="pre_app_data.experiential_learning.0.position_held" />
                                         </div>
                                         <div class="field-col job-roles">
-                                            <label>Job Roles / Performed</label>
-                                            <textarea name="pre_app_data[experiential_learning][0][job_roles]" placeholder="Roles / Duties" rows="3"></textarea>
+                                            <label for="f-pre-app-data-experiential-learning-0-job-roles">Job Roles / Performed</label>
+                                            <textarea name="pre_app_data[experiential_learning][0][job_roles]" placeholder="Roles / Duties" rows="3" id="f-pre-app-data-experiential-learning-0-job-roles"></textarea>
+                                            <x-field-error name="pre_app_data.experiential_learning.0.job_roles" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <h4 style="color: #8B1E3F; margin-top: 20px; margin-bottom: 10px;">TRAINING ACTIVITIES</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">TRAINING ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addTrainingRow()">+ Add Training Activity</button>
                             </div>
@@ -561,24 +586,28 @@
                                     </div>
                                     <div class="row-card-body training-grid">
                                         <div class="field-col course-name">
-                                            <label>Course/Training Name</label>
-                                            <input type="text" name="pre_app_data[training_activities][0][course_name]" placeholder="Course Title">
+                                            <label for="f-pre-app-data-training-activities-0-course-name">Course/Training Name</label>
+                                            <input type="text" name="pre_app_data[training_activities][0][course_name]" placeholder="Course Title" id="f-pre-app-data-training-activities-0-course-name">
+                                            <x-field-error name="pre_app_data.training_activities.0.course_name" />
                                         </div>
                                         <div class="field-col location">
-                                            <label>Location</label>
-                                            <input type="text" name="pre_app_data[training_activities][0][location]" placeholder="Location">
+                                            <label for="f-pre-app-data-training-activities-0-location">Location</label>
+                                            <input type="text" name="pre_app_data[training_activities][0][location]" placeholder="Location" id="f-pre-app-data-training-activities-0-location">
+                                            <x-field-error name="pre_app_data.training_activities.0.location" />
                                         </div>
                                         <div class="field-col date-duration">
-                                            <label>Date & Duration</label>
-                                            <input type="text" name="pre_app_data[training_activities][0][date_duration]" placeholder="e.g. Nov 2024 (15.2 hours)">
+                                            <label for="f-pre-app-data-training-activities-0-date-duration">Date & Duration</label>
+                                            <input type="text" name="pre_app_data[training_activities][0][date_duration]" placeholder="e.g. Nov 2024 (15.2 hours)" id="f-pre-app-data-training-activities-0-date-duration">
+                                            <x-field-error name="pre_app_data.training_activities.0.date_duration" />
                                         </div>
                                         <div class="field-col activity-type">
-                                            <label>Activity Type</label>
-                                            <select name="pre_app_data[training_activities][0][activity_type]">
+                                            <label for="f-pre-app-data-training-activities-0-activity-type">Activity Type</label>
+                                            <select name="pre_app_data[training_activities][0][activity_type]" id="f-pre-app-data-training-activities-0-activity-type">
                                                 <option value="Technical">Technical</option>
                                                 <option value="Managerial">Managerial</option>
                                                 <option value="Both">Both</option>
                                             </select>
+                                            <x-field-error name="pre_app_data.training_activities.0.activity_type" />
                                         </div>
                                         <div class="field-col skills-learnt">
                                             <label>What Have I Learnt? (Skills Checklist)</label>
@@ -591,7 +620,7 @@
 
                         {{-- TAB 3: Skills & Languages --}}
                         <div id="tab-skills" class="tab-content">
-                            <h4 style="color: #8B1E3F; margin-bottom: 10px;">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addOtherSkillRow()">+ Add Activity</button>
                             </div>
@@ -602,12 +631,14 @@
                                     </div>
                                     <div class="row-card-body other-skills-grid">
                                         <div class="field-col other-activities">
-                                            <label>Other Activity Description</label>
-                                            <input type="text" name="pre_app_data[other_learning_skills][0][other_activities]" placeholder="hobbies, community services, etc.">
+                                            <label for="f-pre-app-data-other-learning-skills-0-other-activities">Other Activity Description</label>
+                                            <input type="text" name="pre_app_data[other_learning_skills][0][other_activities]" placeholder="hobbies, community services, etc." id="f-pre-app-data-other-learning-skills-0-other-activities">
+                                            <x-field-error name="pre_app_data.other_learning_skills.0.other_activities" />
                                         </div>
                                         <div class="field-col year">
-                                            <label>Year</label>
-                                            <input type="text" name="pre_app_data[other_learning_skills][0][year]" placeholder="e.g. 2025">
+                                            <label for="f-pre-app-data-other-learning-skills-0-year">Year</label>
+                                            <input type="text" name="pre_app_data[other_learning_skills][0][year]" placeholder="e.g. 2025" id="f-pre-app-data-other-learning-skills-0-year">
+                                            <x-field-error name="pre_app_data.other_learning_skills.0.year" />
                                         </div>
                                         <div class="field-col skills-learnt">
                                             <label>What Have I Learnt? (Skills Checklist)</label>
@@ -617,7 +648,7 @@
                                 </div>
                             </div>
 
-                            <h4 style="color: #8B1E3F; margin-top: 20px; margin-bottom: 10px;">PART B (iv): LANGUAGE SKILLS</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (iv): LANGUAGE SKILLS</h4>
                             <table class="dynamic-table language-table">
                                 <thead>
                                     <tr>
@@ -652,44 +683,51 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            <div style="font-size: 11px; color: #6b7280; margin-top: -10px; margin-bottom: 20px;">
+                            <div style="font-size: 11px; color: var(--ink-3); margin-top: -10px; margin-bottom: 20px;">
                                 Scale Competency - 1: Poor; 2: Average; 3: Good; 4: Excellent
                             </div>
                         </div>
 
                         {{-- TAB 4: Referees & Self-Assessment --}}
                         <div id="tab-referees" class="tab-content">
-                            <h4 style="color: #8B1E3F; margin-bottom: 10px;">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
                             <div class="referee-card">
                                 <h4>Referee 1</h4>
                                 <div class="referee-grid">
                                     <div>
-                                        <label>Name</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_name]" placeholder="Full Name" required>
+                                        <label for="f-pre-app-data-referees-0-referee-name">Name</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_name]" placeholder="Full Name" required id="f-pre-app-data-referees-0-referee-name">
+                                        <x-field-error name="pre_app_data.referees.0.referee_name" />
                                     </div>
                                     <div>
-                                        <label>Position</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_position]" placeholder="Position/Designation" required>
+                                        <label for="f-pre-app-data-referees-0-referee-position">Position</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_position]" placeholder="Position/Designation" required id="f-pre-app-data-referees-0-referee-position">
+                                        <x-field-error name="pre_app_data.referees.0.referee_position" />
                                     </div>
                                     <div>
-                                        <label>Organisation</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_organisation]" placeholder="Organisation" required>
+                                        <label for="f-pre-app-data-referees-0-referee-organisation">Organisation</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_organisation]" placeholder="Organisation" required id="f-pre-app-data-referees-0-referee-organisation">
+                                        <x-field-error name="pre_app_data.referees.0.referee_organisation" />
                                     </div>
                                     <div>
-                                        <label>Office Phone</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_phone_office]" placeholder="Office No.">
+                                        <label for="f-pre-app-data-referees-0-referee-phone-office">Office Phone</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_phone_office]" placeholder="Office No." id="f-pre-app-data-referees-0-referee-phone-office">
+                                        <x-field-error name="pre_app_data.referees.0.referee_phone_office" />
                                     </div>
                                     <div>
-                                        <label>Mobile Phone</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_phone_mobile]" placeholder="Mobile No." required>
+                                        <label for="f-pre-app-data-referees-0-referee-phone-mobile">Mobile Phone</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_phone_mobile]" placeholder="Mobile No." required id="f-pre-app-data-referees-0-referee-phone-mobile">
+                                        <x-field-error name="pre_app_data.referees.0.referee_phone_mobile" />
                                     </div>
                                     <div>
-                                        <label>Email Address</label>
-                                        <input type="email" name="pre_app_data[referees][0][referee_email]" placeholder="email@address.com" required>
+                                        <label for="f-pre-app-data-referees-0-referee-email">Email Address</label>
+                                        <input type="email" name="pre_app_data[referees][0][referee_email]" placeholder="email@address.com" required id="f-pre-app-data-referees-0-referee-email">
+                                        <x-field-error name="pre_app_data.referees.0.referee_email" />
                                     </div>
                                     <div style="grid-column: span 2;">
-                                        <label>Relationship</label>
-                                        <input type="text" name="pre_app_data[referees][0][referee_relationship]" placeholder="e.g. Ex-Supervisor" required>
+                                        <label for="f-pre-app-data-referees-0-referee-relationship">Relationship</label>
+                                        <input type="text" name="pre_app_data[referees][0][referee_relationship]" placeholder="e.g. Ex-Supervisor" required id="f-pre-app-data-referees-0-referee-relationship">
+                                        <x-field-error name="pre_app_data.referees.0.referee_relationship" />
                                     </div>
                                 </div>
                             </div>
@@ -698,61 +736,72 @@
                                 <h4>Referee 2</h4>
                                 <div class="referee-grid">
                                     <div>
-                                        <label>Name</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_name]" placeholder="Full Name" required>
+                                        <label for="f-pre-app-data-referees-1-referee-name">Name</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_name]" placeholder="Full Name" required id="f-pre-app-data-referees-1-referee-name">
+                                        <x-field-error name="pre_app_data.referees.1.referee_name" />
                                     </div>
                                     <div>
-                                        <label>Position</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_position]" placeholder="Position/Designation" required>
+                                        <label for="f-pre-app-data-referees-1-referee-position">Position</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_position]" placeholder="Position/Designation" required id="f-pre-app-data-referees-1-referee-position">
+                                        <x-field-error name="pre_app_data.referees.1.referee_position" />
                                     </div>
                                     <div>
-                                        <label>Organisation</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_organisation]" placeholder="Organisation" required>
+                                        <label for="f-pre-app-data-referees-1-referee-organisation">Organisation</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_organisation]" placeholder="Organisation" required id="f-pre-app-data-referees-1-referee-organisation">
+                                        <x-field-error name="pre_app_data.referees.1.referee_organisation" />
                                     </div>
                                     <div>
-                                        <label>Office Phone</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_phone_office]" placeholder="Office No.">
+                                        <label for="f-pre-app-data-referees-1-referee-phone-office">Office Phone</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_phone_office]" placeholder="Office No." id="f-pre-app-data-referees-1-referee-phone-office">
+                                        <x-field-error name="pre_app_data.referees.1.referee_phone_office" />
                                     </div>
                                     <div>
-                                        <label>Mobile Phone</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_phone_mobile]" placeholder="Mobile No." required>
+                                        <label for="f-pre-app-data-referees-1-referee-phone-mobile">Mobile Phone</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_phone_mobile]" placeholder="Mobile No." required id="f-pre-app-data-referees-1-referee-phone-mobile">
+                                        <x-field-error name="pre_app_data.referees.1.referee_phone_mobile" />
                                     </div>
                                     <div>
-                                        <label>Email Address</label>
-                                        <input type="email" name="pre_app_data[referees][1][referee_email]" placeholder="email@address.com" required>
+                                        <label for="f-pre-app-data-referees-1-referee-email">Email Address</label>
+                                        <input type="email" name="pre_app_data[referees][1][referee_email]" placeholder="email@address.com" required id="f-pre-app-data-referees-1-referee-email">
+                                        <x-field-error name="pre_app_data.referees.1.referee_email" />
                                     </div>
                                     <div style="grid-column: span 2;">
-                                        <label>Relationship</label>
-                                        <input type="text" name="pre_app_data[referees][1][referee_relationship]" placeholder="e.g. Manager" required>
+                                        <label for="f-pre-app-data-referees-1-referee-relationship">Relationship</label>
+                                        <input type="text" name="pre_app_data[referees][1][referee_relationship]" placeholder="e.g. Manager" required id="f-pre-app-data-referees-1-referee-relationship">
+                                        <x-field-error name="pre_app_data.referees.1.referee_relationship" />
                                     </div>
                                 </div>
                             </div>
 
-                            <h4 style="color: #8B1E3F; margin-top: 25px; margin-bottom: 10px;">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
+                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
                             <p style="font-size:12.5px; color:#5b626a; line-height:1.4; margin-bottom:15px;">
                                 For each Course Learning Outcome (CLO), describe how you have learned this outcome through your former studies or working career.
                             </p>
 
-                            <label><strong>CLO1:</strong> Analyse IT information security governance, risk management frameworks, policies, and standards.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo1]" rows="3" placeholder="Describe your experience/certifications related to CLO1..." required></textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo1"><strong>CLO1:</strong> Analyse IT information security governance, risk management frameworks, policies, and standards.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo1]" rows="3" placeholder="Describe your experience/certifications related to CLO1..." required id="f-self-assessment-clo-descriptions-clo1"></textarea>
+                            <x-field-error name="self_assessment.clo_descriptions.clo1" />
 
-                            <label><strong>CLO2:</strong> Evaluate applications of security and management, providing justifications based on fundamental concepts.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo2]" rows="3" placeholder="Describe your experience/certifications related to CLO2..." required></textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo2"><strong>CLO2:</strong> Evaluate applications of security and management, providing justifications based on fundamental concepts.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo2]" rows="3" placeholder="Describe your experience/certifications related to CLO2..." required id="f-self-assessment-clo-descriptions-clo2"></textarea>
+                            <x-field-error name="self_assessment.clo_descriptions.clo2" />
 
-                            <label><strong>CLO3:</strong> Complete the cycle of risk identification, analysis, assessment, and control of security management systems.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo3]" rows="3" placeholder="Describe your experience/certifications related to CLO3..." required></textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo3"><strong>CLO3:</strong> Complete the cycle of risk identification, analysis, assessment, and control of security management systems.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo3]" rows="3" placeholder="Describe your experience/certifications related to CLO3..." required id="f-self-assessment-clo-descriptions-clo3"></textarea>
+                            <x-field-error name="self_assessment.clo_descriptions.clo3" />
 
-                            <label><strong>CLO4:</strong> Construct detailed organisation-wide security plans/policies, and measure safeguards using appropriate tools.</label>
-                            <textarea name="self_assessment[clo_descriptions][clo4]" rows="3" placeholder="Describe your experience/certifications related to CLO4..." required></textarea>
+                            <label for="f-self-assessment-clo-descriptions-clo4"><strong>CLO4:</strong> Construct detailed organisation-wide security plans/policies, and measure safeguards using appropriate tools.</label>
+                            <textarea name="self_assessment[clo_descriptions][clo4]" rows="3" placeholder="Describe your experience/certifications related to CLO4..." required id="f-self-assessment-clo-descriptions-clo4"></textarea>
+                            <x-field-error name="self_assessment.clo_descriptions.clo4" />
                         </div>
 
                         {{-- TAB 5: Uploads & Declaration --}}
                         <div id="tab-declaration" class="tab-content">
-                            <h4 style="color: #8B1E3F; margin-bottom: 10px;">PART C: PORTFOLIO & DECLARATION</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C: PORTFOLIO & DECLARATION</h4>
                             
-                            <div style="background: #fdfafb; border: 1px solid #e2d7da; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-                                <h5 style="color: #8B1E3F; margin-top: 0; margin-bottom: 8px; font-weight: 700; font-size: 13.5px;">📌 PORTFOLIO SUBMISSION INSTRUCTIONS</h5>
-                                <p style="font-size: 12.5px; color: #4b5563; line-height: 1.5; margin-bottom: 0;">
+                            <div style="background: var(--surface-sunk); border: 1px solid var(--line); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                                <h5 style="color: var(--maroon); margin-top: 0; margin-bottom: 8px; font-weight: 700; font-size: 13.5px;">📌 PORTFOLIO SUBMISSION INSTRUCTIONS</h5>
+                                <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-bottom: 0;">
                                     Please upload your completed <strong>APEL (C) Portfolio Submission Form PDF</strong>. 
                                     This single compiled document must include:
                                     <br>• The **Self-Assessment Essay** (minimum 500 words) addressing all Course Learning Outcomes (CLOs).
@@ -761,33 +810,37 @@
                                 </p>
                             </div>
 
-                            <label><strong>Upload Complete Portfolio PDF</strong> <span style="color: #ef4444;">*</span></label>
+                            <label for="portfolio-input"><strong>Upload Complete Portfolio PDF</strong> <span style="color: var(--bad);">*</span></label>
                             <input type="file" name="portfolio_file[]" id="portfolio-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                            <div id="portfolio-preview-list" style="margin-top: 8px; font-size: 13px; color: #4b5563;"></div>
-                            <small style="display:block; margin-top:5px; color:#666; margin-bottom:15px;">
+                            <x-field-error name="portfolio_file" />
+                            <div id="portfolio-preview-list" style="margin-top: 8px; font-size: 13px; color: var(--ink-2);"></div>
+                            <small style="display:block; margin-top:5px; color:var(--ink-3); margin-bottom:15px;">
                                 Allowed format: PDF, JPG, JPEG, PNG, DOC, DOCX. Maximum size: 5MB per file.
                             </small>
 
-                            <h4 style="color: #8B1E3F; margin-top: 25px; margin-bottom: 10px;">PART D: SELF-DECLARATION</h4>
-                            <div style="background: #fdfafb; border: 1px solid #faebef; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
-                                <label style="font-weight: 400; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; color: #374151;">
+                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">PART D: SELF-DECLARATION</h4>
+                            <div style="background: var(--surface-sunk); border: 1px solid #faebef; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
+                                <label style="font-weight: 400; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; color: var(--ink-2);">
                                     <input type="checkbox" name="pre_app_data[self_declaration][confirmed]" value="1" required style="width: auto; margin-top: 4px;">
+                                    <x-field-error name="pre_app_data.self_declaration.confirmed" />
                                     <span>
                                         I hereby declare that all of the information/documents provided to support this application are authentic, true and accurate. I fully understand that the UTM reserves the right to reject my application if proven otherwise.
                                     </span>
                                 </label>
                             </div>
 
-                            <label>Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" placeholder="Full Name as per IC" required>
+                            <label for="f-pre-app-data-self-declaration-name-as-per-ic">Name (As per IC)</label>
+                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" placeholder="Full Name as per IC" required id="f-pre-app-data-self-declaration-name-as-per-ic">
+                            <x-field-error name="pre_app_data.self_declaration.name_as_per_ic" />
 
-                            <label>Date Declared</label>
-                            <input type="date" name="pre_app_data[self_declaration][date_declared]" value="{{ date('Y-m-d') }}" required>
+                            <label for="f-pre-app-data-self-declaration-date-declared">Date Declared</label>
+                            <input type="date" name="pre_app_data[self_declaration][date_declared]" value="{{ date('Y-m-d') }}" required id="f-pre-app-data-self-declaration-date-declared">
+                            <x-field-error name="pre_app_data.self_declaration.date_declared" />
                         </div>
                     </div>
 
                     <div class="form-submit-row" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-                        <span id="autosave-notice" style="font-size: 12px; color: #10b981; opacity: 0; transition: opacity 0.3s; margin-right: auto; font-weight: 500;">✓ Draft saved automatically</span>
+                        <span id="autosave-notice" style="font-size: 12px; color: var(--good); opacity: 0; transition: opacity 0.3s; margin-right: auto; font-weight: 500;">✓ Draft saved automatically</span>
                         <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" name="submit_type" value="draft" class="btn btn-secondary" formnovalidate>Save Draft</button>
                         <button type="submit" name="submit_type" value="submit" class="btn" id="submit-application-btn">Submit Application</button>
@@ -797,10 +850,10 @@
 
             <aside class="info-side-card">
                 <!-- APEL.A T-7 Requirements -->
-                <div id="apel-a-requirements-card" style="background: #fdfafb; border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
-                    <span style="font-size: 10px; font-weight: 700; color: #8B1E3F; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.A T-7 Requirements</span>
+                <div id="apel-a-requirements-card" style="background: var(--surface-sunk); border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
+                    <span style="font-size: 10px; font-weight: 700; color: var(--maroon); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.A T-7 Requirements</span>
                     <h4 style="margin-top: 0; margin-bottom: 8px; color: #30030f; font-size: 14px; font-weight: 700;">Basic Access Eligibility</h4>
-                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: #4b5563; line-height: 1.5; padding-left: 15px;">
+                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; padding-left: 15px;">
                         <li><strong>Malaysian Citizens</strong></li>
                         <li><strong>At least 30 years of age</strong> at the time of application.</li>
                         <li><strong>Hold exactly a Diploma</strong> (STPM/SPM are not eligible, and degree holders do not qualify for APEL A).</li>
@@ -812,7 +865,7 @@
                 <div id="apel-c-requirements-card" style="background: #fcfdfd; border: 1px solid rgba(13, 148, 136, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
                     <span style="font-size: 10px; font-weight: 700; color: #0d9488; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.C Requirements</span>
                     <h4 style="margin-top: 0; margin-bottom: 8px; color: #0f3f3b; font-size: 14px; font-weight: 700;">Credit Award Eligibility</h4>
-                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: #4b5563; line-height: 1.5; padding-left: 15px;">
+                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; padding-left: 15px;">
                         <li><strong>Hold at least a Diploma</strong> qualification.</li>
                         <li><strong>At least 3 years work experience</strong> in a related field.</li>
                         <li><strong>Professional certificates</strong> must be valid within 5 years.</li>
@@ -947,24 +1000,24 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Education Entry #${educationIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #ef4444; border-color: #ef4444; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body education-grid">
                     <div class="field-col">
-                        <label>Year Awarded</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][year_awarded]" placeholder="e.g. 2024">
+                        <label for="f-formal-learning-${educationIndex}-year-awarded">Year Awarded</label>
+                        <input id="f-formal-learning-${educationIndex}-year-awarded" type="text" name="pre_app_data[formal_learning][${educationIndex}][year_awarded]" placeholder="e.g. 2024">
                     </div>
                     <div class="field-col">
-                        <label>Title of Certification</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][title_of_certification]" placeholder="e.g. Cert">
+                        <label for="f-formal-learning-${educationIndex}-title-of-certification">Title of Certification</label>
+                        <input id="f-formal-learning-${educationIndex}-title-of-certification" type="text" name="pre_app_data[formal_learning][${educationIndex}][title_of_certification]" placeholder="e.g. Cert">
                     </div>
                     <div class="field-col">
-                        <label>Level of Award</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][level_of_award]" placeholder="e.g. Certificate">
+                        <label for="f-formal-learning-${educationIndex}-level-of-award">Level of Award</label>
+                        <input id="f-formal-learning-${educationIndex}-level-of-award" type="text" name="pre_app_data[formal_learning][${educationIndex}][level_of_award]" placeholder="e.g. Certificate">
                     </div>
                     <div class="field-col">
-                        <label>Awarding Body</label>
-                        <input type="text" name="pre_app_data[formal_learning][${educationIndex}][awarding_body]" placeholder="Awarding Body">
+                        <label for="f-formal-learning-${educationIndex}-awarding-body">Awarding Body</label>
+                        <input id="f-formal-learning-${educationIndex}-awarding-body" type="text" name="pre_app_data[formal_learning][${educationIndex}][awarding_body]" placeholder="Awarding Body">
                     </div>
                 </div>
             `;
@@ -981,16 +1034,16 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Employer Entry #${employmentIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #ef4444; border-color: #ef4444; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body employment-grid">
                     <div class="field-col employer-name">
-                        <label>Employer Name</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][employer_name]" placeholder="e.g. Roche">
+                        <label for="f-experiential-learning-${employmentIndex}-employer-name">Employer Name</label>
+                        <input id="f-experiential-learning-${employmentIndex}-employer-name" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][employer_name]" placeholder="e.g. Roche">
                     </div>
                     <div class="field-col contact-address">
-                        <label>Contact Address</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][contact_address]" placeholder="Address">
+                        <label for="f-experiential-learning-${employmentIndex}-contact-address">Contact Address</label>
+                        <input id="f-experiential-learning-${employmentIndex}-contact-address" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][contact_address]" placeholder="Address">
                     </div>
                     <div class="field-col time-from">
                         <label>From (Month/Year)</label>
@@ -1021,21 +1074,21 @@
                                     ${Array.from({length: 60}, (_, i) => new Date().getFullYear() + 2 - i).map(y => `<option value="${y}">${y}</option>`).join('')}
                                 </select>
                             </div>
-                            <div id="to-current-display-${employmentIndex}" style="display: none; font-weight: 600; color: #8B1E3F; font-size: 13px; padding: 6px 8px; border: 1px solid #d1d5db; background: #faf9fa; border-radius: 6px; text-align: center;">Current</div>
+                            <div id="to-current-display-${employmentIndex}" style="display: none; font-weight: 600; color: var(--maroon); font-size: 13px; padding: 6px 8px; border: 1px solid var(--line-strong); background: var(--surface-sunk); border-radius: 6px; text-align: center;">Current</div>
                             <input type="hidden" name="pre_app_data[experiential_learning][${employmentIndex}][time_to]" id="time-to-hidden-${employmentIndex}">
-                            <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: #4b5563; cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
+                            <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: var(--ink-2); cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
                                 <input type="checkbox" id="time-to-current-${employmentIndex}" onclick="toggleCurrentWorkCheckbox(this, ${employmentIndex})" style="width: 13px !important; height: 13px !important; margin: 0 !important; cursor: pointer;">
                                 <span>Present</span>
                             </label>
                         </div>
                     </div>
                     <div class="field-col position-held">
-                        <label>Position Held</label>
-                        <input type="text" name="pre_app_data[experiential_learning][${employmentIndex}][position_held]" placeholder="Position">
+                        <label for="f-experiential-learning-${employmentIndex}-position-held">Position Held</label>
+                        <input id="f-experiential-learning-${employmentIndex}-position-held" type="text" name="pre_app_data[experiential_learning][${employmentIndex}][position_held]" placeholder="Position">
                     </div>
                     <div class="field-col job-roles">
-                        <label>Job Roles / Performed</label>
-                        <textarea name="pre_app_data[experiential_learning][${employmentIndex}][job_roles]" placeholder="Roles / Duties" rows="3"></textarea>
+                        <label for="f-experiential-learning-${employmentIndex}-job-roles">Job Roles / Performed</label>
+                        <textarea id="f-experiential-learning-${employmentIndex}-job-roles" name="pre_app_data[experiential_learning][${employmentIndex}][job_roles]" placeholder="Roles / Duties" rows="3"></textarea>
                     </div>
                 </div>
             `;
@@ -1052,24 +1105,24 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Training Entry #${trainingIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #ef4444; border-color: #ef4444; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body training-grid">
                     <div class="field-col course-name">
-                        <label>Course/Training Name</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][course_name]" placeholder="Course Title">
+                        <label for="f-training-activities-${trainingIndex}-course-name">Course/Training Name</label>
+                        <input id="f-training-activities-${trainingIndex}-course-name" type="text" name="pre_app_data[training_activities][${trainingIndex}][course_name]" placeholder="Course Title">
                     </div>
                     <div class="field-col location">
-                        <label>Location</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][location]" placeholder="Location">
+                        <label for="f-training-activities-${trainingIndex}-location">Location</label>
+                        <input id="f-training-activities-${trainingIndex}-location" type="text" name="pre_app_data[training_activities][${trainingIndex}][location]" placeholder="Location">
                     </div>
                     <div class="field-col date-duration">
-                        <label>Date & Duration</label>
-                        <input type="text" name="pre_app_data[training_activities][${trainingIndex}][date_duration]" placeholder="e.g. Nov 2024">
+                        <label for="f-training-activities-${trainingIndex}-date-duration">Date & Duration</label>
+                        <input id="f-training-activities-${trainingIndex}-date-duration" type="text" name="pre_app_data[training_activities][${trainingIndex}][date_duration]" placeholder="e.g. Nov 2024">
                     </div>
                     <div class="field-col activity-type">
-                        <label>Activity Type</label>
-                        <select name="pre_app_data[training_activities][${trainingIndex}][activity_type]">
+                        <label for="f-training-activities-${trainingIndex}-activity-type">Activity Type</label>
+                        <select id="f-training-activities-${trainingIndex}-activity-type" name="pre_app_data[training_activities][${trainingIndex}][activity_type]">
                             <option value="Technical">Technical</option>
                             <option value="Managerial">Managerial</option>
                             <option value="Both">Both</option>
@@ -1095,16 +1148,16 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Other Activity Entry #${otherSkillIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #ef4444; border-color: #ef4444; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body other-skills-grid">
                     <div class="field-col other-activities">
-                        <label>Other Activity Description</label>
-                        <input type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][other_activities]" placeholder="Description">
+                        <label for="f-other-learning-skills-${otherSkillIndex}-other-activities">Other Activity Description</label>
+                        <input id="f-other-learning-skills-${otherSkillIndex}-other-activities" type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][other_activities]" placeholder="Description">
                     </div>
                     <div class="field-col year">
-                        <label>Year</label>
-                        <input type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][year]" placeholder="Year">
+                        <label for="f-other-learning-skills-${otherSkillIndex}-year">Year</label>
+                        <input id="f-other-learning-skills-${otherSkillIndex}-year" type="text" name="pre_app_data[other_learning_skills][${otherSkillIndex}][year]" placeholder="Year">
                     </div>
                     <div class="field-col skills-learnt">
                         <label>What Have I Learnt? (Skills Checklist)</label>
@@ -1119,6 +1172,17 @@
 
         // Tab layout switcher function
         function openTab(evt, tabName) {
+            revealTab(tabName);
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add("active");
+            }
+        }
+
+        /**
+         * Reveal a tab without needing a click event, so validation and error
+         * handling can bring the user to the panel holding the problem.
+         */
+        function revealTab(tabName) {
             const tabContents = document.getElementsByClassName("tab-content");
             for (let i = 0; i < tabContents.length; i++) {
                 tabContents[i].classList.remove("active");
@@ -1129,8 +1193,31 @@
                 tabLinks[i].classList.remove("active");
             }
 
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+            const panel = document.getElementById(tabName);
+            if (panel) {
+                panel.classList.add("active");
+                const link = document.querySelector('.tab-link[onclick*="' + tabName + '"]');
+                if (link) link.classList.add("active");
+            }
+        }
+
+        /**
+         * A control inside a display:none panel cannot be focused, so the browser
+         * silently refuses to submit and shows no message at all - the user clicks
+         * Submit and nothing happens. Reveal the offending panel first, then let
+         * native validation report against a visible control.
+         */
+        function focusFirstInvalid(formEl) {
+            const invalid = formEl.querySelector(':invalid');
+            if (!invalid) return false;
+
+            const panel = invalid.closest('.tab-content');
+            if (panel && panel.id) revealTab(panel.id);
+
+            invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { invalid.focus({ preventScroll: true }); } catch (e) { /* non-focusable */ }
+            formEl.reportValidity();
+            return true;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1218,7 +1305,7 @@
                         li.style.gap = '8px';
                         
                         const sizeKB = (file.size / 1024).toFixed(1);
-                        li.innerHTML = `📄 <strong style="color: #1f2937;">${file.name}</strong> <span style="color: #6b7280; font-size: 11px;">(${sizeKB} KB)</span>`;
+                        li.innerHTML = `📄 <strong style="color: var(--ink);">${file.name}</strong> <span style="color: var(--ink-3); font-size: 11px;">(${sizeKB} KB)</span>`;
                         ul.appendChild(li);
                     }
                     previewDiv.appendChild(ul);
@@ -1240,9 +1327,9 @@
                 icInput.addEventListener('input', function() {
                     const value = icInput.value.trim().replace(/-/g, '');
                     if (/^\d{12}$/.test(value)) {
-                        citizenshipIndicator.innerHTML = '<span style="color: #10b981;">🇲🇾 Malaysian Citizen verified (Valid IC Format)</span>';
+                        citizenshipIndicator.innerHTML = '<span style="color: var(--good);">🇲🇾 Malaysian Citizen verified (Valid IC Format)</span>';
                     } else if (value.length > 0) {
-                        citizenshipIndicator.innerHTML = '<span style="color: #ef4444;">❌ Invalid format. APEL A candidates must be Malaysian Citizens with a valid 12-digit IC.</span>';
+                        citizenshipIndicator.innerHTML = '<span style="color: var(--bad);">❌ Invalid format. APEL A candidates must be Malaysian Citizens with a valid 12-digit IC.</span>';
                     } else {
                         citizenshipIndicator.innerHTML = 'Please enter your 12-digit IC number.';
                     }
@@ -1362,13 +1449,19 @@
                 
                 // If submitType === 'submit' (Submit Application)
                 if (!form.checkValidity()) {
-                    form.reportValidity();
                     e.preventDefault();
+                    // reportValidity alone cannot show a message for a control inside a
+                    // display:none panel, which is why submitting used to appear to do
+                    // nothing at all. Reveal the panel holding the first invalid field
+                    // first, then report against a control the browser can focus.
+                    focusFirstInvalid(form);
                     return;
                 }
                 
                 // Enforce portfolio file upload validation on final submit
-                const typeSelect = document.getElementById('application-type-select');
+                // NOTE: typeSelect is already declared in the enclosing scope.
+                // Re-declaring it here with const put the whole listener body in a
+                // temporal dead zone, so the reference above threw on every submit.
                 if (typeSelect && typeSelect.value === 'APEL C') {
                     const portfolioPreview = document.getElementById('portfolio-preview-list');
                     const portfolioInput = document.getElementById('portfolio-input');
@@ -1404,11 +1497,55 @@
                 localStorage.setItem(autosaveKey, JSON.stringify(formData));
             }
 
+            /**
+             * The repeatable sections are built by JavaScript, so on a fresh page
+             * load their rows do not exist yet and restored values would have
+             * nowhere to go. Recreate the rows first, using the highest index
+             * present in the saved payload.
+             */
+            function restoreDynamicRows(formData) {
+                const sections = [
+                    ['formal_learning',        typeof addEducationRow   === 'function' ? addEducationRow   : null],
+                    ['experiential_learning',  typeof addEmploymentRow  === 'function' ? addEmploymentRow  : null],
+                    ['training_activities',    typeof addTrainingRow    === 'function' ? addTrainingRow    : null],
+                    ['other_learning_skills',  typeof addOtherSkillRow  === 'function' ? addOtherSkillRow  : null],
+                ];
+
+                sections.forEach(function (entry) {
+                    const section = entry[0];
+                    const addRow = entry[1];
+                    if (!addRow) return;
+
+                    // Plain string parsing rather than a built RegExp: the bracket
+                    // and \d escapes do not survive being embedded in a Blade file.
+                    const prefix = 'pre_app_data[' + section + '][';
+                    let maxIndex = -1;
+                    Object.keys(formData).forEach(function (key) {
+                        if (key.indexOf(prefix) !== 0) return;
+                        const rest = key.slice(prefix.length);
+                        const end = rest.indexOf(']');
+                        if (end === -1) return;
+                        const idx = parseInt(rest.slice(0, end), 10);
+                        if (!isNaN(idx)) maxIndex = Math.max(maxIndex, idx);
+                    });
+                    if (maxIndex < 1) return;
+
+                    // Index 0 is rendered server-side; add rows until maxIndex exists.
+                    for (let i = 0; i < maxIndex; i++) {
+                        const existing = form.querySelector(
+                            '[name^="pre_app_data[' + section + '][' + (i + 1) + ']"]'
+                        );
+                        if (!existing) addRow();
+                    }
+                });
+            }
+
             function loadFormData() {
                 const saved = localStorage.getItem(autosaveKey);
                 if (!saved) return;
                 try {
                     const formData = JSON.parse(saved);
+                    restoreDynamicRows(formData);
                     const inputs = form.querySelectorAll('input, select, textarea');
                     inputs.forEach(input => {
                         if (input.type === 'file' || input.type === 'password' || input.name === '_token' || input.name === 'submit_type') return;
@@ -1442,10 +1579,39 @@
             // Load pre-existing auto-save data
             loadFormData();
 
-            // Clear auto-save data on form submit
-            form.addEventListener('submit', function() {
-                localStorage.removeItem(autosaveKey);
-            });
+            /*
+             * If the server rejected the submission, bring the user to the problem
+             * instead of leaving a summary at the top of the page pointing at a
+             * field three screens down inside a collapsed tab.
+             */
+            (function revealFirstServerError() {
+                const firstError = form.querySelector('.field-error');
+                if (!firstError) return;
+
+                const panel = firstError.closest('.tab-content');
+                if (panel && panel.id) revealTab(panel.id);
+
+                const control = firstError.previousElementSibling;
+                if (control && typeof control.focus === 'function') {
+                    control.classList.add('has-error');
+                    try { control.focus({ preventScroll: true }); } catch (e) { /* not focusable */ }
+                }
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            })();
+
+            /*
+             * Deliberately NOT clearing the backup here.
+             *
+             * This listener used to fire on the submit event - before the server
+             * had accepted anything. When validation failed, the repeatable rows
+             * re-rendered blank AND the localStorage copy that would have restored
+             * them was already gone, losing 30+ minutes of work on the one form
+             * where that hurts most.
+             *
+             * The key is now cleared only once the application genuinely exists:
+             * on the applications index after a success redirect, and in the
+             * draft-save AJAX success handler below.
+             */
 
             function showAutoSaveNotice() {
                 const notice = document.getElementById('autosave-notice');

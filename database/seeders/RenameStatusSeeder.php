@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Application;
+use Illuminate\Database\Seeder;
 
 class RenameStatusSeeder extends Seeder
 {

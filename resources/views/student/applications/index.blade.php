@@ -129,7 +129,7 @@
 
 
                 @if ($application->status !== 'Draft' && ($application->payment_status ?? 'pending') === 'pending')
-                    <div class="alert alert-warning" style="background-color: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 12px 16px; border-radius: 12px; margin-top: 15px; margin-bottom: 15px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="alert alert-warning" style="background-color: #fffbeb; border: 1px solid var(--attention-tint); color: var(--attention); padding: 12px 16px; border-radius: 12px; margin-top: 15px; margin-bottom: 15px; font-size: 13.5px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span>⚠️</span>
                             <strong>Payment Required to Proceed</strong>
@@ -137,9 +137,9 @@
                         <p style="margin: 0; color: #d97706;">
                             Please upload your payment receipt to proceed with the application evaluation. 
                             @if ($application->application_type === 'APEL A')
-                                <a href="{{ route('student.apel_a.show', $application->_id) }}" style="font-weight: 700; text-decoration: underline; color: #b45309;">Upload Receipt Here →</a>
+                                <a href="{{ route('student.apel_a.show', $application->_id) }}" style="font-weight: 700; text-decoration: underline; color: var(--attention);">Upload Receipt Here →</a>
                             @else
-                                <a href="{{ route('student.apel_c.show', $application->_id) }}" style="font-weight: 700; text-decoration: underline; color: #b45309;">Upload Receipt Here →</a>
+                                <a href="{{ route('student.apel_c.show', $application->_id) }}" style="font-weight: 700; text-decoration: underline; color: var(--attention);">Upload Receipt Here →</a>
                             @endif
                         </p>
                     </div>
@@ -154,7 +154,7 @@
                     <h4>Internal Application Form</h4>
 
                     @if ($application->application_type === 'APEL A')
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 12px; font-size: 13.5px; color: #4b5563;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 12px; font-size: 13.5px; color: var(--ink-2);">
                             <div><strong>Age:</strong> {{ $application->age ?? 'Not provided' }}</div>
                             <div><strong>University:</strong> {{ $application->university_name ?? 'Not provided' }}</div>
                             <div><strong>Company:</strong> {{ $application->company_name ?? 'Not provided' }}</div>
@@ -246,3 +246,17 @@
         @endforelse
     </div>
 @endsection
+
+@push('scripts')
+    {{-- The APEL C draft autosave backup is cleared here, and only here: reaching
+         this page with a success flash is the first proof the server actually
+         accepted the application. Clearing it at submit time destroyed the
+         student's work whenever validation failed. --}}
+    @if (session('success'))
+        <script>
+            try {
+                localStorage.removeItem('apel_c_autosave_' + '{{ Auth::id() }}');
+            } catch (e) { /* storage unavailable */ }
+        </script>
+    @endif
+@endpush

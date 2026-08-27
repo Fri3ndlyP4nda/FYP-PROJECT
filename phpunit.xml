@@ -23,9 +23,25 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
+        <!--
+            Tests run against a real local MongoDB, not sqlite.
+
+            Every model in this application pins $connection = 'mongodb', so an
+            in-memory sqlite database gave them nothing to talk to. The rule
+            'unique:users,email' resolves against the DEFAULT connection, which
+            is what actually killed the previous suite: it queried a sqlite
+            database that had no users table, and the whole thing was deleted
+            rather than fixed. The evidence is still in .phpunit.result.cache.
+
+            apel_testing is dropped and recreated per test class, so it never
+            touches the Atlas cluster the application uses at runtime.
+        -->
+        <env name="DB_CONNECTION" value="mongodb"/>
+        <env name="DB_DATABASE" value="apel_testing"/>
+        <env name="DB_URI" value="mongodb://127.0.0.1:27017"/>
+
+        <!-- Deterministic auth surface: no OTP step, no throttle interference. -->
+        <env name="APEL_2FA_ENABLED" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

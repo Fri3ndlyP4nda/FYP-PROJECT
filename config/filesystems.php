@@ -30,10 +30,46 @@ return [
 
     'disks' => [
 
+        /*
+        | 'serve' registers GET /storage/{path} — with no middleware whatsoever
+        | — to stream this disk's contents. Nothing in this application calls
+        | Storage::disk('local')->url(), so the route bought nothing and only
+        | offered an unauthenticated way into storage/app/private.
+        */
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | private
+        |----------------------------------------------------------------------
+        |
+        | Everything an applicant uploads: payment receipts, portfolio evidence,
+        | answer scripts, and the assessment papers evaluators publish.
+        |
+        | These used to go on the 'public' disk and were linked with
+        | asset('storage/...'), which put them on an unauthenticated URL. Every
+        | ownership check in the controllers was bypassable by anyone holding
+        | the link — from a Referer header, a shared screenshot or browser
+        | history. There is no public URL for this disk; files are served only
+        | through the /files/{...} route, which re-runs the same authorisation
+        | as the page that links to them.
+        |
+        | The root is deliberately NOT storage/app/private: Laravel's default
+        | 'local' disk points there with 'serve' => true, which registers an
+        | unauthenticated GET /storage/{path} route over the whole directory.
+        | Sharing that root would have handed out every file this disk holds.
+        |
+        */
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/secure'),
+            'visibility' => 'private',
             'throw' => false,
             'report' => false,
         ],

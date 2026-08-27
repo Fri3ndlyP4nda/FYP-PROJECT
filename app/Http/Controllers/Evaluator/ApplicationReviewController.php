@@ -2,23 +2,26 @@
 
 namespace App\Http\Controllers\Evaluator;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
 use App\Models\Application;
+use App\Models\AssessmentSubmission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicationReviewController extends Controller
 {
     public function index()
     {
         $applications = Application::where('status', '!=', 'Draft')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->orderBy('submission_date', 'desc')
             ->get();
@@ -29,32 +32,42 @@ class ApplicationReviewController extends Controller
     public function show($id)
     {
         $application = Application::where('_id', $id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
-        if ($application->status === 'Assessor Assigned' || $application->status === 'Evaluator Assigned') {
-            $application->update([
-                'status' => 'Assessment In Progress',
-                'status_updated_at' => now(),
-            ]);
-
-            $application = Application::where('_id', $id)->firstOrFail();
+        /*
+         | Opening an APEL A application starts the review. This used to be
+         | gated on two different spellings of the same state — 'Assessor
+         | Assigned' and 'Evaluator Assigned' — because the two had drifted
+         | apart in the codebase. There is now one stage.
+         |
+         | APEL C is deliberately excluded: an evaluator opening an APEL C case
+         | has not started assessing it, they still have to set the assessment
+         | first, and moving it here would skip that step.
+         */
+        if (! $application->isApelC() && StageMachine::can($application, ApelStage::UNDER_REVIEW)) {
+            $application = StageMachine::transition(
+                $application,
+                ApelStage::UNDER_REVIEW,
+                [],
+                'Opened by '.Auth::user()->name.'.',
+            );
 
             $this->sendMail(
                 $application->user_id,
-                'UTM APEL Assessment In Progress',
-                "Your application is now being assessed by the assigned evaluator.\n\n" .
-                    "Application: {$application->application_type}\n" .
-                    "Programme / Course: {$application->program_applied}\n" .
-                    "Status: Assessment In Progress"
+                'UTM APEL Review Started',
+                "Your application is now being assessed.\n\n".
+                    "Reference: {$application->reference()}\n".
+                    "Programme / Course: {$application->program_applied}\n\n".
+                    $application->stageExplanation()
             );
         }
 
         if ($application->application_type === 'APEL C' && ($application->assessment_type ?? '') === 'portfolio') {
-            \App\Models\AssessmentSubmission::firstOrCreate(
+            AssessmentSubmission::firstOrCreate(
                 ['application_id' => (string) $application->_id],
                 [
                     'student_id' => (string) $application->user_id,
@@ -71,9 +84,9 @@ class ApplicationReviewController extends Controller
     public function update(Request $request, $id)
     {
         $application = Application::where('_id', $id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
@@ -81,16 +94,30 @@ class ApplicationReviewController extends Controller
             $isEvaluator1 = (string) $application->evaluator_id === (string) Auth::id();
             $isEvaluator2 = (string) ($application->evaluator_2_id ?? '') === (string) Auth::id();
 
-            if ($isEvaluator1 && !empty($application->evaluator_1_reviewed_at)) {
+            if ($isEvaluator1 && ! empty($application->evaluator_1_reviewed_at)) {
                 return redirect()->back()->with('error', 'You have already reviewed this application.');
             }
-            if ($isEvaluator2 && !empty($application->evaluator_2_reviewed_at)) {
+            if ($isEvaluator2 && ! empty($application->evaluator_2_reviewed_at)) {
                 return redirect()->back()->with('error', 'You have already reviewed this application.');
             }
 
+            /*
+             | 'pending' used to be an accepted choice here. Picking it stamped
+             | evaluator_1_reviewed_at, which the guard above then treats as a
+             | completed review — so the evaluator could never revise it — while
+             | the application consolidated to "Awaiting Final Decision" carrying
+             | a recommendation of "pending" that no one could act on. The record
+             | was stranded, permanently.
+             |
+             | A review is a recommendation. An evaluator who is not ready to
+             | give one simply does not submit the form yet.
+             */
             $request->validate([
-                'admission_decision' => 'required|in:pending,recommended,not_recommended',
-                'evaluator_feedback' => 'nullable|string|max:1000',
+                'admission_decision' => 'required|in:recommended,not_recommended',
+                'evaluator_feedback' => 'required|string|max:1000',
+            ], [
+                'admission_decision.in' => 'Choose whether you recommend this candidate. Leave the review unsubmitted if you are not ready to decide.',
+                'evaluator_feedback.required' => 'Please record the reasoning behind your recommendation — the candidate and the faculty both rely on it.',
             ]);
 
             $decision = $request->admission_decision;
@@ -115,93 +142,109 @@ class ApplicationReviewController extends Controller
 
             // Consolidate
             $isSingleEvaluator = empty($application->evaluator_2_id);
-            $bothReviewed = !empty($application->evaluator_1_reviewed_at) && !empty($application->evaluator_2_reviewed_at);
+            $bothReviewed = ! empty($application->evaluator_1_reviewed_at) && ! empty($application->evaluator_2_reviewed_at);
 
             if ($isSingleEvaluator || $bothReviewed) {
+                $split = false;
+
                 if ($isSingleEvaluator) {
                     $finalRec = $application->evaluator_1_decision;
                     $feedback = $application->evaluator_1_feedback;
                 } else {
-                    $bothPass = $application->evaluator_1_decision === 'recommended' && $application->evaluator_2_decision === 'recommended';
-                    $finalRec = $bothPass ? 'recommended' : 'not_recommended';
-                    $feedback = "Evaluator 1 Feedback: {$application->evaluator_1_feedback}\nEvaluator 2 Feedback: {$application->evaluator_2_feedback}";
+                    $first = $application->evaluator_1_decision;
+                    $second = $application->evaluator_2_decision;
+                    $split = $first !== $second;
+
+                    /*
+                     | Two evaluators who disagreed used to produce an automatic
+                     | 'not_recommended' — one dissenting voice silently sank the
+                     | candidate, and nothing told the faculty a disagreement had
+                     | even occurred. A split panel is a real outcome that needs a
+                     | human to resolve it, so it is now recorded as such and put
+                     | in front of the faculty with both opinions intact.
+                     */
+                    $finalRec = $split ? 'split' : $first;
+                    $feedback = "Evaluator 1 ({$first}): {$application->evaluator_1_feedback}"
+                        ."\n\nEvaluator 2 ({$second}): {$application->evaluator_2_feedback}";
                 }
 
-                $application->update([
-                    'admission_decision' => $finalRec,
-                    'evaluator_feedback' => $feedback,
-                    'reviewed_at' => now(),
-                    'review_stage' => 'decision_completed',
-                    'status' => 'Awaiting Final Decision',
-                    'status_updated_at' => now(),
-                ]);
+                $application = StageMachine::transition(
+                    $application,
+                    ApelStage::AWAITING_DECISION,
+                    [
+                        'admission_decision' => $finalRec,
+                        'evaluator_feedback' => $feedback,
+                        'reviewed_at' => now(),
+                        'panel_split' => $split,
+                    ],
+                    $split
+                        ? 'Both evaluators reported and disagreed — referred to the faculty to resolve.'
+                        : 'All evaluator reviews received.',
+                );
             } else {
-                $application->update([
-                    'status' => 'Assessment In Progress',
-                    'status_updated_at' => now(),
-                ]);
+                $application = StageMachine::transition(
+                    $application,
+                    ApelStage::PARTIALLY_REVIEWED,
+                    [],
+                    Auth::user()->name.' submitted their review; awaiting the second evaluator.',
+                );
             }
 
-            $application->refresh();
-
+            // The candidate is told a review landed, never what it said — the
+            // recommendation is not the decision, and only the faculty makes that.
             $this->sendMail(
                 $application->user_id,
-                'UTM APEL A Evaluator Review Updated',
-                "Your APEL A evaluator review has been updated.\n\n" .
-                    "Programme: {$application->program_applied}\n" .
-                    "Evaluator Recommendation: " . ucfirst(str_replace('_', ' ', $application->admission_decision ?? 'pending')) . "\n" .
-                    "Status: {$application->status}\n\n" .
-                    "Feedback: " . ($application->evaluator_feedback ?? 'No feedback provided.')
+                'UTM APEL A Review Progress',
+                "There has been progress on your application.\n\n".
+                    "Reference: {$application->reference()}\n".
+                    "Programme: {$application->program_applied}\n\n".
+                    $application->stageExplanation()
             );
 
             return redirect()->route('evaluator.applications.index')
-                ->with('success', 'APEL A application updated successfully.');
+                ->with('success', $application->stage() === ApelStage::AWAITING_DECISION
+                    ? 'Review submitted. This application now goes to the faculty for the final decision.'
+                    : 'Review submitted. The application is waiting on the second evaluator.');
         }
 
-        if ($application->application_type === 'APEL C') {
-            $hasPaper = \App\Models\AssessmentPaper::where('application_id', (string) $application->_id)->exists();
-            $hasGraded = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->where('status', 'graded')->exists();
+        /*
+         | APEL C.
+         |
+         | This branch used to accept a 'status' field and write it straight to
+         | the record, letting an evaluator move an application to "Awaiting
+         | Final Decision" by hand. That is what grading is for — an APEL C case
+         | reaches a decision because it was graded, not because someone typed a
+         | status. Grading already advances the stage, so all this action does
+         | now is attach the evaluator's written remarks.
+         */
+        $hasGraded = AssessmentSubmission::where('application_id', (string) $application->_id)
+            ->whereNotNull('graded_at')
+            ->exists();
 
-            if (!$hasPaper || !$hasGraded) {
-                return redirect()->back()
-                    ->withErrors(['error' => 'You must upload the assessment paper and grade the student\'s submission before updating the application.'])
-                    ->withInput();
-            }
+        if (! $hasGraded) {
+            return redirect()->back()
+                ->withErrors(['error' => 'Grade the candidate\'s submission first — that is what moves this application forward.'])
+                ->withInput();
         }
 
         $request->validate([
-            'status' => 'required|in:Assessment In Progress,Awaiting Final Decision',
-            'evaluator_feedback' => 'nullable|string|max:1000',
+            'evaluator_feedback' => 'required|string|max:1000',
         ]);
 
-        $application->update([
-            'status' => $request->status,
+        StageMachine::record($application, [
             'evaluator_feedback' => $request->evaluator_feedback,
-            'reviewed_at' => now(),
-            'status_updated_at' => now(),
         ]);
-
-        $application = Application::where('_id', $id)->firstOrFail();
-
-        $this->sendMail(
-            $application->user_id,
-            'UTM APEL C Evaluator Review Updated',
-            "Your APEL C evaluator review has been updated.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Status: {$application->status}\n\n" .
-                "Feedback: " . ($application->evaluator_feedback ?? 'No feedback provided.')
-        );
 
         return redirect()->route('evaluator.applications.index')
-            ->with('success', 'Application updated successfully.');
+            ->with('success', 'Your remarks have been saved against this application.');
     }
 
     public function apelAIndex()
     {
         $applications = Application::where('application_type', 'APEL A')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->orderBy('submission_date', 'desc')
             ->get();
@@ -213,14 +256,14 @@ class ApplicationReviewController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Evaluator review mail error: ' . $e->getMessage());
+            Log::error('Evaluator review mail error: '.$e->getMessage());
         }
     }
 }

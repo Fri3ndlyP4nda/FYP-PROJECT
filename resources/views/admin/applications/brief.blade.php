@@ -7,8 +7,8 @@
     <style>
         body {
             margin: 0;
-            background: #f3f4f6;
-            color: #111827;
+            background: var(--surface-sunk);
+            color: var(--ink);
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
             line-height: 1.5;
@@ -23,7 +23,7 @@
             align-items: center;
             padding: 14px 24px;
             background: #ffffff;
-            border-bottom: 1px solid #d1d5db;
+            border-bottom: 1px solid var(--line-strong);
         }
 
         .toolbar-title {
@@ -34,9 +34,9 @@
         .btn {
             display: inline-block;
             padding: 7px 14px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--line-strong);
             border-radius: 6px;
-            color: #374151;
+            color: var(--ink-2);
             background: #ffffff;
             font-weight: 700;
             font-size: 12px;
@@ -45,8 +45,8 @@
         }
 
         .btn-primary {
-            background: #8B1E3F;
-            border-color: #8B1E3F;
+            background: var(--maroon);
+            border-color: var(--maroon);
             color: #ffffff;
         }
 
@@ -64,7 +64,7 @@
             display: flex;
             justify-content: space-between;
             gap: 24px;
-            border-bottom: 3px solid #111827;
+            border-bottom: 3px solid var(--ink);
             padding-bottom: 14px;
             margin-bottom: 18px;
         }
@@ -78,7 +78,7 @@
 
         .header p {
             margin: 0;
-            color: #4b5563;
+            color: var(--ink-2);
         }
 
         .score-box {
@@ -110,8 +110,8 @@
         }
 
         .badge-medium {
-            color: #92400e;
-            background: #fef3c7;
+            color: var(--attention);
+            background: var(--attention-tint);
         }
 
         .badge-high {
@@ -126,7 +126,7 @@
         }
 
         .card {
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--line-strong);
             border-radius: 8px;
             padding: 12px;
             page-break-inside: avoid;
@@ -136,7 +136,7 @@
             margin: 0 0 8px 0;
             font-size: 14px;
             text-transform: uppercase;
-            color: #111827;
+            color: var(--ink);
         }
 
         .meta-table {
@@ -147,7 +147,7 @@
 
         .meta-table td,
         .meta-table th {
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--line-strong);
             padding: 7px;
             text-align: left;
             vertical-align: top;
@@ -155,8 +155,8 @@
 
         .meta-table th {
             width: 165px;
-            background: #f9fafb;
-            color: #374151;
+            background: var(--surface-sunk);
+            color: var(--ink-2);
         }
 
         .section {
@@ -167,7 +167,7 @@
         .section h2 {
             margin: 0 0 8px 0;
             padding-bottom: 5px;
-            border-bottom: 1px solid #111827;
+            border-bottom: 1px solid var(--ink);
             font-size: 15px;
             text-transform: uppercase;
         }
@@ -188,14 +188,14 @@
 
         .criteria-table th,
         .criteria-table td {
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--line-strong);
             padding: 7px;
             vertical-align: top;
             text-align: left;
         }
 
         .criteria-table th {
-            background: #f9fafb;
+            background: var(--surface-sunk);
         }
 
         .status-pass {
@@ -204,20 +204,20 @@
         }
 
         .status-warning {
-            color: #b45309;
+            color: var(--attention);
             font-weight: 800;
         }
 
         .status-fail {
-            color: #dc2626;
+            color: var(--bad);
             font-weight: 800;
         }
 
         .footer {
             margin-top: 28px;
             padding-top: 10px;
-            border-top: 1px solid #d1d5db;
-            color: #6b7280;
+            border-top: 1px solid var(--line-strong);
+            color: var(--ink-3);
             font-size: 11px;
             display: flex;
             justify-content: space-between;

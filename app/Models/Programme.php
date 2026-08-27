@@ -15,6 +15,6 @@ class Programme extends Model
         'faculty',
         'level',
         'type',
-        'status'
+        'status',
     ];
 }

@@ -313,7 +313,7 @@
                 @endphp
 
                 @if ($submission && $submission->graded_at)
-                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid #10b981; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid var(--good); background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                         <h3 style="color: #065f46; margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
                             <span>✓</span> Portfolio Evaluation Completed
                         </h3>
@@ -322,19 +322,19 @@
                         </div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; font-size: 14px;">
-                            <div>Overall Score: <strong style="font-size: 15px; color: #1f2937;">{{ $submission->score }}%</strong></div>
-                            <div>Outcome: <strong style="font-size: 15px; color: {{ $submission->result === 'pass' ? '#10b981' : '#ef4444' }}; text-transform: uppercase;">{{ $submission->result === 'pass' ? 'PASS' : 'FAIL' }}</strong></div>
+                            <div>Overall Score: <strong style="font-size: 15px; color: var(--ink);">{{ $submission->score }}%</strong></div>
+                            <div>Outcome: <strong style="font-size: 15px; color: {{ $submission->result === 'pass' ? 'var(--good)' : 'var(--bad)' }}; text-transform: uppercase;">{{ $submission->result === 'pass' ? 'PASS' : 'FAIL' }}</strong></div>
                         </div>
 
                         <!-- CLO Scores if available -->
                         @if(isset($submission->evaluator_1_clo1) || isset($submission->evaluator_2_clo1))
-                            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-top: 15px;">
-                                <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 13px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px;">Evaluator Rubric Scores</h4>
+                            <div style="background: var(--surface-sunk); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 15px;">
+                                <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 13px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.5px;">Evaluator Rubric Scores</h4>
                                 
                                 @if(isset($submission->evaluator_1_clo1))
                                     <div style="margin-bottom: 10px;">
-                                        <strong style="font-size: 12px; color: #8B1E3F; display: block; margin-bottom: 4px;">Evaluator 1 Scores:</strong>
-                                        <span style="font-size: 12.5px; color: #374151;">
+                                        <strong style="font-size: 12px; color: var(--maroon); display: block; margin-bottom: 4px;">Evaluator 1 Scores:</strong>
+                                        <span style="font-size: 12.5px; color: var(--ink-2);">
                                             CLO1: <strong>{{ $submission->evaluator_1_clo1 }}/10</strong> | 
                                             CLO2: <strong>{{ $submission->evaluator_1_clo2 }}/10</strong> | 
                                             CLO3: <strong>{{ $submission->evaluator_1_clo3 }}/10</strong> | 
@@ -345,8 +345,8 @@
 
                                 @if(isset($submission->evaluator_2_clo1))
                                     <div>
-                                        <strong style="font-size: 12px; color: #8B1E3F; display: block; margin-bottom: 4px;">Evaluator 2 Scores:</strong>
-                                        <span style="font-size: 12.5px; color: #374151;">
+                                        <strong style="font-size: 12px; color: var(--maroon); display: block; margin-bottom: 4px;">Evaluator 2 Scores:</strong>
+                                        <span style="font-size: 12.5px; color: var(--ink-2);">
                                             CLO1: <strong>{{ $submission->evaluator_2_clo1 }}/10</strong> | 
                                             CLO2: <strong>{{ $submission->evaluator_2_clo2 }}/10</strong> | 
                                             CLO3: <strong>{{ $submission->evaluator_2_clo3 }}/10</strong> | 
@@ -358,11 +358,11 @@
                         @endif
                     </div>
                 @else
-                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid #8B1E3F; background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="color: #8B1E3F; margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid var(--maroon); background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <h3 style="color: var(--maroon); margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
                             <span>📄</span> Portfolio Assessment In Progress
                         </h3>
-                        <p style="font-size: 13px; color: #4b5563; line-height: 1.5; margin-bottom: 0;">
+                        <p style="font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 0;">
                             Your advisor has recommended the <strong>Portfolio Mode of Assessment</strong>. The evaluator is currently reviewing your uploaded portfolio. No further action is required from you.
                         </p>
                     </div>
@@ -422,7 +422,7 @@
                 @endif
 
                 @if (($application->payment_status ?? 'pending') === 'verified')
-                    <p class="feedback-text" style="color: #059669; font-weight: 500; margin-top: 15px;">
+                    <p class="feedback-text" style="color: var(--good); font-weight: 500; margin-top: 15px;">
                         Your payment has been verified by the Faculty Academic Office.
                     </p>
                 @elseif (($application->payment_status ?? 'pending') === 'submitted')
@@ -434,15 +434,15 @@
                         enctype="multipart/form-data" style="margin-top: 15px;">
                         @csrf
 
-                        <label>Upload Payment Receipt</label>
-                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <label for="f-payment-receipt">Upload Payment Receipt</label>
+                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required id="f-payment-receipt">
 
-                        <small style="display:block; margin-top:5px; color:#666;">
+                        <small style="display:block; margin-top:5px; color:var(--ink-3);">
                             Allowed format: PDF, JPG, JPEG, PNG. Maximum size: 5MB.
                         </small>
 
-                        <label>Payment Remarks</label>
-                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub.">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
+                        <label for="f-payment-remarks">Payment Remarks</label>
+                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub." id="f-payment-remarks">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
 
                         <div class="form-submit-row">
                             <button type="submit" class="btn">
@@ -455,7 +455,7 @@
 
             {{-- APPEAL WORKFLOW --}}
             @if (($application->status ?? '') === 'Final Rejected' || ($application->credit_decision ?? '') === 'rejected')
-                <div class="record-panel" style="margin-top: 20px; border-top: 2px solid #ef4444; padding-top: 20px;">
+                <div class="record-panel" style="margin-top: 20px; border-top: 2px solid var(--bad); padding-top: 20px;">
                     @if (($application->appeal_status ?? null) !== 'submitted')
                         <h4 style="color: #b91c1c; margin-bottom: 10px;">Submit Appeal Request</h4>
                         <p class="feedback-text" style="margin-bottom: 15px;">
@@ -465,8 +465,8 @@
                         <form method="POST" action="{{ route('student.applications.appeal', $application->_id) }}">
                             @csrf
 
-                            <label style="font-weight:700; color:#b91c1c;">Reason for Appeal</label>
-                            <textarea name="appeal_remarks" rows="5" class="form-control" placeholder="Explain how your prior learning justifies the credit award..." required></textarea>
+                            <label for="f-appeal-remarks" style="font-weight:700; color:#b91c1c;">Reason for Appeal</label>
+                            <textarea name="appeal_remarks" rows="5" class="form-control" placeholder="Explain how your prior learning justifies the credit award..." required id="f-appeal-remarks"></textarea>
 
                             <div class="form-submit-row">
                                 <button type="submit" class="btn" style="background: #b91c1c;">
@@ -508,20 +508,20 @@
             }
             .row-card {
                 background: #ffffff;
-                border: 1px solid #e5e7eb;
+                border: 1px solid var(--line);
                 border-radius: 12px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                 overflow: hidden;
             }
             .row-card-header {
                 background: #fafafb;
-                border-bottom: 1px solid #e5e7eb;
+                border-bottom: 1px solid var(--line);
                 padding: 10px 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 font-weight: 600;
-                color: #8B1E3F;
+                color: var(--maroon);
             }
             .row-card-body {
                 padding: 16px;
@@ -536,14 +536,14 @@
             .row-card-body label {
                 font-size: 11px;
                 font-weight: 600;
-                color: #4b5563;
+                color: var(--ink-2);
                 margin-bottom: 0 !important;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
             }
             .row-card-body strong {
                 font-size: 13.5px;
-                color: #1f2937;
+                color: var(--ink);
             }
             .details-tab-content {
                 animation: fadeIn 0.2s ease-in-out;
@@ -563,11 +563,11 @@
                 </div>
             </div>
 
-            <div class="form-tabs" style="margin-top: 20px; display: flex; gap: 6px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px;">
-                <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #6b7280; font-size: 13px;">Personal Particulars</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #6b7280; font-size: 13px;">Formal Learning</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #6b7280; font-size: 13px;">Experience & Training</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #6b7280; font-size: 13px;">Other Learning</button>
+            <div class="form-tabs" style="margin-top: 20px; display: flex; gap: 6px; border-bottom: 2px solid var(--line); padding-bottom: 6px;">
+                <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Personal Particulars</button>
+                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Formal Learning</button>
+                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Experience & Training</button>
+                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Other Learning</button>
             </div>
 
             <!-- TAB 1: Personal Particulars -->
@@ -631,7 +631,7 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="muted" style="font-style: italic; color: #6b7280; font-size: 13.5px;">No formal learning recorded.</p>
+                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No formal learning recorded.</p>
                 @endif
             </div>
 
@@ -647,7 +647,7 @@
                     ];
                 @endphp
                 
-                <h4 style="color: #8B1E3F; margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Experiential Learning (Employment History)</h4>
+                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Experiential Learning (Employment History)</h4>
                 @if(!empty($jobs) && count($jobs) > 0 && (!empty($jobs[0]['employer_name']) || !empty($jobs[0]['position_held'])))
                     <div class="cards-container" style="margin-bottom: 30px;">
                         @foreach ($jobs as $idx => $item)
@@ -679,7 +679,7 @@
                                         </div>
                                         <div class="field-col job-roles" style="grid-column: span 12;">
                                             <label>Job Roles / Performed</label>
-                                            <p style="margin: 4px 0 0 0; color: #374151; font-size: 13px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
+                                            <p style="margin: 4px 0 0 0; color: var(--ink-2); font-size: 13px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -687,10 +687,10 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="muted" style="font-style: italic; color: #6b7280; font-size: 13.5px; margin-bottom: 30px;">No employment history recorded.</p>
+                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px; margin-bottom: 30px;">No employment history recorded.</p>
                 @endif
 
-                <h4 style="color: #8B1E3F; margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Training Activities</h4>
+                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Training Activities</h4>
                 @if(!empty($trainings) && count($trainings) > 0 && (!empty($trainings[0]['course_name']) || !empty($trainings[0]['location'])))
                     <div class="cards-container">
                         @foreach ($trainings as $idx => $item)
@@ -718,12 +718,12 @@
                                         </div>
                                         <div class="field-col skills-learnt" style="grid-column: span 12;">
                                             <label>Skills Checklist / Learnt</label>
-                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #f9fafb; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 4px;">
+                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
                                                 @php
                                                     $checkedSkills = $item['skills_learnt'] ?? [];
                                                 @endphp
                                                 @foreach ($skillsList as $sIdx => $sName)
-                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? '#111827' : '#9ca3af' }}; display: flex; align-items: center; gap: 6px;">
+                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
                                                         <span style="font-size: 14px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
                                                         <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
                                                     </div>
@@ -736,7 +736,7 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="muted" style="font-style: italic; color: #6b7280; font-size: 13.5px;">No training activities recorded.</p>
+                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No training activities recorded.</p>
                 @endif
             </div>
 
@@ -752,7 +752,7 @@
                     ];
                 @endphp
 
-                <h4 style="color: #8B1E3F; margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Other Learning Skills / Activities</h4>
+                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Other Learning Skills / Activities</h4>
                 @if(!empty($otherSkills) && count($otherSkills) > 0 && (!empty($otherSkills[0]['other_activities']) || !empty($otherSkills[0]['year'])))
                     <div class="cards-container" style="margin-bottom: 30px;">
                         @foreach ($otherSkills as $idx => $item)
@@ -772,12 +772,12 @@
                                         </div>
                                         <div class="field-col skills-learnt" style="grid-column: span 12;">
                                             <label>Skills Checklist / Learnt</label>
-                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #f9fafb; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 4px;">
+                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
                                                 @php
                                                     $checkedSkills = $item['skills_learnt'] ?? [];
                                                 @endphp
                                                 @foreach ($skillsList as $sIdx => $sName)
-                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? '#111827' : '#9ca3af' }}; display: flex; align-items: center; gap: 6px;">
+                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
                                                         <span style="font-size: 14px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
                                                         <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
                                                     </div>
@@ -790,38 +790,38 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="muted" style="font-style: italic; color: #6b7280; font-size: 13.5px; margin-bottom: 30px;">No other learning activities recorded.</p>
+                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px; margin-bottom: 30px;">No other learning activities recorded.</p>
                 @endif
 
-                <h4 style="color: #8B1E3F; margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">Language Skills</h4>
+                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Language Skills</h4>
                 @if(!empty($langSkills))
                     <table class="dynamic-table" style="width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px;">
                         <thead>
-                            <tr style="background: #fafafb; border-bottom: 1px solid #e5e7eb;">
-                                <th style="padding: 10px; text-align: left; font-size: 12px; color: #4b5563; font-weight: 600;">Language</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: #4b5563; font-weight: 600;">Listening</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: #4b5563; font-weight: 600;">Reading</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: #4b5563; font-weight: 600;">Speaking</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: #4b5563; font-weight: 600;">Writing</th>
+                            <tr style="background: #fafafb; border-bottom: 1px solid var(--line);">
+                                <th style="padding: 10px; text-align: left; font-size: 12px; color: var(--ink-2); font-weight: 600;">Language</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Listening</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Reading</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Speaking</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Writing</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($langSkills as $item)
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 10px; font-size: 13.5px; font-weight: 600; color: #1f2937;">{{ $item['language'] ?? 'N/A' }}</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: #374151;">{{ $item['listening'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: #374151;">{{ $item['reading'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: #374151;">{{ $item['speaking'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: #374151;">{{ $item['writing'] ?? '3' }} / 4</td>
+                                <tr style="border-bottom: 1px solid var(--line);">
+                                    <td style="padding: 10px; font-size: 13.5px; font-weight: 600; color: var(--ink);">{{ $item['language'] ?? 'N/A' }}</td>
+                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['listening'] ?? '3' }} / 4</td>
+                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['reading'] ?? '3' }} / 4</td>
+                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['speaking'] ?? '3' }} / 4</td>
+                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['writing'] ?? '3' }} / 4</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                    <div style="font-size: 11px; color: #6b7280; margin-bottom: 20px;">
+                    <div style="font-size: 11px; color: var(--ink-3); margin-bottom: 20px;">
                         Scale Competency - 1: Poor; 2: Average; 3: Good; 4: Excellent
                     </div>
                 @else
-                    <p class="muted" style="font-style: italic; color: #6b7280; font-size: 13.5px;">No language skills recorded.</p>
+                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No language skills recorded.</p>
                 @endif
             </div>
         </section>
@@ -837,14 +837,14 @@
             const links = document.querySelectorAll(".form-tabs .tab-link");
             links.forEach(link => {
                 link.classList.remove("active");
-                link.style.color = "#6b7280";
+                link.style.color = "var(--ink-3)";
                 link.style.background = "transparent";
             });
             
             document.getElementById(tabId).style.display = "block";
             evt.currentTarget.classList.add("active");
             evt.currentTarget.style.color = "#ffffff";
-            evt.currentTarget.style.background = "#8B1E3F";
+            evt.currentTarget.style.background = "#6e1730";
             evt.currentTarget.style.borderRadius = "6px";
         }
 
@@ -857,14 +857,14 @@
             const links = evt.currentTarget.parentElement.querySelectorAll(".tab-link");
             links.forEach(link => {
                 link.classList.remove("active");
-                link.style.color = "#6b7280";
+                link.style.color = "var(--ink-3)";
                 link.style.background = "transparent";
             });
             
             document.getElementById(tabId).style.display = "block";
             evt.currentTarget.classList.add("active");
             evt.currentTarget.style.color = "#ffffff";
-            evt.currentTarget.style.background = "#8B1E3F";
+            evt.currentTarget.style.background = "#6e1730";
             evt.currentTarget.style.borderRadius = "6px";
         }
 
@@ -873,7 +873,7 @@
             const activeLink = document.querySelector(".form-tabs .tab-link.active");
             if (activeLink) {
                 activeLink.style.color = "#ffffff";
-                activeLink.style.background = "#8B1E3F";
+                activeLink.style.background = "#6e1730";
                 activeLink.style.borderRadius = "6px";
             }
 
@@ -883,9 +883,9 @@
                 textarea.addEventListener("input", function() {
                     const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
                     if (words < 200) {
-                        countDiv.innerHTML = `<span style="color: #ef4444; font-weight:600;">Word count: ${words} words (Minimum 200 words required)</span>`;
+                        countDiv.innerHTML = `<span style="color: var(--bad); font-weight:600;">Word count: ${words} words (Minimum 200 words required)</span>`;
                     } else {
-                        countDiv.innerHTML = `<span style="color: #10b981; font-weight:600;">Word count: ${words} words (Valid)</span>`;
+                        countDiv.innerHTML = `<span style="color: var(--good); font-weight:600;">Word count: ${words} words (Valid)</span>`;
                     }
                 });
             });
