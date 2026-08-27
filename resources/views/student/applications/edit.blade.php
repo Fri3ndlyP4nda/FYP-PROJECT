@@ -6,14 +6,14 @@
             display: flex;
             gap: 8px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #e4e0d8;
+            border-bottom: 2px solid var(--line);
             padding-bottom: 8px;
             flex-wrap: wrap;
         }
         .tab-link {
             border: none;
             background: transparent;
-            color: #837e75;
+            color: var(--ink-3);
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -22,7 +22,7 @@
             font-size: 13.5px;
         }
         .tab-link.active {
-            background: #6e1730;
+            background: var(--maroon);
             color: #ffffff;
         }
         .tab-content {
@@ -36,7 +36,7 @@
             border-collapse: collapse !important;
             margin-bottom: 24px !important;
             background: #ffffff !important;
-            border: 1px solid #e4e0d8 !important;
+            border: 1px solid var(--line) !important;
             border-radius: 8px !important;
             overflow: hidden !important;
         }
@@ -44,11 +44,11 @@
             table-layout: fixed !important;
         }
         .dynamic-table th {
-            background: #fbfaf8 !important;
-            color: #6e1730 !important;
+            background: var(--surface-sunk) !important;
+            color: var(--maroon) !important;
             font-weight: 700 !important;
             padding: 10px 8px !important;
-            border: 1px solid #e4e0d8 !important;
+            border: 1px solid var(--line) !important;
             font-size: 11px !important;
             text-transform: uppercase !important;
             letter-spacing: 0.3px !important;
@@ -57,7 +57,7 @@
         }
         .dynamic-table td {
             padding: 10px 12px !important;
-            border: 1px solid #e4e0d8 !important;
+            border: 1px solid var(--line) !important;
             vertical-align: middle !important;
         }
         .dynamic-table td input,
@@ -65,7 +65,7 @@
             width: 100% !important;
             padding: 8px 10px !important;
             margin-bottom: 0 !important;
-            border: 1px solid #cfc9be !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 8px !important;
             font-size: 13px !important;
             background-color: #ffffff !important;
@@ -78,7 +78,7 @@
             resize: vertical !important;
             padding: 8px 10px !important;
             margin-bottom: 0 !important;
-            border: 1px solid #cfc9be !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 8px !important;
             font-size: 13px !important;
             background-color: #ffffff !important;
@@ -90,9 +90,9 @@
             gap: 6px !important;
             max-height: 140px !important;
             overflow-y: auto !important;
-            border: 1px solid #e4e0d8 !important;
+            border: 1px solid var(--line) !important;
             padding: 8px !important;
-            background: #fbfaf8 !important;
+            background: var(--surface-sunk) !important;
             border-radius: 6px !important;
             box-sizing: border-box !important;
         }
@@ -102,7 +102,7 @@
             gap: 6px !important;
             font-size: 11.5px !important;
             font-weight: 500 !important;
-            color: #4e4b45 !important;
+            color: var(--ink-2) !important;
             margin-bottom: 0 !important;
             cursor: pointer !important;
         }
@@ -142,25 +142,25 @@
             padding: 6px 8px !important;
             font-size: 13px !important;
             border-radius: 6px !important;
-            border: 1px solid #cfc9be !important;
+            border: 1px solid var(--line-strong) !important;
             background-color: #ffffff !important;
             margin-bottom: 0 !important;
             box-sizing: border-box !important;
         }
 
         .referee-card {
-            border: 1px solid #e4e0d8;
+            border: 1px solid var(--line);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
-            background: #fbfaf8;
+            background: var(--surface-sunk);
         }
         .referee-card h4 {
             margin-top: 0;
-            color: #6e1730;
+            color: var(--maroon);
             font-weight: 600;
             font-size: 14.5px;
-            border-bottom: 1px solid #e4e0d8;
+            border-bottom: 1px solid var(--line);
             padding-bottom: 6px;
             margin-bottom: 12px;
         }
@@ -181,20 +181,20 @@
         }
         .row-card {
             background: #ffffff;
-            border: 1px solid #e4e0d8;
+            border: 1px solid var(--line);
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow: hidden;
         }
         .row-card-header {
             background: #fafafb;
-            border-bottom: 1px solid #e4e0d8;
+            border-bottom: 1px solid var(--line);
             padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-            color: #6e1730;
+            color: var(--maroon);
         }
         .row-card-body {
             padding: 16px;
@@ -210,7 +210,7 @@
         .row-card-body label {
             font-size: 11px;
             font-weight: 600;
-            color: #4e4b45;
+            color: var(--ink-2);
             margin-bottom: 0 !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -221,7 +221,7 @@
             width: 100% !important;
             box-sizing: border-box !important;
             padding: 8px 12px !important;
-            border: 1px solid #cfc9be !important;
+            border: 1px solid var(--line-strong) !important;
             border-radius: 6px !important;
             font-size: 13px !important;
             margin-bottom: 0 !important;
@@ -253,9 +253,9 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
-            background: #fbfaf8;
+            background: var(--surface-sunk);
             padding: 12px;
-            border: 1px solid #e4e0d8;
+            border: 1px solid var(--line);
             border-radius: 8px;
             max-height: 160px;
             overflow-y: auto;
@@ -267,7 +267,7 @@
             gap: 6px;
             font-size: 11.5px !important;
             font-weight: normal !important;
-            color: #4e4b45 !important;
+            color: var(--ink-2) !important;
             text-transform: none !important;
             letter-spacing: normal !important;
             cursor: pointer;
@@ -357,43 +357,43 @@
                         <h3>APEL A Internal Application Form</h3>
 
                         <label for="ic-no-input">Identity Card (IC) No.</label>
-                        <input type="text" name="ic_no" id="ic-no-input" value="{{ old('ic_no', $application->
-                        <x-field-error name="ic_no" />ic_no) }}" placeholder="Example: 951020-10-5033" style="margin-bottom: 4px !important;">
+                        <input type="text" name="ic_no" id="ic-no-input" value="{{ old('ic_no', $application->ic_no) }}" placeholder="Example: 951020-10-5033" style="margin-bottom: 4px !important;">
+                        <x-field-error name="ic_no" />
                         <div id="citizenship-indicator" style="font-size: 12px; font-weight: 600; margin-bottom: 15px; display: block;">
                             Please enter your 12-digit IC number.
                         </div>
 
                         <label for="age-input">Age</label>
-                        <input type="number" name="age" id="age-input" value="{{ old('age', $application->
-                        <x-field-error name="age" />age) }}" min="18" max="100" placeholder="Example: 25" style="margin-bottom: 4px !important;">
-                        <div id="age-warning" style="font-size: 12px; color: #a32a20; font-weight: 600; margin-bottom: 15px; display: none;">
+                        <input type="number" name="age" id="age-input" value="{{ old('age', $application->age) }}" min="18" max="100" placeholder="Example: 25" style="margin-bottom: 4px !important;">
+                        <x-field-error name="age" />
+                        <div id="age-warning" style="font-size: 12px; color: var(--bad); font-weight: 600; margin-bottom: 15px; display: none;">
                             ⚠️ Alert: APEL A for Master level access requires candidates to be at least 30 years of age.
                         </div>
 
                         <label for="f-university-name">Name of University (Highest Qualification)</label>
-                        <input type="text" name="university_name" value="{{ old('university_name', $application- id="f-university-name">
-                        <x-field-error name="university_name" />university_name) }}" placeholder="Example: Universiti Teknologi Malaysia">
+                        <input type="text" name="university_name" id="f-university-name" value="{{ old('university_name', $application->university_name) }}" placeholder="Example: Universiti Teknologi Malaysia">
+                        <x-field-error name="university_name" />
 
                         <label for="f-company-name">Name of Company (Current Employment)</label>
-                        <input type="text" name="company_name" value="{{ old('company_name', $application- id="f-company-name">
-                        <x-field-error name="company_name" />company_name) }}" placeholder="Example: Google Inc.">
+                        <input type="text" name="company_name" id="f-company-name" value="{{ old('company_name', $application->company_name) }}" placeholder="Example: Google Inc.">
+                        <x-field-error name="company_name" />
 
                         <label for="qualification-input">Highest Academic Qualification</label>
-                        <input type="text" name="highest_qualification" id="qualification-input" value="{{ old('highest_qualification', $application->
-                        <x-field-error name="highest_qualification" />highest_qualification) }}"
+                        <input type="text" name="highest_qualification" id="qualification-input" value="{{ old('highest_qualification', $application->highest_qualification) }}"
+                        <x-field-error name="highest_qualification" />
                             placeholder="Example: Diploma in Computer Science" style="margin-bottom: 4px !important;">
-                        <div id="qualification-warning" style="font-size: 12px; color: #a32a20; font-weight: 600; margin-bottom: 15px; display: none;">
+                        <div id="qualification-warning" style="font-size: 12px; color: var(--bad); font-weight: 600; margin-bottom: 15px; display: none;">
                             ⚠️ Alert: The highest qualification for APEL A must start exactly with "Diploma" (e.g., Diploma in Computer Science).
                         </div>
 
                         <label for="f-current-job">Current Job / Position</label>
-                        <input type="text" name="current_job" value="{{ old('current_job', $application- id="f-current-job">
-                        <x-field-error name="current_job" />current_job) }}"
+                        <input type="text" name="current_job" id="f-current-job" value="{{ old('current_job', $application->current_job) }}"
+                        <x-field-error name="current_job" />
                             placeholder="Example: IT Executive / Software Developer">
 
                         <label for="f-working-experience-years">Years of Working Experience</label>
-                        <input type="number" name="working_experience_years" value="{{ old('working_experience_years', $application- id="f-working-experience-years">
-                        <x-field-error name="working_experience_years" />working_experience_years) }}"
+                        <input type="number" name="working_experience_years" id="f-working-experience-years" value="{{ old('working_experience_years', $application->working_experience_years) }}"
+                        <x-field-error name="working_experience_years" />
                             min="0" placeholder="Example: 5">
 
                         <label for="f-working-experience-details">Relevant Working Experience</label>
@@ -432,18 +432,18 @@
                             <x-field-error name="target_semester" />
                             -->
 
-                            <h4 style="color: #6e1730; margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
+                            <h4 style="color: var(--maroon); margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
                             <label for="f-pre-app-data-personal-particulars-name">Full Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', $application- id="f-pre-app-data-personal-particulars-name">
-                            <x-field-error name="pre_app_data.personal_particulars.name" />pre_app_data['personal_particulars']['name'] ?? auth()->user()->name) }}" required>
+                            <input type="text" name="pre_app_data[personal_particulars][name]" id="f-pre-app-data-personal-particulars-name" value="{{ old('pre_app_data.personal_particulars.name', $application->pre_app_data['personal_particulars']['name'] ?? auth()->user()->name) }}" required>
+                        <x-field-error name="pre_app_data.personal_particulars.name" />
 
                             <label for="f-pre-app-data-personal-particulars-matric-no">Matric No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" value="{{ old('pre_app_data.personal_particulars.matric_no', $application- id="f-pre-app-data-personal-particulars-matric-no">
-                            <x-field-error name="pre_app_data.personal_particulars.matric_no" />pre_app_data['personal_particulars']['matric_no'] ?? '') }}" placeholder="e.g. MEC244062">
+                            <input type="text" name="pre_app_data[personal_particulars][matric_no]" id="f-pre-app-data-personal-particulars-matric-no" value="{{ old('pre_app_data.personal_particulars.matric_no', $application->pre_app_data['personal_particulars']['matric_no'] ?? '') }}" placeholder="e.g. MEC244062">
+                        <x-field-error name="pre_app_data.personal_particulars.matric_no" />
 
                             <label for="f-pre-app-data-personal-particulars-ic-no">Identity Card No.</label>
-                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" value="{{ old('pre_app_data.personal_particulars.ic_no', $application- id="f-pre-app-data-personal-particulars-ic-no">
-                            <x-field-error name="pre_app_data.personal_particulars.ic_no" />pre_app_data['personal_particulars']['ic_no'] ?? '') }}" placeholder="e.g. 851020105033" required>
+                            <input type="text" name="pre_app_data[personal_particulars][ic_no]" id="f-pre-app-data-personal-particulars-ic-no" value="{{ old('pre_app_data.personal_particulars.ic_no', $application->pre_app_data['personal_particulars']['ic_no'] ?? '') }}" placeholder="e.g. 851020105033" required>
+                        <x-field-error name="pre_app_data.personal_particulars.ic_no" />
 
                             <label for="f-pre-app-data-personal-particulars-highest-qualification">Highest Academic Qualification</label>
                             @php
@@ -460,7 +460,7 @@
                             </select>
                             <x-field-error name="pre_app_data.personal_particulars.highest_qualification" />
 
-                            <h4 style="color: #6e1730; margin-top: 20px; margin-bottom: 10px;">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEducationRow()">+ Add Education</button>
                             </div>
@@ -473,7 +473,7 @@
                                         <div class="row-card-header">
                                             <span>Education Entry #{{ $idx + 1 }}</span>
                                             @if($idx > 0)
-                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                                             @endif
                                         </div>
                                         <div class="row-card-body education-grid">
@@ -501,7 +501,7 @@
 
                         {{-- TAB 2: Experience & Training --}}
                         <div id="tab-experience" class="tab-content">
-                            <h4 style="color: #6e1730; margin-bottom: 10px;">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEmploymentRow()">+ Add Employer</button>
                             </div>
@@ -514,7 +514,7 @@
                                         <div class="row-card-header">
                                             <span>Employer Entry #{{ $idx + 1 }}</span>
                                             @if($idx > 0)
-                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                                             @endif
                                         </div>
                                         <div class="row-card-body employment-grid">
@@ -563,9 +563,9 @@
                                                             @endfor
                                                         </select>
                                                     </div>
-                                                    <div id="to-current-display-{{ $idx }}" style="display: none; font-weight: 600; color: #6e1730; font-size: 13px; padding: 6px 8px; border: 1px solid #cfc9be; background: #fbfaf8; border-radius: 6px; text-align: center;">Current</div>
+                                                    <div id="to-current-display-{{ $idx }}" style="display: none; font-weight: 600; color: var(--maroon); font-size: 13px; padding: 6px 8px; border: 1px solid var(--line-strong); background: var(--surface-sunk); border-radius: 6px; text-align: center;">Current</div>
                                                     <input type="hidden" name="pre_app_data[experiential_learning][{{ $idx }}][time_to]" value="{{ $item['time_to'] ?? '' }}" id="time-to-hidden-{{ $idx }}">
-                                                    <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: #4e4b45; cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
+                                                    <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: var(--ink-2); cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
                                                         <input type="checkbox" 
                                                                id="time-to-current-{{ $idx }}" 
                                                                onclick="toggleCurrentWorkCheckbox(this, {{ $idx }})" 
@@ -588,7 +588,7 @@
                                 @endforeach
                             </div>
 
-                            <h4 style="color: #6e1730; margin-top: 20px; margin-bottom: 10px;">TRAINING ACTIVITIES</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">TRAINING ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addTrainingRow()">+ Add Training Activity</button>
                             </div>
@@ -601,7 +601,7 @@
                                         <div class="row-card-header">
                                             <span>Training Entry #{{ $idx + 1 }}</span>
                                             @if($idx > 0)
-                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                                             @endif
                                         </div>
                                         <div class="row-card-body training-grid">
@@ -644,7 +644,7 @@
 
                         {{-- TAB 3: Skills & Languages --}}
                         <div id="tab-skills" class="tab-content">
-                            <h4 style="color: #6e1730; margin-bottom: 10px;">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addOtherSkillRow()">+ Add Activity</button>
                             </div>
@@ -657,7 +657,7 @@
                                         <div class="row-card-header">
                                             <span>Other Activity Entry #{{ $idx + 1 }}</span>
                                             @if($idx > 0)
-                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                                             @endif
                                         </div>
                                         <div class="row-card-body other-skills-grid">
@@ -685,7 +685,7 @@
                                 @endforeach
                             </div>
 
-                            <h4 style="color: #6e1730; margin-top: 20px; margin-bottom: 10px;">PART B (iv): LANGUAGE SKILLS</h4>
+                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (iv): LANGUAGE SKILLS</h4>
                             <table class="dynamic-table language-table">
                                 <thead>
                                     <tr>
@@ -726,14 +726,14 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            <div style="font-size: 11px; color: #837e75; margin-top: -10px; margin-bottom: 20px;">
+                            <div style="font-size: 11px; color: var(--ink-3); margin-top: -10px; margin-bottom: 20px;">
                                 Scale Competency - 1: Poor; 2: Average; 3: Good; 4: Excellent
                             </div>
                         </div>
 
                         {{-- TAB 4: Referees & Self-Assessment --}}
                         <div id="tab-referees" class="tab-content">
-                            <h4 style="color: #6e1730; margin-bottom: 10px;">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
                             @php
                                 $ref1 = $application->pre_app_data['referees'][0] ?? [];
                                 $ref2 = $application->pre_app_data['referees'][1] ?? [];
@@ -820,7 +820,7 @@
                                 </div>
                             </div>
 
-                            <h4 style="color: #6e1730; margin-top: 25px; margin-bottom: 10px;">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
+                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
                             <p style="font-size:12.5px; color:#5b626a; line-height:1.4; margin-bottom:15px;">
                                 For each Course Learning Outcome (CLO), describe how you have learned this outcome through your former studies or working career.
                             </p>
@@ -844,11 +844,11 @@
 
                         {{-- TAB 5: Uploads & Declaration --}}
                         <div id="tab-declaration" class="tab-content">
-                            <h4 style="color: #6e1730; margin-bottom: 10px;">PART C: PORTFOLIO & DECLARATION</h4>
+                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C: PORTFOLIO & DECLARATION</h4>
                             
-                            <div style="background: #fbfaf8; border: 1px solid #e4e0d8; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-                                <h5 style="color: #6e1730; margin-top: 0; margin-bottom: 8px; font-weight: 700; font-size: 13.5px;">📌 PORTFOLIO SUBMISSION INSTRUCTIONS</h5>
-                                <p style="font-size: 12.5px; color: #4e4b45; line-height: 1.5; margin-bottom: 0;">
+                            <div style="background: var(--surface-sunk); border: 1px solid var(--line); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                                <h5 style="color: var(--maroon); margin-top: 0; margin-bottom: 8px; font-weight: 700; font-size: 13.5px;">📌 PORTFOLIO SUBMISSION INSTRUCTIONS</h5>
+                                <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-bottom: 0;">
                                     Please upload your completed <strong>APEL (C) Portfolio Submission Form PDF</strong>. 
                                     This single compiled document must include:
                                     <br>• The **Self-Assessment Essay** (minimum 500 words) addressing all Course Learning Outcomes (CLOs).
@@ -857,27 +857,27 @@
                                 </p>
                             </div>
 
-                            <label for="portfolio-input"><strong>Upload Complete Portfolio PDF</strong> <span style="color: #a32a20;">*</span></label>
+                            <label for="portfolio-input"><strong>Upload Complete Portfolio PDF</strong> <span style="color: var(--bad);">*</span></label>
                             <input type="file" name="portfolio_file[]" id="portfolio-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                             <x-field-error name="portfolio_file" />
-                            <div id="portfolio-preview-list" style="margin-top: 8px; font-size: 13px; color: #4e4b45;">
+                            <div id="portfolio-preview-list" style="margin-top: 8px; font-size: 13px; color: var(--ink-2);">
                                 @if(!empty($application->portfolio_file))
                                     <ul style="list-style: none; padding: 0;">
                                         @foreach($application->portfolio_file as $file)
-                                            <li style="padding: 3px 0;">📄 <strong style="color: #1a1917;">{{ $file['name'] ?? basename($file['path']) }}</strong> (Already uploaded)</li>
+                                            <li style="padding: 3px 0;">📄 <strong style="color: var(--ink);">{{ $file['name'] ?? basename($file['path']) }}</strong> (Already uploaded)</li>
                                         @endforeach
                                     </ul>
                                 @endif
                             </div>
-                            <small style="display:block; margin-top:5px; color:#666; margin-bottom:15px;">
+                            <small style="display:block; margin-top:5px; color:var(--ink-3); margin-bottom:15px;">
                                 Allowed format: PDF, JPG, JPEG, PNG, DOC, DOCX. Maximum size: 5MB per file.
                             </small>
 
-                            <h4 style="color: #6e1730; margin-top: 25px; margin-bottom: 10px;">PART D: SELF-DECLARATION</h4>
-                            <div style="background: #fbfaf8; border: 1px solid #faebef; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
-                                <label style="font-weight: 400; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; color: #4e4b45;">
-                                    <input type="checkbox" name="pre_app_data[self_declaration][confirmed]" value="1" {{ ($application->
-                                    <x-field-error name="pre_app_data.self_declaration.confirmed" />pre_app_data['self_declaration']['confirmed'] ?? false) ? 'checked' : '' }} required style="width: auto; margin-top: 4px;">
+                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">PART D: SELF-DECLARATION</h4>
+                            <div style="background: var(--surface-sunk); border: 1px solid #faebef; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
+                                <label style="font-weight: 400; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; color: var(--ink-2);">
+                                    <input type="checkbox" name="pre_app_data[self_declaration][confirmed]" value="1" {{ ($application->pre_app_data['self_declaration']['confirmed'] ?? false) ? 'checked' : '' }} required style="width: auto; margin-top: 4px;">
+                                    <x-field-error name="pre_app_data.self_declaration.confirmed" />
                                     <span>
                                         I hereby declare that all of the information/documents provided to support this application are authentic, true and accurate. I fully understand that the UTM reserves the right to reject my application if proven otherwise.
                                     </span>
@@ -885,17 +885,17 @@
                             </div>
 
                             <label for="f-pre-app-data-self-declaration-name-as-per-ic">Name (As per IC)</label>
-                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" value="{{ $application- id="f-pre-app-data-self-declaration-name-as-per-ic">
-                            <x-field-error name="pre_app_data.self_declaration.name_as_per_ic" />pre_app_data['self_declaration']['name_as_per_ic'] ?? '' }}" placeholder="Full Name as per IC" required>
+                            <input type="text" name="pre_app_data[self_declaration][name_as_per_ic]" id="f-pre-app-data-self-declaration-name-as-per-ic" value="{{ $application->pre_app_data['self_declaration']['name_as_per_ic'] ?? '' }}" placeholder="Full Name as per IC" required>
+                        <x-field-error name="pre_app_data.self_declaration.name_as_per_ic" />
 
                             <label for="f-pre-app-data-self-declaration-date-declared">Date Declared</label>
-                            <input type="date" name="pre_app_data[self_declaration][date_declared]" value="{{ $application- id="f-pre-app-data-self-declaration-date-declared">
-                            <x-field-error name="pre_app_data.self_declaration.date_declared" />pre_app_data['self_declaration']['date_declared'] ?? date('Y-m-d') }}" required>
+                            <input type="date" name="pre_app_data[self_declaration][date_declared]" id="f-pre-app-data-self-declaration-date-declared" value="{{ $application->pre_app_data['self_declaration']['date_declared'] ?? date('Y-m-d') }}" required>
+                        <x-field-error name="pre_app_data.self_declaration.date_declared" />
                         </div>
                     </div>
 
                     <div class="form-submit-row" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-                        <span id="autosave-notice" style="font-size: 12px; color: #146b45; opacity: 0; transition: opacity 0.3s; margin-right: auto; font-weight: 500;">✓ Draft saved automatically</span>
+                        <span id="autosave-notice" style="font-size: 12px; color: var(--good); opacity: 0; transition: opacity 0.3s; margin-right: auto; font-weight: 500;">✓ Draft saved automatically</span>
                         <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" name="submit_type" value="draft" class="btn btn-secondary" formnovalidate>Save Draft</button>
                         <button type="submit" name="submit_type" value="submit" class="btn" id="submit-application-btn">Submit Application</button>
@@ -905,10 +905,10 @@
 
             <aside class="info-side-card">
                 <!-- APEL.A T-7 Requirements -->
-                <div id="apel-a-requirements-card" style="background: #fbfaf8; border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
-                    <span style="font-size: 10px; font-weight: 700; color: #6e1730; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.A T-7 Requirements</span>
+                <div id="apel-a-requirements-card" style="background: var(--surface-sunk); border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
+                    <span style="font-size: 10px; font-weight: 700; color: var(--maroon); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.A T-7 Requirements</span>
                     <h4 style="margin-top: 0; margin-bottom: 8px; color: #30030f; font-size: 14px; font-weight: 700;">Basic Access Eligibility</h4>
-                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: #4e4b45; line-height: 1.5; padding-left: 15px;">
+                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; padding-left: 15px;">
                         <li><strong>Malaysian Citizens</strong></li>
                         <li><strong>At least 30 years of age</strong> at the time of application.</li>
                         <li><strong>Hold exactly a Diploma</strong> (STPM/SPM are not eligible, and degree holders do not qualify for APEL A).</li>
@@ -920,7 +920,7 @@
                 <div id="apel-c-requirements-card" style="background: #fcfdfd; border: 1px solid rgba(13, 148, 136, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); display: none;">
                     <span style="font-size: 10px; font-weight: 700; color: #0d9488; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">APEL.C Requirements</span>
                     <h4 style="margin-top: 0; margin-bottom: 8px; color: #0f3f3b; font-size: 14px; font-weight: 700;">Credit Award Eligibility</h4>
-                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: #4e4b45; line-height: 1.5; padding-left: 15px;">
+                    <ul class="check-list" style="margin-bottom: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; padding-left: 15px;">
                         <li><strong>Hold at least a Diploma</strong> qualification.</li>
                         <li><strong>At least 3 years work experience</strong> in a related field.</li>
                         <li><strong>Professional certificates</strong> must be valid within 5 years.</li>
@@ -1054,7 +1054,7 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Education Entry #${educationIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body education-grid">
                     <div class="field-col">
@@ -1088,7 +1088,7 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Employer Entry #${employmentIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body employment-grid">
                     <div class="field-col employer-name">
@@ -1128,9 +1128,9 @@
                                     ${Array.from({length: 60}, (_, i) => new Date().getFullYear() + 2 - i).map(y => `<option value="${y}">${y}</option>`).join('')}
                                 </select>
                             </div>
-                            <div id="to-current-display-${employmentIndex}" style="display: none; font-weight: 600; color: #6e1730; font-size: 13px; padding: 6px 8px; border: 1px solid #cfc9be; background: #fbfaf8; border-radius: 6px; text-align: center;">Current</div>
+                            <div id="to-current-display-${employmentIndex}" style="display: none; font-weight: 600; color: var(--maroon); font-size: 13px; padding: 6px 8px; border: 1px solid var(--line-strong); background: var(--surface-sunk); border-radius: 6px; text-align: center;">Current</div>
                             <input type="hidden" name="pre_app_data[experiential_learning][${employmentIndex}][time_to]" id="time-to-hidden-${employmentIndex}">
-                            <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: #4e4b45; cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
+                            <label style="font-size: 11px; font-weight: normal; margin-top: 4px; display: flex; align-items: center; gap: 4px; color: var(--ink-2); cursor: pointer; width: auto !important; margin-bottom: 0 !important; text-transform: none; letter-spacing: normal;">
                                 <input type="checkbox" id="time-to-current-${employmentIndex}" onclick="toggleCurrentWorkCheckbox(this, ${employmentIndex})" style="width: 13px !important; height: 13px !important; margin: 0 !important; cursor: pointer;">
                                 <span>Present</span>
                             </label>
@@ -1159,7 +1159,7 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Training Entry #${trainingIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body training-grid">
                     <div class="field-col course-name">
@@ -1202,7 +1202,7 @@
             card.innerHTML = `
                 <div class="row-card-header">
                     <span>Other Activity Entry #${otherSkillIndex + 1}</span>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: #a32a20; border-color: #a32a20; color: white;">Remove</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.row-card').remove()" style="background: var(--bad); border-color: var(--bad); color: white;">Remove</button>
                 </div>
                 <div class="row-card-body other-skills-grid">
                     <div class="field-col other-activities">
@@ -1354,7 +1354,7 @@
                         li.style.gap = '8px';
                         
                         const sizeKB = (file.size / 1024).toFixed(1);
-                        li.innerHTML = `📄 <strong style="color: #1a1917;">${file.name}</strong> <span style="color: #837e75; font-size: 11px;">(${sizeKB} KB)</span>`;
+                        li.innerHTML = `📄 <strong style="color: var(--ink);">${file.name}</strong> <span style="color: var(--ink-3); font-size: 11px;">(${sizeKB} KB)</span>`;
                         ul.appendChild(li);
                     }
                     previewDiv.appendChild(ul);
@@ -1377,9 +1377,9 @@
                 icInput.addEventListener('input', function() {
                     const value = icInput.value.trim().replace(/-/g, '');
                     if (/^\d{12}$/.test(value)) {
-                        citizenshipIndicator.innerHTML = '<span style="color: #146b45;">🇲🇾 Malaysian Citizen verified (Valid IC Format)</span>';
+                        citizenshipIndicator.innerHTML = '<span style="color: var(--good);">🇲🇾 Malaysian Citizen verified (Valid IC Format)</span>';
                     } else if (value.length > 0) {
-                        citizenshipIndicator.innerHTML = '<span style="color: #a32a20;">❌ Invalid format. APEL A candidates must be Malaysian Citizens with a valid 12-digit IC.</span>';
+                        citizenshipIndicator.innerHTML = '<span style="color: var(--bad);">❌ Invalid format. APEL A candidates must be Malaysian Citizens with a valid 12-digit IC.</span>';
                     } else {
                         citizenshipIndicator.innerHTML = 'Please enter your 12-digit IC number.';
                     }

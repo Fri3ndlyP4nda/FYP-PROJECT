@@ -125,13 +125,13 @@
                                 <tr>
                                     <td style="font-weight: 600;">{{ $bottleneck['stage'] }}</td>
                                     <td>{{ $bottleneck['count'] }}</td>
-                                    <td style="font-size: 13.5px; color: #4e4b45;">
+                                    <td style="font-size: 13.5px; color: var(--ink-2);">
                                         This stage currently has queue pressure and should be checked first.
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" style="text-align: center; color: #a39d93; padding: 20px;">
+                                    <td colspan="3" style="text-align: center; color: var(--ink-4); padding: 20px;">
                                         No active workflow bottlenecks detected.
                                     </td>
                                 </tr>
@@ -264,7 +264,7 @@
                         <tbody>
                             @forelse($activityLogs as $log)
                                 <tr>
-                                    <td style="font-size: 13px; color: #837e75; white-space: nowrap;">
+                                    <td style="font-size: 13px; color: var(--ink-3); white-space: nowrap;">
                                         {{ $log->created_at ? $log->created_at->format('Y-m-d H:i') : 'N/A' }}
                                     </td>
                                     <td style="font-weight: 600;">{{ $log->user_name }}</td>
@@ -280,11 +280,11 @@
                                     <td>
                                         <span class="badge badge-submitted">{{ $log->action }}</span>
                                     </td>
-                                    <td style="font-size: 13.5px; color: #4e4b45;">{{ $log->description }}</td>
+                                    <td style="font-size: 13.5px; color: var(--ink-2);">{{ $log->description }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" style="text-align: center; color: #a39d93; padding: 24px;">
+                                    <td colspan="5" style="text-align: center; color: var(--ink-4); padding: 24px;">
                                         No recent system activities logged.
                                     </td>
                                 </tr>

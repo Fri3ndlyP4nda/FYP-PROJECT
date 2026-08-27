@@ -80,7 +80,7 @@
                     @if ($application->application_type === 'APEL A')
                         <div class="record-panel">
                             <h4>Internal Application Form Details</h4>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px; margin-bottom: 15px; font-size: 13.5px; color: #4e4b45;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px; margin-bottom: 15px; font-size: 13.5px; color: var(--ink-2);">
                                 <div><strong>Age:</strong> {{ $application->age ?? 'Not provided' }}</div>
                                 <div><strong>University:</strong> {{ $application->university_name ?? 'Not provided' }}</div>
                                 <div><strong>Company:</strong> {{ $application->company_name ?? 'Not provided' }}</div>
@@ -117,7 +117,7 @@
 
                             <p class="feedback-text" style="font-size: 14px; margin-bottom: 15px;">
                                 <strong>Applied Course:</strong>
-                                <span style="font-weight: 600; color: #1a1917;">
+                                <span style="font-weight: 600; color: var(--ink);">
                                     {{ $application->credit_course_name ?? 'Not provided' }}
                                     @if ($application->credit_course_code)
                                          ({{ $application->credit_course_code }})
@@ -125,8 +125,8 @@
                                 </span>
                             </p>
 
-                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e4e0d8;">
-                                <p style="font-size: 13.5px; font-weight: 700; color: #6e1730; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Submitted Portfolio Files</p>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--line);">
+                                <p style="font-size: 13.5px; font-weight: 700; color: var(--maroon); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Submitted Portfolio Files</p>
                                 
                                 @if (!empty($application->portfolio_file))
                                     <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; list-style-type: disc;">
@@ -136,18 +136,18 @@
                                                 $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                             @endphp
                                             <li style="margin-bottom: 6px;">
-                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: #6e1730; text-decoration: underline; font-weight: 600;">
+                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
                                                     {{ $fileName }}
                                                 </a>
                                             </li>
                                         @endforeach
                                     </ul>
                                 @else
-                                    <p style="font-size: 13px; color: #837e75; font-style: italic; margin: 0;">No portfolio files uploaded.</p>
+                                    <p style="font-size: 13px; color: var(--ink-3); font-style: italic; margin: 0;">No portfolio files uploaded.</p>
                                 @endif
 
                                 @if (!empty($application->evidence_file))
-                                    <p style="font-size: 13.5px; font-weight: 700; color: #6e1730; margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Evidence File(s)</p>
+                                    <p style="font-size: 13.5px; font-weight: 700; color: var(--maroon); margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Evidence File(s)</p>
                                     <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; list-style-type: disc;">
                                         @foreach ($application->evidence_file as $file)
                                             @php
@@ -155,7 +155,7 @@
                                                 $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                             @endphp
                                             <li style="margin-bottom: 6px;">
-                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: #6e1730; text-decoration: underline; font-weight: 600;">
+                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
                                                     {{ $fileName }}
                                                 </a>
                                             </li>
@@ -177,20 +177,20 @@
                                 }
                                 .row-card {
                                     background: #ffffff;
-                                    border: 1px solid #e4e0d8;
+                                    border: 1px solid var(--line);
                                     border-radius: 12px;
                                     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                                     overflow: hidden;
                                 }
                                 .row-card-header {
                                     background: #fafafb;
-                                    border-bottom: 1px solid #e4e0d8;
+                                    border-bottom: 1px solid var(--line);
                                     padding: 10px 16px;
                                     display: flex;
                                     justify-content: space-between;
                                     align-items: center;
                                     font-weight: 600;
-                                    color: #6e1730;
+                                    color: var(--maroon);
                                 }
                                 .row-card-body {
                                     padding: 16px;
@@ -205,14 +205,14 @@
                                 .row-card-body label {
                                     font-size: 11px;
                                     font-weight: 600;
-                                    color: #4e4b45;
+                                    color: var(--ink-2);
                                     margin-bottom: 0 !important;
                                     text-transform: uppercase;
                                     letter-spacing: 0.05em;
                                 }
                                 .row-card-body strong {
                                     font-size: 13.5px;
-                                    color: #1a1917;
+                                    color: var(--ink);
                                 }
                                 .details-tab-content {
                                     animation: fadeIn 0.2s ease-in-out;
@@ -223,20 +223,20 @@
                                 }
                                 .form-tabs .tab-link.active {
                                     color: #ffffff !important;
-                                    background: #6e1730 !important;
+                                    background: var(--maroon) !important;
                                     border-radius: 6px;
                                 }
                             </style>
 
                             <!-- Submitted Pre-Application Details Card -->
-                            <div style="margin-top: 24px; border-top: 1px dashed #e4e0d8; padding-top: 20px;">
-                                <h4 style="font-size: 14.5px; font-weight: 700; color: #6e1730; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Submitted Pre-Application Form Data</h4>
+                            <div style="margin-top: 24px; border-top: 1px dashed var(--line); padding-top: 20px;">
+                                <h4 style="font-size: 14.5px; font-weight: 700; color: var(--maroon); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Submitted Pre-Application Form Data</h4>
 
-                                <div class="form-tabs" style="margin-top: 10px; display: flex; gap: 6px; border-bottom: 2px solid #e4e0d8; padding-bottom: 6px; margin-bottom: 15px;">
-                                    <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #837e75; font-size: 13px;">Personal Particulars</button>
-                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #837e75; font-size: 13px;">Formal Learning</button>
-                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #837e75; font-size: 13px;">Experience & Training</button>
-                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: #837e75; font-size: 13px;">Other Learning</button>
+                                <div class="form-tabs" style="margin-top: 10px; display: flex; gap: 6px; border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-bottom: 15px;">
+                                    <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Personal Particulars</button>
+                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Formal Learning</button>
+                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Experience & Training</button>
+                                    <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Other Learning</button>
                                 </div>
 
                                 <!-- TAB 1: Personal Particulars -->
@@ -301,7 +301,7 @@
                                             @endforeach
                                         </div>
                                     @else
-                                        <p class="muted" style="font-style: italic; color: #837e75; font-size: 13px;">No formal learning recorded.</p>
+                                        <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No formal learning recorded.</p>
                                     @endif
                                 </div>
 
@@ -317,7 +317,7 @@
                                         ];
                                     @endphp
                                     
-                                    <h5 style="color: #6e1730; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed #e4e0d8; padding-bottom: 4px;">Experiential Learning (Employment History)</h5>
+                                    <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Experiential Learning (Employment History)</h5>
                                     @if(!empty($jobs) && count($jobs) > 0 && (!empty($jobs[0]['employer_name']) || !empty($jobs[0]['position_held'])))
                                         <div class="cards-container" style="margin-bottom: 25px;">
                                             @foreach ($jobs as $idx => $item)
@@ -349,7 +349,7 @@
                                                             </div>
                                                             <div class="field-col job-roles" style="grid-column: span 12;">
                                                                 <label>Job Roles / Performed</label>
-                                                                <p style="margin: 4px 0 0 0; color: #4e4b45; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
+                                                                <p style="margin: 4px 0 0 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -357,10 +357,10 @@
                                             @endforeach
                                         </div>
                                     @else
-                                        <p class="muted" style="font-style: italic; color: #837e75; font-size: 13px; margin-bottom: 25px;">No employment history recorded.</p>
+                                        <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px; margin-bottom: 25px;">No employment history recorded.</p>
                                     @endif
 
-                                    <h5 style="color: #6e1730; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed #e4e0d8; padding-bottom: 4px;">Training Activities</h5>
+                                    <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Training Activities</h5>
                                     @if(!empty($trainings) && count($trainings) > 0 && (!empty($trainings[0]['course_name']) || !empty($trainings[0]['location'])))
                                         <div class="cards-container">
                                             @foreach ($trainings as $idx => $item)
@@ -388,12 +388,12 @@
                                                             </div>
                                                             <div class="field-col skills-learnt" style="grid-column: span 12;">
                                                                 <label>Skills Checklist / Learnt</label>
-                                                                <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #fbfaf8; padding: 12px; border: 1px solid #e4e0d8; border-radius: 8px; margin-top: 4px;">
+                                                                <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
                                                                     @php
                                                                         $checkedSkills = $item['skills_learnt'] ?? [];
                                                                     @endphp
                                                                     @foreach ($skillsList as $sIdx => $sName)
-                                                                        <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? '#1a1917' : '#a39d93' }}; display: flex; align-items: center; gap: 6px;">
+                                                                        <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
                                                                             <span style="font-size: 13px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
                                                                             <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
                                                                         </div>
@@ -406,7 +406,7 @@
                                             @endforeach
                                         </div>
                                     @else
-                                        <p class="muted" style="font-style: italic; color: #837e75; font-size: 13px;">No training activities recorded.</p>
+                                        <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No training activities recorded.</p>
                                     @endif
                                 </div>
 
@@ -422,7 +422,7 @@
                                         ];
                                     @endphp
 
-                                    <h5 style="color: #6e1730; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed #e4e0d8; padding-bottom: 4px;">Other Learning Skills / Activities</h5>
+                                    <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Other Learning Skills / Activities</h5>
                                     @if(!empty($otherSkills) && count($otherSkills) > 0 && (!empty($otherSkills[0]['other_activities']) || !empty($otherSkills[0]['year'])))
                                         <div class="cards-container" style="margin-bottom: 25px;">
                                             @foreach ($otherSkills as $idx => $item)
@@ -442,12 +442,12 @@
                                                             </div>
                                                             <div class="field-col skills-learnt" style="grid-column: span 12;">
                                                                 <label>Skills Checklist / Learnt</label>
-                                                                <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #fbfaf8; padding: 12px; border: 1px solid #e4e0d8; border-radius: 8px; margin-top: 4px;">
+                                                                <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
                                                                     @php
                                                                         $checkedSkills = $item['skills_learnt'] ?? [];
                                                                     @endphp
                                                                     @foreach ($skillsList as $sIdx => $sName)
-                                                                        <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? '#1a1917' : '#a39d93' }}; display: flex; align-items: center; gap: 6px;">
+                                                                        <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
                                                                             <span style="font-size: 13px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
                                                                             <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
                                                                         </div>
@@ -460,35 +460,35 @@
                                             @endforeach
                                         </div>
                                     @else
-                                        <p class="muted" style="font-style: italic; color: #837e75; font-size: 13px; margin-bottom: 25px;">No other learning activities recorded.</p>
+                                        <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px; margin-bottom: 25px;">No other learning activities recorded.</p>
                                     @endif
 
-                                    <h5 style="color: #6e1730; margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed #e4e0d8; padding-bottom: 4px;">Language Skills</h5>
+                                    <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Language Skills</h5>
                                     @if(!empty($langSkills))
                                         <table class="dynamic-table" style="width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px;">
                                             <thead>
-                                                <tr style="background: #fafafb; border-bottom: 1px solid #e4e0d8;">
-                                                    <th style="padding: 10px; text-align: left; font-size: 12px; color: #4e4b45; font-weight: 600;">Language</th>
-                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #4e4b45; font-weight: 600;">Listening</th>
-                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #4e4b45; font-weight: 600;">Reading</th>
-                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #4e4b45; font-weight: 600;">Speaking</th>
-                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #4e4b45; font-weight: 600;">Writing</th>
+                                                <tr style="background: #fafafb; border-bottom: 1px solid var(--line);">
+                                                    <th style="padding: 10px; text-align: left; font-size: 12px; color: var(--ink-2); font-weight: 600;">Language</th>
+                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Listening</th>
+                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Reading</th>
+                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Speaking</th>
+                                                    <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Writing</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($langSkills as $item)
-                                                    <tr style="border-bottom: 1px solid #e4e0d8;">
-                                                        <td style="padding: 10px; font-size: 13px; font-weight: 600; color: #1a1917;">{{ $item['language'] ?? 'N/A' }}</td>
-                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: #4e4b45;">{{ $item['listening'] ?? '3' }} / 4</td>
-                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: #4e4b45;">{{ $item['reading'] ?? '3' }} / 4</td>
-                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: #4e4b45;">{{ $item['speaking'] ?? '3' }} / 4</td>
-                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: #4e4b45;">{{ $item['writing'] ?? '3' }} / 4</td>
+                                                    <tr style="border-bottom: 1px solid var(--line);">
+                                                        <td style="padding: 10px; font-size: 13px; font-weight: 600; color: var(--ink);">{{ $item['language'] ?? 'N/A' }}</td>
+                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['listening'] ?? '3' }} / 4</td>
+                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['reading'] ?? '3' }} / 4</td>
+                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['speaking'] ?? '3' }} / 4</td>
+                                                        <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['writing'] ?? '3' }} / 4</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
                                         </table>
                                     @else
-                                        <p class="muted" style="font-style: italic; color: #837e75; font-size: 13px;">No language skills recorded.</p>
+                                        <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No language skills recorded.</p>
                                     @endif
                                 </div>
                             </div>
@@ -503,7 +503,7 @@
                                     const links = evt.currentTarget.parentElement.querySelectorAll(".tab-link");
                                     links.forEach(link => {
                                         link.classList.remove("active");
-                                        link.style.color = "#837e75";
+                                        link.style.color = "var(--ink-3)";
                                         link.style.background = "transparent";
                                     });
                                     
@@ -550,34 +550,34 @@
                             
                             <div class="review-details" style="display: flex; flex-direction: column; gap: 16px; margin-top: 15px;">
                                 <div class="detail-group">
-                                    <label style="font-weight: 600; font-size: 13px; color: #6e1730; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Admission Decision</label>
-                                    <div style="font-size: 15px; font-weight: 700; color: #1a1917; display: flex; align-items: center; gap: 8px;">
+                                    <label style="font-weight: 600; font-size: 13px; color: var(--maroon); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Admission Decision</label>
+                                    <div style="font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px;">
                                         @if ($userDecision === 'recommended')
-                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: #146b45; border-radius: 50%;"></span>
+                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--good); border-radius: 50%;"></span>
                                             Recommended
                                         @elseif ($userDecision === 'not_recommended')
-                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: #a32a20; border-radius: 50%;"></span>
+                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--bad); border-radius: 50%;"></span>
                                             Not Recommended
                                         @else
-                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: #837e75; border-radius: 50%;"></span>
+                                            <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--ink-3); border-radius: 50%;"></span>
                                             Pending
                                         @endif
                                     </div>
                                 </div>
 
                                 <div class="detail-group">
-                                    <label style="font-weight: 600; font-size: 13px; color: #6e1730; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Evaluator Feedback</label>
-                                    <div style="font-size: 14px; color: #4e4b45; line-height: 1.5; background: #fbfaf8; padding: 12px 16px; border-radius: 12px; border: 1px solid #f2e7ea; white-space: pre-wrap;">{{ $userFeedback ?? 'No feedback provided.' }}</div>
+                                    <label style="font-weight: 600; font-size: 13px; color: var(--maroon); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Evaluator Feedback</label>
+                                    <div style="font-size: 14px; color: var(--ink-2); line-height: 1.5; background: var(--surface-sunk); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--maroon-tint); white-space: pre-wrap;">{{ $userFeedback ?? 'No feedback provided.' }}</div>
                                 </div>
                                 
                                 @if (in_array($application->status ?? '', ['Final Approved', 'Final Rejected']))
                                     <div style="margin-top: 10px; padding: 12px; background-color: #f0fdf4; border: 1px solid #e4f1ea; border-radius: 12px; text-align: center;">
                                         <span style="font-size: 12px; font-weight: 700; color: #15803d; text-transform: uppercase; display: block; margin-bottom: 4px;">Decision Finalized</span>
-                                        <p style="margin: 0; font-size: 13px; color: #146b45;">This application has been finalized as <strong>{{ $application->status }}</strong>.</p>
+                                        <p style="margin: 0; font-size: 13px; color: var(--good);">This application has been finalized as <strong>{{ $application->status }}</strong>.</p>
                                     </div>
                                 @endif
 
-                                <div style="margin-top: 10px; padding-top: 15px; border-top: 1px solid #f2e7ea;">
+                                <div style="margin-top: 10px; padding-top: 15px; border-top: 1px solid var(--maroon-tint);">
                                     <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary" style="width: 100%; text-align: center; display: block;">Back to Assigned Applications</a>
                                 </div>
                             </div>
@@ -638,7 +638,7 @@
                     @endphp
 
                     @if ($isPortfolioMode)
-                        <section class="card form-main-card" style="border-top: 4px solid #6e1730;">
+                        <section class="card form-main-card" style="border-top: 4px solid var(--maroon);">
                             <h3 class="side-form-title" style="margin-bottom: 20px;">Portfolio Evaluation</h3>
 
                             @if ($submission)
@@ -665,42 +665,42 @@
                                 @endphp
 
                                 @if ($submission->graded_at)
-                                    <div style="background: #fbfaf8; padding: 12px; border-radius: 8px; border: 1px solid #e4e0d8; margin-bottom: 15px;">
-                                        <p style="margin: 0; font-size: 13.5px;">Consolidated Result: <strong style="color: {{ $submission->result === 'pass' ? '#146b45' : '#a32a20' }};">{{ $submission->result === 'pass' ? 'Approved' : 'Rejected' }}</strong></p>
+                                    <div style="background: var(--surface-sunk); padding: 12px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 15px;">
+                                        <p style="margin: 0; font-size: 13.5px;">Consolidated Result: <strong style="color: {{ $submission->result === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ $submission->result === 'pass' ? 'Approved' : 'Rejected' }}</strong></p>
                                     </div>
                                 @endif
 
                                 <div style="margin-top: 15px;">
                                     @if ($hasGradedThisUser)
-                                        <div style="background: #fbfaf8; padding: 12px; border-radius: 8px; border: 1px solid #e4e0d8; margin-bottom: 12px; font-size: 13.5px; line-height: 1.5;">
+                                        <div style="background: var(--surface-sunk); padding: 12px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 12px; font-size: 13.5px; line-height: 1.5;">
                                             <div>Your Score: <strong>{{ $existingScore }}%</strong></div>
-                                            <div>Result: <strong style="color: {{ $existingResult === 'pass' ? '#146b45' : '#a32a20' }};">{{ ucfirst($existingResult) }}</strong></div>
-                                            <div style="margin-top: 5px; font-style: italic; color: #4e4b45;">Feedback: "{{ $existingFeedback }}"</div>
+                                            <div>Result: <strong style="color: {{ $existingResult === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ ucfirst($existingResult) }}</strong></div>
+                                            <div style="margin-top: 5px; font-style: italic; color: var(--ink-2);">Feedback: "{{ $existingFeedback }}"</div>
                                         </div>
-                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" class="btn btn-full btn-secondary" style="width: 100%; text-align: center; padding: 10px; display: block; background: #f1efea; color: #4e4b45; font-weight: 600; text-decoration: none; border-radius: 6px; border: 1px solid #e4e0d8;">
+                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" class="btn btn-full btn-secondary" style="width: 100%; text-align: center; padding: 10px; display: block; background: var(--surface-sunk); color: var(--ink-2); font-weight: 600; text-decoration: none; border-radius: 6px; border: 1px solid var(--line);">
                                             View Rubric Evaluation
                                         </a>
                                     @else
-                                        <p style="font-size: 13px; color: #4e4b45; margin-bottom: 15px; line-height: 1.4;">
+                                        <p style="font-size: 13px; color: var(--ink-2); margin-bottom: 15px; line-height: 1.4;">
                                             Review the candidate's uploaded portfolio and submit the scoring rubric.
                                         </p>
-                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" class="btn btn-full" style="width: 100%; text-align: center; padding: 10px; display: block; background: #6e1730; color: #ffffff; font-weight: 600; text-decoration: none; border-radius: 6px;">
+                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" class="btn btn-full" style="width: 100%; text-align: center; padding: 10px; display: block; background: var(--maroon); color: #ffffff; font-weight: 600; text-decoration: none; border-radius: 6px;">
                                             Evaluate Portfolio Now
                                         </a>
                                     @endif
                                 </div>
                             @else
-                                <p style="font-size: 13px; color: #a32a20;">Evaluation submission is not initialized yet.</p>
+                                <p style="font-size: 13px; color: var(--bad);">Evaluation submission is not initialized yet.</p>
                             @endif
                         </section>
                     @else
-                        <section class="card form-main-card" style="border-top: 4px solid #6e1730;">
+                        <section class="card form-main-card" style="border-top: 4px solid var(--maroon);">
                             <h3 class="side-form-title" style="margin-bottom: 20px;">Assessment Progress</h3>
 
                             <!-- Step 1: Assessment Paper -->
                             <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="font-size: 14px; color: #4e4b45;">1. Assessment Paper</strong>
+                                    <strong style="font-size: 14px; color: var(--ink-2);">1. Assessment Paper</strong>
                                     @if ($paper)
                                         <span class="badge badge-approved" style="font-size: 11px; padding: 3px 8px; background-color: #d4edda; color: #155724;">Uploaded</span>
                                     @else
@@ -708,10 +708,10 @@
                                     @endif
                                 </div>
                                 @if ($paper)
-                                    <p style="margin: 0; font-size: 13px; color: #1a1917; font-weight: 500;">{{ $paper->title }}</p>
-                                    <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: #6e1730; font-weight: 600; text-decoration: none;">View Paper PDF</a>
+                                    <p style="margin: 0; font-size: 13px; color: var(--ink); font-weight: 500;">{{ $paper->title }}</p>
+                                    <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">View Paper PDF</a>
                                 @else
-                                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #837e75;">No assessment paper has been uploaded yet.</p>
+                                    <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--ink-3);">No assessment paper has been uploaded yet.</p>
                                     <a href="{{ route('evaluator.assessment.papers.create', $application->_id) }}" class="btn btn-sm" style="width: 100%; text-align: center; display: block; font-size: 12px; padding: 8px;">Upload Paper</a>
                                 @endif
                             </div>
@@ -719,7 +719,7 @@
                             <!-- Step 2: Student Submission -->
                             <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="font-size: 14px; color: #4e4b45;">2. Answer Submission</strong>
+                                    <strong style="font-size: 14px; color: var(--ink-2);">2. Answer Submission</strong>
                                     @if ($submission)
                                         <span class="badge badge-approved" style="font-size: 11px; padding: 3px 8px; background-color: #d4edda; color: #155724;">Submitted</span>
                                     @else
@@ -727,17 +727,17 @@
                                     @endif
                                 </div>
                                 @if ($submission)
-                                    <p style="margin: 0; font-size: 12px; color: #837e75;">Submitted on: <strong style="color: #1a1917;">{{ $submission->submitted_at ?? 'N/A' }}</strong></p>
-                                    <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: #6e1730; font-weight: 600; text-decoration: none;">Open Submitted Answer</a>
+                                    <p style="margin: 0; font-size: 12px; color: var(--ink-3);">Submitted on: <strong style="color: var(--ink);">{{ $submission->submitted_at ?? 'N/A' }}</strong></p>
+                                    <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">Open Submitted Answer</a>
                                 @else
-                                    <p style="margin: 0; font-size: 12px; color: #837e75;">Awaiting student's answer upload.</p>
+                                    <p style="margin: 0; font-size: 12px; color: var(--ink-3);">Awaiting student's answer upload.</p>
                                  @endif
                             </div>
 
                             <!-- Step 3: Grading -->
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="font-size: 14px; color: #4e4b45;">3. Assessment Grade</strong>
+                                    <strong style="font-size: 14px; color: var(--ink-2);">3. Assessment Grade</strong>
                                     @if ($submission && $submission->graded_at)
                                         <span class="badge badge-approved" style="font-size: 11px; padding: 3px 8px; background-color: #d4edda; color: #155724;">Graded</span>
                                     @else
@@ -746,20 +746,20 @@
                                 </div>
                                 @if ($submission)
                                     @if ($submission->graded_at)
-                                        <div style="background: #fbfaf8; padding: 10px; border-radius: 6px; border: 1px solid #e4e0d8;">
-                                            <p style="margin: 0 0 4px 0; font-size: 13px;">Score: <strong style="color: #1a1917; font-size: 14px;">{{ $submission->score }}%</strong></p>
-                                            <p style="margin: 0 0 4px 0; font-size: 13px;">Result: <strong style="color: {{ $submission->result === 'pass' ? '#146b45' : '#a32a20' }}; font-size: 14px;">{{ ucfirst($submission->result) }}</strong></p>
+                                        <div style="background: var(--surface-sunk); padding: 10px; border-radius: 6px; border: 1px solid var(--line);">
+                                            <p style="margin: 0 0 4px 0; font-size: 13px;">Score: <strong style="color: var(--ink); font-size: 14px;">{{ $submission->score }}%</strong></p>
+                                            <p style="margin: 0 0 4px 0; font-size: 13px;">Result: <strong style="color: {{ $submission->result === 'pass' ? 'var(--good)' : 'var(--bad)' }}; font-size: 14px;">{{ ucfirst($submission->result) }}</strong></p>
                                             @if ($submission->grader_feedback)
-                                                <p style="margin: 8px 0 0 0; font-size: 12px; color: #4e4b45; font-style: italic; border-top: 1px dashed #cfc9be; padding-top: 8px;">Feedback: "{{ $submission->grader_feedback }}"</p>
+                                                <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--ink-2); font-style: italic; border-top: 1px dashed var(--line-strong); padding-top: 8px;">Feedback: "{{ $submission->grader_feedback }}"</p>
                                             @endif
                                         </div>
-                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" style="display: block; text-align: center; margin-top: 10px; font-size: 12px; color: #6e1730; font-weight: 600; text-decoration: none;">View Full Grading Details</a>
+                                        <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" style="display: block; text-align: center; margin-top: 10px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">View Full Grading Details</a>
                                     @else
-                                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #837e75;">Answer is ready for grading.</p>
+                                        <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--ink-3);">Answer is ready for grading.</p>
                                         <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}" class="btn btn-sm" style="width: 100%; text-align: center; display: block; font-size: 12px; padding: 8px;">Grade Now</a>
                                     @endif
                                 @else
-                                    <p style="margin: 0; font-size: 12px; color: #837e75;">Cannot grade until student submits answer.</p>
+                                    <p style="margin: 0; font-size: 12px; color: var(--ink-3);">Cannot grade until student submits answer.</p>
                                 @endif
                             </div>
                         </section>

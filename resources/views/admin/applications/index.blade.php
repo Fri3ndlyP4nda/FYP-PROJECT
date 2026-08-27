@@ -11,7 +11,7 @@
 
     <style>
         .filter-btn:hover:not(.active) {
-            color: #6e1730 !important;
+            color: var(--maroon) !important;
             background: rgba(139, 30, 63, 0.04) !important;
         }
     </style>
@@ -75,14 +75,14 @@
                 </div>
 
                 {{-- Queue Filters --}}
-                <div class="queue-filters" style="display: flex; gap: 8px; background: #f2e7ea; padding: 4px; border-radius: 10px;">
-                    <button type="button" class="filter-btn active" data-filter="all" style="border: none; background: #ffffff; color: #6e1730; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+                <div class="queue-filters" style="display: flex; gap: 8px; background: var(--maroon-tint); padding: 4px; border-radius: 10px;">
+                    <button type="button" class="filter-btn active" data-filter="all" style="border: none; background: #ffffff; color: var(--maroon); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
                         All ({{ $total }})
                     </button>
-                    <button type="button" class="filter-btn" data-filter="APEL A" style="border: none; background: transparent; color: #837e75; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <button type="button" class="filter-btn" data-filter="APEL A" style="border: none; background: transparent; color: var(--ink-3); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                         APEL A ({{ $applications->where('application_type', 'APEL A')->count() }})
                     </button>
-                    <button type="button" class="filter-btn" data-filter="APEL C" style="border: none; background: transparent; color: #837e75; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    <button type="button" class="filter-btn" data-filter="APEL C" style="border: none; background: transparent; color: var(--ink-3); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                         APEL C ({{ $applications->where('application_type', 'APEL C')->count() }})
                     </button>
                 </div>
@@ -230,7 +230,7 @@
                     filterButtons.forEach(btn => {
                         btn.classList.remove('active');
                         btn.style.background = 'transparent';
-                        btn.style.color = '#837e75';
+                        btn.style.color = 'var(--ink-3)';
                         btn.style.boxShadow = 'none';
                     });
                     this.classList.add('active');

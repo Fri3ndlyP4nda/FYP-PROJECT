@@ -238,7 +238,7 @@
                 @endif
 
                 @if (($application->payment_status ?? 'pending') === 'verified')
-                    <p class="feedback-text" style="color: #146b45; font-weight: 500; margin-top: 15px;">
+                    <p class="feedback-text" style="color: var(--good); font-weight: 500; margin-top: 15px;">
                         Your payment has been verified by the Faculty Academic Office.
                     </p>
                 @elseif (($application->payment_status ?? 'pending') === 'submitted')
@@ -253,7 +253,7 @@
                         <label for="f-payment-receipt">Upload Payment Receipt</label>
                         <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required id="f-payment-receipt">
 
-                        <small style="display:block; margin-top:5px; color:#666;">
+                        <small style="display:block; margin-top:5px; color:var(--ink-3);">
                             Allowed format: PDF, JPG, JPEG, PNG. Maximum size: 5MB.
                         </small>
 

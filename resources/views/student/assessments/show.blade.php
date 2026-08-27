@@ -62,13 +62,13 @@
 
                         @if ($deadline)
                             <div class="tip-box {{ $isExpired ? 'tip-box-danger' : 'tip-box-warning' }}" 
-                                 style="margin-top: 15px; margin-bottom: 15px; padding: 14px; border-left: 4px solid {{ $isExpired ? '#a32a20' : '#f59e0b' }}; background: {{ $isExpired ? '#fef2f2' : '#fffbeb' }}; color: {{ $isExpired ? '#991b1b' : '#8a5a0c' }}; border-radius: 8px;">
+                                 style="margin-top: 15px; margin-bottom: 15px; padding: 14px; border-left: 4px solid {{ $isExpired ? 'var(--bad)' : '#f59e0b' }}; background: {{ $isExpired ? '#fef2f2' : '#fffbeb' }}; color: {{ $isExpired ? '#991b1b' : 'var(--attention)' }}; border-radius: 8px;">
                                 <strong>Submission Deadline</strong>
                                 <p style="margin: 4px 0 0 0; font-size: 13.5px; font-weight: 500;">
                                     {{ $deadline->format('d M Y, h:i A') }} ({{ $deadline->diffForHumans() }})
                                 </p>
                                 @if (!$isExpired && empty($submission))
-                                    <div id="countdown-timer" style="margin-top: 8px; font-weight: 700; font-size: 14px; color: #8a5a0c;" data-deadline="{{ $deadline->toIso8601String() }}">
+                                    <div id="countdown-timer" style="margin-top: 8px; font-weight: 700; font-size: 14px; color: var(--attention);" data-deadline="{{ $deadline->toIso8601String() }}">
                                         Time Remaining: Loading...
                                     </div>
                                     <script>
@@ -106,26 +106,26 @@
                         <!-- Assessment Paper Details & Download -->
                         <div class="paper-details-card" style="background: rgba(139, 30, 63, 0.03); border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 20px; margin-top: 15px; margin-bottom: 20px;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-                                <div style="background: #6e1730; color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
+                                <div style="background: var(--maroon); color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
                                     PDF
                                 </div>
                                 <div>
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6e1730; display: block;">Assessment Paper Title</span>
-                                    <h4 style="margin: 2px 0 0 0; font-size: 16px; font-weight: 700; color: #1a1917; line-height: 1.3;">{{ $paper->title }}</h4>
+                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--maroon); display: block;">Assessment Paper Title</span>
+                                    <h4 style="margin: 2px 0 0 0; font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.3;">{{ $paper->title }}</h4>
                                 </div>
                             </div>
 
                             @if (!empty($paper->instructions))
                                 <div style="margin-bottom: 16px;">
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #837e75; display: block; margin-bottom: 4px;">Instructions</span>
-                                    <div style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; color: #4e4b45; background: white; padding: 12px; border-radius: 8px; border: 1px solid #e4e0d8;">{{ $paper->instructions }}</div>
+                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-3); display: block; margin-bottom: 4px;">Instructions</span>
+                                    <div style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); background: white; padding: 12px; border-radius: 8px; border: 1px solid var(--line);">{{ $paper->instructions }}</div>
                                 </div>
                             @endif
 
                             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 10px; border-top: 1px dashed rgba(139, 30, 63, 0.1);">
                                 <div>
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #837e75; display: block; margin-bottom: 2px;">Format</span>
-                                    <strong style="font-size: 13px; color: #4e4b45;">PDF Document</strong>
+                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-3); display: block; margin-bottom: 2px;">Format</span>
+                                    <strong style="font-size: 13px; color: var(--ink-2);">PDF Document</strong>
                                 </div>
                                 <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank" class="btn" style="padding: 10px 18px; font-size: 13.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle;">
