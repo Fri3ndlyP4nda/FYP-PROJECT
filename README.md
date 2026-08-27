@@ -10,8 +10,7 @@ assessment and final decision, across three roles, on two distinct tracks.
 
 **Final Year Project** · Laravel 12 · MongoDB · PHP 8.2
 
-<!-- Renders once this repository is pushed to GitHub. Replace OWNER/REPO. -->
-[![tests](https://github.com/OWNER/REPO/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml)
+[![tests](https://github.com/Fri3ndlyP4nda/FYP-PROJECT/actions/workflows/tests.yml/badge.svg)](https://github.com/Fri3ndlyP4nda/FYP-PROJECT/actions/workflows/tests.yml)
 
 ---
 
