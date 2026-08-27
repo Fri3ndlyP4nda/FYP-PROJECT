@@ -69,8 +69,33 @@ class StageMachine
     /** The stage an application is at, tolerating documents written earlier. */
     public static function current(Application $application): ApelStage
     {
-        return ApelStage::tryParse($application->stage)
+        return ApelStage::tryParse(self::rawStage($application))
             ?? self::inferFromLegacyFields($application);
+    }
+
+    /**
+     * Read the stored `stage` value without going through __get.
+     *
+     * Application::stage() and the `stage` attribute share a name, and
+     * mongodb/laravel-mongodb's DocumentModel::getAttribute() prefers a
+     * same-named method over the attribute bag — it treats the match as an
+     * embedded relation. So `$application->stage` called Application::stage(),
+     * which called back into here, which read `$application->stage` again.
+     *
+     * The recursion did not merely loop: getRelationValue() rejected the
+     * ApelStage return value as a relation, so every stage read on a real model
+     * died with "Undefined property: App\Models\Application::$stage". That
+     * meant every stage read and every transition threw, across all 16 call
+     * sites - the workflow was fully broken on the branch and nothing caught it,
+     * because there were no tests over this path when it landed.
+     *
+     * Reading the attribute bag directly is the narrow fix: it keeps the
+     * convenient $application->stage() accessor working for callers, and does
+     * not depend on the driver's relation-detection heuristics.
+     */
+    private static function rawStage(Application $application): mixed
+    {
+        return $application->getAttributes()['stage'] ?? null;
     }
 
     public static function type(Application $application): string

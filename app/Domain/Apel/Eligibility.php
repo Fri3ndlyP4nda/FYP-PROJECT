@@ -40,17 +40,28 @@ class Eligibility
             return null;
         }
 
-        // Longest key first so "advanced diploma" is not matched as "diploma".
-        $keys = array_keys(self::LEVELS);
-        usort($keys, fn ($a, $b) => strlen($b) <=> strlen($a));
+        // Keep the HIGHEST level named, not the first one found.
+        //
+        // This previously scanned longest-key-first and returned on the first
+        // match. That ordering exists so "advanced diploma" is not read as a
+        // plain "diploma" — but returning early meant a qualification naming
+        // two levels was scored at whichever key happened to be the longer
+        // string. "certificate" is longer than "bachelor", so
+        // "Bachelor of Science with a Certificate in Teaching" scored as a
+        // certificate and was rejected as under-qualified — the same false
+        // under-qualification this class was written to fix.
+        //
+        // Taking the maximum keeps the "advanced diploma" behaviour (3 beats 2)
+        // without depending on key length at all.
+        $best = null;
 
-        foreach ($keys as $key) {
+        foreach (self::LEVELS as $key => $level) {
             if ($key !== 'none' && str_contains($text, $key)) {
-                return self::LEVELS[$key];
+                $best = $best === null ? $level : max($best, $level);
             }
         }
 
-        return null;
+        return $best;
     }
 
     public static function minimumLevel(): int

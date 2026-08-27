@@ -8,6 +8,7 @@ use App\Models\AssessmentSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\FilesystemException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -140,11 +141,58 @@ class SecureFileController extends Controller
         return in_array($path, $known, true);
     }
 
+    /**
+     * Reject anything that tries to leave the disk root before Flysystem sees it.
+     *
+     * belongsToApplication() cannot catch this case: it compares the requested
+     * path against the paths the record holds, so a traversal that is already
+     * STORED on the record passes that check and reaches here as a legitimate
+     * path. Flysystem does refuse it — nothing escapes the disk — but it refuses
+     * by throwing PathTraversalDetected, which nothing caught. The request then
+     * answered 500, and with APP_DEBUG on the error page renders the environment
+     * table, so a refused file read disclosed APP_KEY and the database URI.
+     *
+     * Checked on the raw string rather than after normalisation: realpath() and
+     * friends resolve against the local filesystem, which is the wrong question
+     * for a disk that may not be local.
+     */
+    private function isContained(string $path): bool
+    {
+        if ($path === '') {
+            return false;
+        }
+
+        $normalised = str_replace('\\', '/', $path);
+
+        if (str_starts_with($normalised, '/') || preg_match('#^[a-zA-Z]:#', $normalised)) {
+            return false;   // absolute, so not relative to the disk root
+        }
+
+        foreach (explode('/', $normalised) as $segment) {
+            if ($segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function stream(string $path): StreamedResponse
     {
+        abort_unless($this->isContained($path), 404);
+
         $disk = Storage::disk('private');
 
-        abort_unless($disk->exists($path), 404);
+        // Belt and braces: a driver may still reject a path this check allowed,
+        // and that refusal must read as "no such file", never as a 500 carrying
+        // a stack trace.
+        try {
+            $exists = $disk->exists($path);
+        } catch (FilesystemException | \RuntimeException) {
+            abort(404);
+        }
+
+        abort_unless($exists, 404);
 
         return $disk->response($path, basename($path), [
             // These documents are personal records; keep them out of shared caches.
