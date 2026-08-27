@@ -49,6 +49,21 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build frontend assets
+        # Required, not cosmetic. layouts/app.blade.php calls @vite(...), and
+        # public/build is gitignored - so without a build every test that renders
+        # a page through the layout dies with "Vite manifest not found" rather
+        # than failing on anything it was actually asserting.
+        run: |
+          npm ci
+          npm run build
+
       - name: Prepare environment
         run: |
           cp .env.example .env
