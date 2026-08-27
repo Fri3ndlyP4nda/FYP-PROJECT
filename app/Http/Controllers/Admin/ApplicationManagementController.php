@@ -6,38 +6,36 @@ use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\IllegalStageTransition;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
-use App\Models\Application;
-use App\Models\User;
-use App\Models\AssessmentSubmission;
-use App\Models\ActivityLog;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 use App\Mail\GenericQueueMail;
+use App\Models\ActivityLog;
+use App\Models\Application;
+use App\Models\AssessmentSubmission;
+use App\Models\User;
 use App\Services\ApelDecisionSupportService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 class ApplicationManagementController extends Controller
 {
-    public function __construct(private ApelDecisionSupportService $decisionSupport)
-    {
-    }
+    public function __construct(private ApelDecisionSupportService $decisionSupport) {}
 
     public function index()
     {
         $all = Application::where('stage', '!=', ApelStage::DRAFT->value)->get();
-        
+
         $apelA = $all->where('application_type', 'APEL A')
             ->sortByDesc(function ($app) {
                 return $app->target_year ?? date('Y', strtotime($app->submission_date));
             });
-            
+
         $apelC = $all->where('application_type', 'APEL C')
             ->sortByDesc(function ($app) {
                 return $app->target_year ?? date('Y', strtotime($app->submission_date));
             });
-            
+
         $applications = $apelA->merge($apelC);
 
         return view('admin.applications.index', compact('applications'));
@@ -114,7 +112,7 @@ class ApplicationManagementController extends Controller
             return redirect()->back()->withErrors([
                 'evaluator_id' => $application->stage() === ApelStage::PAYMENT_VERIFIED
                     ? 'This application cannot be assigned at its current stage.'
-                    : 'Payment must be verified before an evaluator can be assigned. This application is at "' . $application->stageLabel() . '".',
+                    : 'Payment must be verified before an evaluator can be assigned. This application is at "'.$application->stageLabel().'".',
             ]);
         }
 
@@ -122,7 +120,7 @@ class ApplicationManagementController extends Controller
             ->where('role', 'evaluator')
             ->first();
 
-        if (!$evaluator) {
+        if (! $evaluator) {
             return back()->withErrors([
                 'evaluator_id' => 'Selected evaluator is invalid.',
             ]);
@@ -134,7 +132,7 @@ class ApplicationManagementController extends Controller
                 ->where('role', 'evaluator')
                 ->first();
 
-            if (!$evaluator2) {
+            if (! $evaluator2) {
                 return back()->withErrors([
                     'evaluator_2_id' => 'Selected second evaluator is invalid.',
                 ]);
@@ -180,7 +178,7 @@ class ApplicationManagementController extends Controller
         }
 
         if ($isApelC && $request->assessment_type === 'test') {
-            \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)
+            AssessmentSubmission::where('application_id', (string) $application->_id)
                 ->whereNull('answer_file')
                 ->delete();
         }
@@ -202,30 +200,30 @@ class ApplicationManagementController extends Controller
         $this->sendMail(
             $application->user_id,
             'UTM APEL Evaluator Assigned',
-            "An evaluator has been assigned to your application.\n\n" .
-                "Application: {$application->application_type}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Evaluator(s): {$evalNames}\n" .
-                "Status: Evaluator Assigned"
+            "An evaluator has been assigned to your application.\n\n".
+                "Application: {$application->application_type}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                "Evaluator(s): {$evalNames}\n".
+                'Status: Evaluator Assigned'
         );
 
         $this->sendMail(
             $evaluator->_id,
             'New UTM APEL Application Assigned',
-            "You have been assigned to review an APEL application.\n\n" .
-                "Application: {$application->application_type}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Status: Evaluator Assigned"
+            "You have been assigned to review an APEL application.\n\n".
+                "Application: {$application->application_type}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                'Status: Evaluator Assigned'
         );
 
         if ($evaluator2) {
             $this->sendMail(
                 $evaluator2->_id,
                 'New UTM APEL Application Assigned',
-                "You have been assigned to review an APEL application.\n\n" .
-                    "Application: {$application->application_type}\n" .
-                    "Programme / Course: {$application->program_applied}\n" .
-                    "Status: Evaluator Assigned"
+                "You have been assigned to review an APEL application.\n\n".
+                    "Application: {$application->application_type}\n".
+                    "Programme / Course: {$application->program_applied}\n".
+                    'Status: Evaluator Assigned'
             );
         }
 
@@ -262,7 +260,7 @@ class ApplicationManagementController extends Controller
 
         if (! StageMachine::can($application, $target)) {
             return redirect()->back()->withErrors([
-                'advisor_name' => 'This pre-application is at "' . $application->stageLabel() . '" and is no longer awaiting an advisor recommendation.',
+                'advisor_name' => 'This pre-application is at "'.$application->stageLabel().'" and is no longer awaiting an advisor recommendation.',
             ]);
         }
 
@@ -296,18 +294,18 @@ class ApplicationManagementController extends Controller
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
             'action' => 'Advisor Evaluated',
-            'description' => "Advisor '{$request->advisor_name}' reviewed pre-application for student '{$studentName}' and marked as '{$request->recommendation_status}' (Assessment Mode: " . ucfirst($request->mode_of_assessment) . ")",
+            'description' => "Advisor '{$request->advisor_name}' reviewed pre-application for student '{$studentName}' and marked as '{$request->recommendation_status}' (Assessment Mode: ".ucfirst($request->mode_of_assessment).')',
             'ip_address' => $request->ip(),
         ]);
 
         $this->sendMail(
             $application->user_id,
             'UTM APEL C Pre-Application Decision',
-            "Your pre-application has been reviewed by Advisor {$request->advisor_name}.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Decision: {$request->recommendation_status}\n" .
-                "Assessment mode: " . ucfirst($request->mode_of_assessment) . "\n\n" .
-                $application->stageExplanation() . "\n\n" .
+            "Your pre-application has been reviewed by Advisor {$request->advisor_name}.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Decision: {$request->recommendation_status}\n".
+                'Assessment mode: '.ucfirst($request->mode_of_assessment)."\n\n".
+                $application->stageExplanation()."\n\n".
                 "Thank you.\nFaculty of Computing, UTM"
         );
 
@@ -339,7 +337,7 @@ class ApplicationManagementController extends Controller
             )],
             'reason' => 'required|string|max:500',
         ], [
-            'stage.in' => 'That is not a move this application can make from "' . $application->stageLabel() . '".',
+            'stage.in' => 'That is not a move this application can make from "'.$application->stageLabel().'".',
             'reason.required' => 'Record why you are moving this application by hand — it becomes part of the audit trail.',
         ]);
 
@@ -384,22 +382,22 @@ class ApplicationManagementController extends Controller
             'user_role' => Auth::user()->role,
             'action' => $reopening ? 'Reopened Assessment' : 'Moved Stage',
             'description' => ($reopening ? 'Reopened' : 'Moved')
-                . " {$application->application_type} application for '{$application->program_applied}' to '{$application->stageLabel()}' (Student: {$studentName}). Reason: {$request->reason}",
+                ." {$application->application_type} application for '{$application->program_applied}' to '{$application->stageLabel()}' (Student: {$studentName}). Reason: {$request->reason}",
             'ip_address' => $request->ip(),
         ]);
 
         $this->sendMail(
             $application->user_id,
             'UTM APEL Application Update',
-            "There has been an update to your application.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Stage: {$application->stageLabel()}\n\n" .
+            "There has been an update to your application.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                "Stage: {$application->stageLabel()}\n\n".
                 $application->stageExplanation()
         );
 
         return redirect()->back()
-            ->with('success', 'Application moved to "' . $application->stageLabel() . '".');
+            ->with('success', 'Application moved to "'.$application->stageLabel().'".');
     }
 
     /** The decision fields a reopening clears, by application type. */
@@ -445,10 +443,10 @@ class ApplicationManagementController extends Controller
         }
 
         $isSingleEvaluator = empty($application->evaluator_2_id);
-        $bothReviewed = !empty($application->evaluator_1_reviewed_at) && !empty($application->evaluator_2_reviewed_at);
-        $canFinalize = $isSingleEvaluator ? !empty($application->evaluator_1_reviewed_at) : $bothReviewed;
+        $bothReviewed = ! empty($application->evaluator_1_reviewed_at) && ! empty($application->evaluator_2_reviewed_at);
+        $canFinalize = $isSingleEvaluator ? ! empty($application->evaluator_1_reviewed_at) : $bothReviewed;
 
-        if (!$canFinalize) {
+        if (! $canFinalize) {
             return redirect()->back()->withErrors([
                 'final_decision' => $isSingleEvaluator
                     ? 'Final decision cannot be made before the evaluator has submitted their review.'
@@ -471,7 +469,7 @@ class ApplicationManagementController extends Controller
                 'final_decision_remarks' => $request->final_decision_remarks,
                 'finalized_at' => now(),
             ],
-            'Final decision: ' . ucfirst($finalDecision) . '.',
+            'Final decision: '.ucfirst($finalDecision).'.',
         );
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
@@ -480,7 +478,7 @@ class ApplicationManagementController extends Controller
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
             'action' => 'Finalized APEL A',
-            'description' => "Completed final decision as '" . ucfirst($finalDecision) . "' for APEL A application '{$application->program_applied}' (Student: {$studentName})",
+            'description' => "Completed final decision as '".ucfirst($finalDecision)."' for APEL A application '{$application->program_applied}' (Student: {$studentName})",
             'ip_address' => $request->ip(),
         ]);
 
@@ -489,11 +487,11 @@ class ApplicationManagementController extends Controller
         $this->sendMail(
             $application->user_id,
             'UTM APEL A Final Decision',
-            "Your APEL A final decision has been updated.\n\n" .
-                "Programme: {$application->program_applied}\n" .
-                "Final Decision: " . ucfirst($application->final_decision ?? 'pending') . "\n" .
-                "Status: {$application->status}\n\n" .
-                "Remarks: " . ($application->final_decision_remarks ?? 'No remarks provided.')
+            "Your APEL A final decision has been updated.\n\n".
+                "Programme: {$application->program_applied}\n".
+                'Final Decision: '.ucfirst($application->final_decision ?? 'pending')."\n".
+                "Status: {$application->status}\n\n".
+                'Remarks: '.($application->final_decision_remarks ?? 'No remarks provided.')
         );
 
         return redirect()->route('admin.applications.assign.form', $application->_id)
@@ -530,7 +528,7 @@ class ApplicationManagementController extends Controller
             ->whereNotNull('graded_at')
             ->first();
 
-        if (!$gradedSubmission) {
+        if (! $gradedSubmission) {
             return redirect()->back()->withErrors([
                 'credit_decision' => 'Final credit decision cannot be made before grading is completed.',
             ])->withInput();
@@ -545,7 +543,7 @@ class ApplicationManagementController extends Controller
 
         $decision = $request->credit_decision;
 
-        $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
+        $submission = AssessmentSubmission::where('application_id', (string) $application->_id)->first();
         if ($submission && $submission->result === 'fail' && $decision === 'approved') {
             return redirect()->back()->with('error', 'Cannot approve credit decision when the grading outcome is fail/rejected.');
         }
@@ -577,7 +575,7 @@ class ApplicationManagementController extends Controller
                 'credit_decided_at' => now(),
                 'reviewed_at' => $application->reviewed_at ?? now(),
             ],
-            'Credit decision: ' . ucfirst($decision) . ($decision === 'approved' ? " ({$approvedHours} credit hours)." : '.'),
+            'Credit decision: '.ucfirst($decision).($decision === 'approved' ? " ({$approvedHours} credit hours)." : '.'),
         );
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
@@ -593,7 +591,7 @@ class ApplicationManagementController extends Controller
              | audit trail was recorded as "0 approved hours" regardless of what
              | was actually granted. The value is computed from the course code.
              */
-            'description' => "Completed credit transfer decision as '" . ucfirst($decision) . "' with {$approvedHours} approved hours for course '{$application->program_applied}' (Student: {$studentName})",
+            'description' => "Completed credit transfer decision as '".ucfirst($decision)."' with {$approvedHours} approved hours for course '{$application->program_applied}' (Student: {$studentName})",
             'ip_address' => $request->ip(),
         ]);
 
@@ -602,12 +600,12 @@ class ApplicationManagementController extends Controller
         $this->sendMail(
             $application->user_id,
             'UTM APEL C Final Credit Decision',
-            "Your APEL C final credit decision has been updated.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Credit Decision: " . ucfirst($application->credit_decision ?? 'pending') . "\n" .
-                "Approved Credit Hours: " . ($application->credit_hours_approved ?? 'Not decided') . "\n" .
-                "Status: {$application->status}\n\n" .
-                "Remarks: " . ($application->credit_remarks ?? 'No remarks provided.')
+            "Your APEL C final credit decision has been updated.\n\n".
+                "Course: {$application->program_applied}\n".
+                'Credit Decision: '.ucfirst($application->credit_decision ?? 'pending')."\n".
+                'Approved Credit Hours: '.($application->credit_hours_approved ?? 'Not decided')."\n".
+                "Status: {$application->status}\n\n".
+                'Remarks: '.($application->credit_remarks ?? 'No remarks provided.')
         );
 
         return redirect()->route('admin.applications.assign.form', $application->_id)
@@ -645,7 +643,7 @@ class ApplicationManagementController extends Controller
             return redirect()->back()->withErrors([
                 'payment_status' => $application->stage() === ApelStage::PAYMENT_VERIFIED
                     ? 'This payment has already been verified.'
-                    : 'This application is at "' . $application->stageLabel() . '", so there is no payment awaiting verification.',
+                    : 'This application is at "'.$application->stageLabel().'", so there is no payment awaiting verification.',
             ]);
         }
 
@@ -665,7 +663,7 @@ class ApplicationManagementController extends Controller
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
             'action' => 'Verified Payment',
-            'description' => "Updated payment verification status to '" . ucfirst($paymentStatus) . "' for {$application->application_type} application '{$application->program_applied}' (Student: {$studentName})",
+            'description' => "Updated payment verification status to '".ucfirst($paymentStatus)."' for {$application->application_type} application '{$application->program_applied}' (Student: {$studentName})",
             'ip_address' => $request->ip(),
         ]);
 
@@ -674,12 +672,12 @@ class ApplicationManagementController extends Controller
         $this->sendMail(
             $application->user_id,
             'UTM APEL Payment Status Update',
-            "Your payment status has been updated.\n\n" .
-                "Application: {$application->application_type}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Payment Status: " . ucfirst($application->payment_status ?? 'pending') . "\n" .
-                "Current Status: {$application->status}\n\n" .
-                "Remarks: " . ($application->payment_remarks ?? 'No remarks provided.')
+            "Your payment status has been updated.\n\n".
+                "Application: {$application->application_type}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                'Payment Status: '.ucfirst($application->payment_status ?? 'pending')."\n".
+                "Current Status: {$application->status}\n\n".
+                'Remarks: '.($application->payment_remarks ?? 'No remarks provided.')
         );
 
         return redirect()->back()
@@ -732,8 +730,8 @@ class ApplicationManagementController extends Controller
     {
         $value = (string) $value;
 
-        if ($value !== '' && str_contains("=+-@	", $value[0])) {
-            return "'" . $value;
+        if ($value !== '' && str_contains('=+-@	', $value[0])) {
+            return "'".$value;
         }
 
         return $value;
@@ -749,6 +747,7 @@ class ApplicationManagementController extends Controller
         if (is_numeric($lastChar)) {
             return (int) $lastChar;
         }
+
         return config('apel.default_credit_hours', 3);
     }
 
@@ -756,14 +755,14 @@ class ApplicationManagementController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Admin mail error: ' . $e->getMessage());
+            Log::error('Admin mail error: '.$e->getMessage());
         }
     }
 
@@ -775,7 +774,7 @@ class ApplicationManagementController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="apel_a_report_' . date('Y-m-d') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="apel_a_report_'.date('Y-m-d').'.csv"',
         ];
 
         $callback = function () use ($applications) {
@@ -807,7 +806,7 @@ class ApplicationManagementController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="apel_c_report_' . date('Y-m-d') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="apel_c_report_'.date('Y-m-d').'.csv"',
         ];
 
         $callback = function () use ($applications) {

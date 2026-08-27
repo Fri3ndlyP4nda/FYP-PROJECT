@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\StageMachine;
 use App\Models\Application;
-use App\Models\AssessmentPaper;
 use App\Models\AssessmentSubmission;
 use App\Models\Course;
 use App\Models\User;

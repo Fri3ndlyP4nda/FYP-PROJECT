@@ -34,7 +34,7 @@ class UserManagementController extends Controller
         if ($search = trim((string) $request->query('q'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -170,7 +170,7 @@ class UserManagementController extends Controller
     {
         return Application::where(function ($query) use ($evaluatorId) {
             $query->where('evaluator_id', $evaluatorId)
-                  ->orWhere('evaluator_2_id', $evaluatorId);
+                ->orWhere('evaluator_2_id', $evaluatorId);
         })
             ->whereNotIn('stage', ['approved', 'rejected', 'advisor_rejected', 'draft'])
             ->count();

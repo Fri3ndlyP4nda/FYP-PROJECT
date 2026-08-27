@@ -5,6 +5,7 @@ namespace App\Domain\Apel;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 /**
  * "What do I have to do about this application, right now?"
@@ -20,7 +21,7 @@ use App\Models\User;
 class NextAction
 {
     /**
-     * @return array{tone:string,title:string,body:string,cta:?array,deadline:?\Illuminate\Support\Carbon,waiting_on:?string}|null
+     * @return array{tone:string,title:string,body:string,cta:?array,deadline:?Carbon,waiting_on:?string}|null
      */
     public static function for(Application $application, ?User $viewer): ?array
     {
@@ -67,7 +68,7 @@ class NextAction
             ApelStage::PAYMENT_REJECTED => self::act(
                 'bad',
                 'Your receipt was not accepted',
-                trim('The academic office could not verify the receipt you uploaded. ' . ($application->payment_remarks ?: 'Please check the details and upload it again.')),
+                trim('The academic office could not verify the receipt you uploaded. '.($application->payment_remarks ?: 'Please check the details and upload it again.')),
                 'Upload a new receipt',
                 $detailRoute,
                 $id,
@@ -79,8 +80,8 @@ class NextAction
                 'bad',
                 'You may appeal this decision',
                 trim(($isC ? 'Credit was not awarded. ' : 'Your application was not approved. ')
-                    . ($application->final_decision_remarks ?: $application->credit_remarks ?: '')
-                    . ' If you believe the outcome should be reconsidered, you can submit an appeal.'),
+                    .($application->final_decision_remarks ?: $application->credit_remarks ?: '')
+                    .' If you believe the outcome should be reconsidered, you can submit an appeal.'),
                 'Submit an appeal',
                 $detailRoute,
                 $id,
@@ -286,7 +287,7 @@ class NextAction
             ApelStage::APPEAL_SUBMITTED => self::act(
                 'appeal',
                 'Consider this appeal',
-                trim('The candidate has appealed. ' . ($application->appeal_remarks ?: '')),
+                trim('The candidate has appealed. '.($application->appeal_remarks ?: '')),
                 'Review appeal',
                 'admin.applications.assign.form',
                 $id,

@@ -73,6 +73,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $email = strtolower(trim((string) $request->input('email')));
 
-        return sha1($email . '|' . $request->ip());
+        return sha1($email.'|'.$request->ip());
     }
 }

@@ -83,6 +83,7 @@ enum ApelStage: string
     case APPEAL_UNDER_REVIEW = 'appeal_under_review';
 
     public const APEL_A = 'APEL A';
+
     public const APEL_C = 'APEL C';
 
     /**

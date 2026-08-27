@@ -134,7 +134,7 @@ class AuthFlowTest extends FeatureTestCase
             $knownMessage,
             $unknownMessage,
             'A registered address and an unregistered one must produce the identical error, '
-            . 'or the login form becomes a membership oracle for the whole user base.',
+            .'or the login form becomes a membership oracle for the whole user base.',
         );
     }
 
@@ -239,7 +239,7 @@ class AuthFlowTest extends FeatureTestCase
             1,
             User::where('email', 'arif@apel.test')->count(),
             'The address is stored lowercased, so an uppercase variant must not create a second document. '
-            . 'MongoDB string equality is case-sensitive and unique:users,email used to run on the raw input.',
+            .'MongoDB string equality is case-sensitive and unique:users,email used to run on the raw input.',
         );
         $this->assertSame(0, User::where('email', 'ARIF@apel.test')->count());
         $this->assertSame(1, User::count());
@@ -311,7 +311,7 @@ class AuthFlowTest extends FeatureTestCase
             $knownMessage,
             session('success'),
             'A registered and an unregistered address must produce byte-identical responses, '
-            . 'or /forgot-password enumerates the user base.',
+            .'or /forgot-password enumerates the user base.',
         );
 
         $this->assertSame(

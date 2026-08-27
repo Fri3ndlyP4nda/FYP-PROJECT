@@ -2,6 +2,8 @@
 
 use App\Domain\Apel\ApelStage;
 use App\Models\Application;
+use App\Models\AssessmentPaper;
+use App\Models\AssessmentSubmission;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use MongoDB\Laravel\Schema\Blueprint;
@@ -113,7 +115,7 @@ return new class extends Migration
 
         // Assessment progress, read from the submission rather than the status
         // string, because the status string was the field most often wrong.
-        $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
+        $submission = AssessmentSubmission::where('application_id', (string) $application->_id)->first();
 
         if ($submission?->graded_at) {
             return ApelStage::AWAITING_DECISION;
@@ -134,7 +136,7 @@ return new class extends Migration
                 : ApelStage::PARTIALLY_REVIEWED;
         }
 
-        if ($isC && \App\Models\AssessmentPaper::where('application_id', (string) $application->_id)->where('status', 'active')->exists()) {
+        if ($isC && AssessmentPaper::where('application_id', (string) $application->_id)->where('status', 'active')->exists()) {
             return ApelStage::ASSESSMENT_SET;
         }
         if ($isC && ($application->assessment_type ?? '') === 'portfolio' && ! empty($application->evaluator_id)) {

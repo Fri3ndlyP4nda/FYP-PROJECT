@@ -188,7 +188,7 @@ class SecureFileController extends Controller
         // a stack trace.
         try {
             $exists = $disk->exists($path);
-        } catch (FilesystemException | \RuntimeException) {
+        } catch (FilesystemException|\RuntimeException) {
             abort(404);
         }
 

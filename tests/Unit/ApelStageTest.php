@@ -216,7 +216,8 @@ class ApelStageTest extends TestCase
                 $currents = count(array_keys($states, 'current', true));
 
                 if ($stage->isTerminal()) {
-                    $this->assertSame(0, $currents, "A completed application should have no current node.");
+                    $this->assertSame(0, $currents, 'A completed application should have no current node.');
+
                     continue;
                 }
 

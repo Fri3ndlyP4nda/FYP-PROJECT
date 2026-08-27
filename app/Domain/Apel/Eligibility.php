@@ -91,7 +91,7 @@ class Eligibility
 
         if (self::level($qualification) === null) {
             return "We could not recognise \"{$qualification}\" as a qualification level. "
-                . "Please state it in a form such as \"Diploma in Computer Science\" or \"Bachelor of Engineering\".";
+                .'Please state it in a form such as "Diploma in Computer Science" or "Bachelor of Engineering".';
         }
 
         return "APEL A requires a {$floor} or higher as the highest academic qualification.";

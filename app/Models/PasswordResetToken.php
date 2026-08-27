@@ -7,6 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class PasswordResetToken extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'password_reset_tokens';
 
     protected $fillable = [

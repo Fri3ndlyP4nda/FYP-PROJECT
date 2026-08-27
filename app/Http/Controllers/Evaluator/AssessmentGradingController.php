@@ -5,16 +5,16 @@ namespace App\Http\Controllers\Evaluator;
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
+use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
-use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
 
 class AssessmentGradingController extends Controller
 {
@@ -23,17 +23,17 @@ class AssessmentGradingController extends Controller
         $evaluatorId = (string) Auth::id();
 
         $assignedApplicationIds = Application::where('application_type', 'APEL C')
-            ->where(function($query) use ($evaluatorId) {
+            ->where(function ($query) use ($evaluatorId) {
                 $query->where('evaluator_id', $evaluatorId)
-                      ->orWhere('evaluator_2_id', $evaluatorId);
+                    ->orWhere('evaluator_2_id', $evaluatorId);
             })
             ->pluck('id')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->toArray();
 
         $paperApplicationIds = AssessmentPaper::where('evaluator_id', $evaluatorId)
             ->pluck('application_id')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->toArray();
 
         $applicationIds = array_values(array_unique(array_merge(
@@ -44,10 +44,10 @@ class AssessmentGradingController extends Controller
         $submissions = empty($applicationIds)
             ? collect()
             : AssessmentSubmission::whereIn('application_id', $applicationIds)
-            ->whereIn('status', ['submitted', 'graded'])
-            ->whereNotNull('answer_file')
-            ->orderBy('submitted_at', 'desc')
-            ->get();
+                ->whereIn('status', ['submitted', 'graded'])
+                ->whereNotNull('answer_file')
+                ->orderBy('submitted_at', 'desc')
+                ->get();
 
         return view('evaluator.assessments.grading.index', compact('submissions'));
     }
@@ -61,7 +61,7 @@ class AssessmentGradingController extends Controller
         $application = Application::where('_id', $submission->application_id)->first();
         $isPortfolio = $application && ($application->assessment_type ?? '') === 'portfolio';
 
-        if (empty($submission->answer_file) && !$isPortfolio) {
+        if (empty($submission->answer_file) && ! $isPortfolio) {
             abort(404, 'No submitted answer file found for this assessment.');
         }
 
@@ -88,11 +88,11 @@ class AssessmentGradingController extends Controller
         // emailed the candidate a grade.
         abort_unless($isEvaluator1 || $isEvaluator2, 403, 'You are not assigned to this application.');
 
-        if ($isEvaluator1 && !empty($submission->evaluator_1_graded_at)) {
+        if ($isEvaluator1 && ! empty($submission->evaluator_1_graded_at)) {
             return redirect()->back()->with('error', 'You have already graded this submission.');
         }
 
-        if ($isEvaluator2 && !empty($submission->evaluator_2_graded_at)) {
+        if ($isEvaluator2 && ! empty($submission->evaluator_2_graded_at)) {
             return redirect()->back()->with('error', 'You have already graded this submission.');
         }
 
@@ -111,7 +111,7 @@ class AssessmentGradingController extends Controller
 
         $totalCloScore = $clo1 + $clo2 + $clo3 + $clo4;
         $score = ($totalCloScore / 40) * 100;
-        
+
         // PASS is equal to an achievement of at least 50% (5/10) of each Course Learning Outcome
         $result = ($clo1 >= 5 && $clo2 >= 5 && $clo3 >= 5 && $clo4 >= 5) ? 'pass' : 'fail';
 
@@ -163,7 +163,7 @@ class AssessmentGradingController extends Controller
         $submission->update($updateData);
         $submission->refresh();
 
-        $bothGraded = !$isSingleEvaluator && !empty($submission->evaluator_1_graded_at) && !empty($submission->evaluator_2_graded_at);
+        $bothGraded = ! $isSingleEvaluator && ! empty($submission->evaluator_1_graded_at) && ! empty($submission->evaluator_2_graded_at);
 
         if ($isSingleEvaluator || $bothGraded) {
             if ($bothGraded) {
@@ -197,7 +197,7 @@ class AssessmentGradingController extends Controller
                 $application,
                 ApelStage::PARTIALLY_REVIEWED,
                 [],
-                Auth::user()->name . ' graded this submission; awaiting the second evaluator.',
+                Auth::user()->name.' graded this submission; awaiting the second evaluator.',
             );
         }
 
@@ -207,19 +207,19 @@ class AssessmentGradingController extends Controller
             'user_name' => Auth::user()->name,
             'user_role' => Auth::user()->role,
             'action' => 'Graded Assessment',
-            'description' => "Evaluated APEL C assessment for course '{$application->program_applied}' with score {$score}% (Result: " . ucfirst($result) . ") (Student: {$studentName})",
+            'description' => "Evaluated APEL C assessment for course '{$application->program_applied}' with score {$score}% (Result: ".ucfirst($result).") (Student: {$studentName})",
             'ip_address' => $request->ip(),
         ]);
 
         $this->sendMail(
             $application->user_id,
             'UTM APEL C Assessment Graded',
-            "Your APEL C assessment has been graded.\n\n" .
-                "Course: {$application->program_applied}\n" .
-                "Score: {$score}\n" .
-                "Result: " . ucfirst($result) . "\n" .
-                "Status: {$application->status}\n\n" .
-                "Feedback: " . ($request->grader_feedback ?? 'No feedback provided.')
+            "Your APEL C assessment has been graded.\n\n".
+                "Course: {$application->program_applied}\n".
+                "Score: {$score}\n".
+                'Result: '.ucfirst($result)."\n".
+                "Status: {$application->status}\n\n".
+                'Feedback: '.($request->grader_feedback ?? 'No feedback provided.')
         );
 
         if (($application->assessment_type ?? '') === 'portfolio') {
@@ -252,7 +252,7 @@ class AssessmentGradingController extends Controller
             ->where('application_type', 'APEL C')
             ->where(function ($query) use ($evaluatorId) {
                 $query->where('evaluator_id', $evaluatorId)
-                      ->orWhere('evaluator_2_id', $evaluatorId);
+                    ->orWhere('evaluator_2_id', $evaluatorId);
             })
             ->exists();
 
@@ -263,14 +263,14 @@ class AssessmentGradingController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Assessment grading mail error: ' . $e->getMessage());
+            Log::error('Assessment grading mail error: '.$e->getMessage());
         }
     }
 }

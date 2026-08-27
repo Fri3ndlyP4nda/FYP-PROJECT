@@ -1,18 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Student\ApplicationController;
-use App\Http\Controllers\Evaluator\ApplicationReviewController;
 use App\Http\Controllers\Admin\ApplicationManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Evaluator\AssessmentPaperController;
-use App\Http\Controllers\Student\AssessmentSubmissionController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Evaluator\ApplicationReviewController;
 use App\Http\Controllers\Evaluator\AssessmentGradingController;
+use App\Http\Controllers\Evaluator\AssessmentPaperController;
+use App\Http\Controllers\SecureFileController;
 use App\Http\Controllers\Student\ApelAController;
 use App\Http\Controllers\Student\ApelCController;
-use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\SecureFileController;
+use App\Http\Controllers\Student\ApplicationController;
+use App\Http\Controllers\Student\AssessmentSubmissionController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -75,8 +75,6 @@ Route::middleware('role:student')->group(function () {
 
     Route::post('/student/applications', [ApplicationController::class, 'store'])
         ->name('student.applications.store');
-
-
 
     Route::get('/student/apel-a/{id}', [ApelAController::class, 'show'])
         ->name('student.apel_a.show');
@@ -241,6 +239,3 @@ Route::middleware('auth')->group(function () {
     Route::get('/files/submission/{submission}', [SecureFileController::class, 'submission'])
         ->name('files.submission');
 });
-
-
-

@@ -6,15 +6,17 @@ use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\Eligibility;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
 use App\Models\Application;
-use App\Models\Programme;
+use App\Models\AssessmentSubmission;
 use App\Models\Course;
+use App\Models\Programme;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicationController extends Controller
 {
@@ -74,20 +76,20 @@ class ApplicationController extends Controller
         $isApelA = $request->application_type === 'APEL A';
         $isApelC = $request->application_type === 'APEL C';
 
-        if ($isApelA && !$isDraft) {
+        if ($isApelA && ! $isDraft) {
             // 1. Age check
             $age = (int) $request->age;
             if ($age < Eligibility::minimumAge()) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL A requires candidates to be at least ' . Eligibility::minimumAge() . ' years of age at the time of application.'
+                    'eligibility' => 'APEL A requires candidates to be at least '.Eligibility::minimumAge().' years of age at the time of application.',
                 ])->withInput();
             }
 
             // 2. IC check
             $ic = str_replace('-', '', $request->ic_no ?? '');
-            if (!preg_match('/^\d{12}$/', $ic)) {
+            if (! preg_match('/^\d{12}$/', $ic)) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL A candidates must be Malaysian Citizens with a valid 12-digit Identity Card (IC) number.'
+                    'eligibility' => 'APEL A candidates must be Malaysian Citizens with a valid 12-digit Identity Card (IC) number.',
                 ])->withInput();
             }
 
@@ -106,15 +108,15 @@ class ApplicationController extends Controller
             }
         }
 
-        if ($isApelC && !$isDraft) {
+        if ($isApelC && ! $isDraft) {
             $preAppData = $request->pre_app_data;
 
             // 1. Diploma Check
             $qualification = $preAppData['personal_particulars']['highest_qualification'] ?? '';
             $eligibleQualifications = ['Diploma', 'Bachelor', 'Master', 'PhD'];
-            if (!in_array($qualification, $eligibleQualifications)) {
+            if (! in_array($qualification, $eligibleQualifications)) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL C requires at least a Diploma qualification.'
+                    'eligibility' => 'APEL C requires at least a Diploma qualification.',
                 ])->withInput();
             }
 
@@ -122,11 +124,13 @@ class ApplicationController extends Controller
             $totalMonths = 0;
             $experience = $preAppData['experiential_learning'] ?? [];
             foreach ($experience as $job) {
-                if (empty($job['time_from']) || empty($job['time_to'])) continue;
+                if (empty($job['time_from']) || empty($job['time_to'])) {
+                    continue;
+                }
                 try {
-                    $from = \Carbon\Carbon::parse($job['time_from']);
+                    $from = Carbon::parse($job['time_from']);
                     $toStr = strtolower(trim($job['time_to']));
-                    $to = ($toStr === 'current' || $toStr === 'present') ? now() : \Carbon\Carbon::parse($job['time_to']);
+                    $to = ($toStr === 'current' || $toStr === 'present') ? now() : Carbon::parse($job['time_to']);
                     $totalMonths += $from->diffInMonths($to);
                 } catch (\Exception $e) {
                     // Fallback: assume 12 months
@@ -135,7 +139,7 @@ class ApplicationController extends Controller
             }
             if (($totalMonths / 12) < 3.0) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL C requires a minimum of 3 years of work experience in a related field. Currently calculated: ' . round($totalMonths / 12, 1) . ' years.'
+                    'eligibility' => 'APEL C requires a minimum of 3 years of work experience in a related field. Currently calculated: '.round($totalMonths / 12, 1).' years.',
                 ])->withInput();
             }
 
@@ -146,7 +150,7 @@ class ApplicationController extends Controller
                 $year = (int) filter_var($cert['year_awarded'], FILTER_SANITIZE_NUMBER_INT);
                 if ($year > 0 && ($currentYear - $year) > 5) {
                     return back()->withErrors([
-                        'eligibility' => "Certificate '{$cert['title_of_certification']}' was awarded in {$year}, which is older than the allowed 5 years validity."
+                        'eligibility' => "Certificate '{$cert['title_of_certification']}' was awarded in {$year}, which is older than the allowed 5 years validity.",
                     ])->withInput();
                 }
             }
@@ -183,7 +187,7 @@ class ApplicationController extends Controller
         if ($isApelA) {
             $programApplied = $request->program_applied ?? '';
         } elseif ($selectedCourse) {
-            $programApplied = $selectedCourse->course_name . ' (' . $selectedCourse->course_code . ')';
+            $programApplied = $selectedCourse->course_name.' ('.$selectedCourse->course_code.')';
         }
 
         $application = Application::create([
@@ -249,7 +253,7 @@ class ApplicationController extends Controller
             'portfolio_file' => $isApelC ? $portfolioFiles : [],
         ]);
 
-        if (!$isDraft) {
+        if (! $isDraft) {
             $application = $this->submitForReview($application);
         }
 
@@ -260,9 +264,10 @@ class ApplicationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $msg,
-                'application_id' => (string) $application->_id
+                'application_id' => (string) $application->_id,
             ]);
         }
+
         return redirect()->route('student.applications.index')
             ->with('success', $msg);
     }
@@ -324,20 +329,20 @@ class ApplicationController extends Controller
         $isApelA = $request->application_type === 'APEL A';
         $isApelC = $request->application_type === 'APEL C';
 
-        if ($isApelA && !$isDraft) {
+        if ($isApelA && ! $isDraft) {
             // 1. Age check
             $age = (int) $request->age;
             if ($age < Eligibility::minimumAge()) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL A requires candidates to be at least ' . Eligibility::minimumAge() . ' years of age at the time of application.'
+                    'eligibility' => 'APEL A requires candidates to be at least '.Eligibility::minimumAge().' years of age at the time of application.',
                 ])->withInput();
             }
 
             // 2. IC check
             $ic = str_replace('-', '', $request->ic_no ?? '');
-            if (!preg_match('/^\d{12}$/', $ic)) {
+            if (! preg_match('/^\d{12}$/', $ic)) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL A candidates must be Malaysian Citizens with a valid 12-digit Identity Card (IC) number.'
+                    'eligibility' => 'APEL A candidates must be Malaysian Citizens with a valid 12-digit Identity Card (IC) number.',
                 ])->withInput();
             }
 
@@ -356,15 +361,15 @@ class ApplicationController extends Controller
             }
         }
 
-        if ($isApelC && !$isDraft) {
+        if ($isApelC && ! $isDraft) {
             $preAppData = $request->pre_app_data;
 
             // 1. Diploma Check
             $qualification = $preAppData['personal_particulars']['highest_qualification'] ?? '';
             $eligibleQualifications = ['Diploma', 'Bachelor', 'Master', 'PhD'];
-            if (!in_array($qualification, $eligibleQualifications)) {
+            if (! in_array($qualification, $eligibleQualifications)) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL C requires at least a Diploma qualification.'
+                    'eligibility' => 'APEL C requires at least a Diploma qualification.',
                 ])->withInput();
             }
 
@@ -372,11 +377,13 @@ class ApplicationController extends Controller
             $totalMonths = 0;
             $experience = $preAppData['experiential_learning'] ?? [];
             foreach ($experience as $job) {
-                if (empty($job['time_from']) || empty($job['time_to'])) continue;
+                if (empty($job['time_from']) || empty($job['time_to'])) {
+                    continue;
+                }
                 try {
-                    $from = \Carbon\Carbon::parse($job['time_from']);
+                    $from = Carbon::parse($job['time_from']);
                     $toStr = strtolower(trim($job['time_to']));
-                    $to = ($toStr === 'current' || $toStr === 'present') ? now() : \Carbon\Carbon::parse($job['time_to']);
+                    $to = ($toStr === 'current' || $toStr === 'present') ? now() : Carbon::parse($job['time_to']);
                     $totalMonths += $from->diffInMonths($to);
                 } catch (\Exception $e) {
                     $totalMonths += 12;
@@ -384,7 +391,7 @@ class ApplicationController extends Controller
             }
             if (($totalMonths / 12) < 3.0) {
                 return back()->withErrors([
-                    'eligibility' => 'APEL C requires a minimum of 3 years of work experience in a related field. Currently calculated: ' . round($totalMonths / 12, 1) . ' years.'
+                    'eligibility' => 'APEL C requires a minimum of 3 years of work experience in a related field. Currently calculated: '.round($totalMonths / 12, 1).' years.',
                 ])->withInput();
             }
 
@@ -395,7 +402,7 @@ class ApplicationController extends Controller
                 $year = (int) filter_var($cert['year_awarded'], FILTER_SANITIZE_NUMBER_INT);
                 if ($year > 0 && ($currentYear - $year) > 5) {
                     return back()->withErrors([
-                        'eligibility' => "Certificate '{$cert['title_of_certification']}' was awarded in {$year}, which is older than the allowed 5 years validity."
+                        'eligibility' => "Certificate '{$cert['title_of_certification']}' was awarded in {$year}, which is older than the allowed 5 years validity.",
                     ])->withInput();
                 }
             }
@@ -410,7 +417,7 @@ class ApplicationController extends Controller
         if ($isApelA) {
             $programApplied = $request->program_applied ?? '';
         } elseif ($selectedCourse) {
-            $programApplied = $selectedCourse->course_name . ' (' . $selectedCourse->course_code . ')';
+            $programApplied = $selectedCourse->course_name.' ('.$selectedCourse->course_code.')';
         }
 
         $evidenceFiles = $application->evidence_file ?? [];
@@ -459,7 +466,7 @@ class ApplicationController extends Controller
             'portfolio_file' => $portfolioFiles,
         ]);
 
-        if (!$isDraft) {
+        if (! $isDraft) {
             $application = $this->submitForReview($application);
         }
 
@@ -470,9 +477,10 @@ class ApplicationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $msg,
-                'application_id' => (string) $application->_id
+                'application_id' => (string) $application->_id,
             ]);
         }
+
         return redirect()->route('student.applications.index')->with('success', $msg);
     }
 
@@ -501,11 +509,11 @@ class ApplicationController extends Controller
         $this->sendMail(
             $application->user_id,
             "UTM {$application->application_type} Application Received",
-            "Your {$application->application_type} application has been received.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Stage: {$application->stageLabel()}\n\n" .
-                $application->stageExplanation() . "\n\n" .
+            "Your {$application->application_type} application has been received.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                "Stage: {$application->stageLabel()}\n\n".
+                $application->stageExplanation()."\n\n".
                 "Thank you.\nFaculty of Computing, UTM"
         );
 
@@ -557,10 +565,10 @@ class ApplicationController extends Controller
         $this->sendMail(
             Auth::id(),
             'UTM APEL Payment Receipt Received',
-            "Your payment receipt has been received.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Stage: {$application->stageLabel()}\n\n" .
+            "Your payment receipt has been received.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                "Stage: {$application->stageLabel()}\n\n".
                 $application->stageExplanation()
         );
 
@@ -605,10 +613,10 @@ class ApplicationController extends Controller
         $this->sendMail(
             Auth::id(),
             'UTM APEL Appeal Received',
-            "Your appeal has been received.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Programme / Course: {$application->program_applied}\n" .
-                "Your grounds: {$request->appeal_remarks}\n\n" .
+            "Your appeal has been received.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Programme / Course: {$application->program_applied}\n".
+                "Your grounds: {$request->appeal_remarks}\n\n".
                 $application->stageExplanation()
         );
 
@@ -620,32 +628,32 @@ class ApplicationController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Student mail error: ' . $e->getMessage());
+            Log::error('Student mail error: '.$e->getMessage());
         }
     }
 
     public function printPortfolio($id)
     {
         $application = Application::where('_id', $id)->firstOrFail();
-        
+
         $user = Auth::user();
         $isStudent = (string) $user->_id === (string) $application->user_id;
         $isEvaluator = (string) $user->_id === (string) $application->evaluator_id || (string) $user->_id === (string) ($application->evaluator_2_id ?? '');
         $isAdmin = $user->role === 'admin';
 
-        if (!$isStudent && !$isEvaluator && !$isAdmin) {
+        if (! $isStudent && ! $isEvaluator && ! $isAdmin) {
             abort(403, 'Unauthorized access to this portfolio.');
         }
 
         $student = User::where('_id', (string) $application->user_id)->firstOrFail();
-        
+
         $evaluator = null;
         if ($application->evaluator_id) {
             $evaluator = User::where('_id', (string) $application->evaluator_id)->first();
@@ -686,7 +694,7 @@ class ApplicationController extends Controller
 
         // If in portfolio mode, make sure AssessmentSubmission points to it
         if (($application->assessment_type ?? '') === 'portfolio') {
-            \App\Models\AssessmentSubmission::updateOrCreate(
+            AssessmentSubmission::updateOrCreate(
                 ['application_id' => (string) $application->_id],
                 [
                     'student_id' => (string) $application->user_id,
@@ -723,19 +731,19 @@ class ApplicationController extends Controller
         if ($request->hasFile('cv_file')) {
             $portfolioFiles[] = [
                 'path' => $request->file('cv_file')->store('apel_c/portfolio', 'private'),
-                'name' => 'CV_Resume_' . $request->file('cv_file')->getClientOriginalName(),
+                'name' => 'CV_Resume_'.$request->file('cv_file')->getClientOriginalName(),
             ];
         }
         if ($request->hasFile('certs_file')) {
             $portfolioFiles[] = [
                 'path' => $request->file('certs_file')->store('apel_c/portfolio', 'private'),
-                'name' => 'Certs_' . $request->file('certs_file')->getClientOriginalName(),
+                'name' => 'Certs_'.$request->file('certs_file')->getClientOriginalName(),
             ];
         }
         if ($request->hasFile('samples_file')) {
             $portfolioFiles[] = [
                 'path' => $request->file('samples_file')->store('apel_c/portfolio', 'private'),
-                'name' => 'WorkSamples_' . $request->file('samples_file')->getClientOriginalName(),
+                'name' => 'WorkSamples_'.$request->file('samples_file')->getClientOriginalName(),
             ];
         }
 
@@ -746,7 +754,7 @@ class ApplicationController extends Controller
             );
         }
 
-        \App\Models\AssessmentSubmission::updateOrCreate(
+        AssessmentSubmission::updateOrCreate(
             ['application_id' => (string) $application->_id],
             [
                 'student_id' => (string) $application->user_id,
@@ -769,20 +777,20 @@ class ApplicationController extends Controller
         $this->sendMail(
             $application->user_id,
             'UTM APEL C Portfolio Received',
-            "Your portfolio essays and supporting documents have been received.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Course: {$application->program_applied}\n\n" .
-                $application->stageExplanation() . "\n\n" .
+            "Your portfolio essays and supporting documents have been received.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Course: {$application->program_applied}\n\n".
+                $application->stageExplanation()."\n\n".
                 "Thank you.\nFaculty of Computing, UTM"
         );
 
         $this->sendMail(
             $application->evaluator_id,
             'UTM APEL C Portfolio Ready for Grading',
-            "A candidate has submitted their portfolio for grading.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Course: {$application->program_applied}\n\n" .
-                "Please sign in to the APEL Management System to grade it."
+            "A candidate has submitted their portfolio for grading.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Course: {$application->program_applied}\n\n".
+                'Please sign in to the APEL Management System to grade it.'
         );
 
         return redirect()->back()->with('success', 'Portfolio submitted. It is now with your evaluator for grading.');

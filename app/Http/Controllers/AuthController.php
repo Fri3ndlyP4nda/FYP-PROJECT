@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Application;
-use App\Models\User;
 use App\Models\ActivityLog;
+use App\Models\Application;
 use App\Models\AssessmentSubmission;
+use App\Models\User;
+use App\Services\ApelDecisionSupportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
-use App\Services\ApelDecisionSupportService;
 
 class AuthController extends Controller
 {
     public function showRegister()
     {
         $this->generateCaptcha();
+
         return view('auth.register');
     }
 
@@ -61,6 +62,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         $this->generateCaptcha();
+
         return view('auth.login');
     }
 
@@ -87,7 +89,7 @@ class AuthController extends Controller
             'password' => $request->password,
         ];
 
-        if (!Auth::attempt($credentials)) {
+        if (! Auth::attempt($credentials)) {
             $this->generateCaptcha();
 
             return back()->withErrors([
@@ -109,6 +111,7 @@ class AuthController extends Controller
         $rememberMinutes = (int) config('apel.two_factor.remember_minutes', 30);
         if ($user->last_2fa_verified_at && $user->last_2fa_verified_at->isAfter(now()->subMinutes($rememberMinutes))) {
             $request->session()->regenerate();
+
             return $this->redirectUserByRole($user->role);
         }
 
@@ -136,7 +139,7 @@ class AuthController extends Controller
                     ->subject('UTM APEL Two-Factor Verification Code');
             });
         } catch (\Exception $e) {
-            Log::error('2FA Mail Error: ' . $e->getMessage());
+            Log::error('2FA Mail Error: '.$e->getMessage());
         }
 
         Auth::logout();
@@ -154,7 +157,7 @@ class AuthController extends Controller
             return redirect()->route('login');
         }
 
-        if (!session('2fa_user_id')) {
+        if (! session('2fa_user_id')) {
             return redirect()->route('login');
         }
 
@@ -173,21 +176,21 @@ class AuthController extends Controller
 
         $user = User::where('_id', session('2fa_user_id'))->first();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'Session expired. Please login again.']);
         }
 
         // Expiry is checked before the code so an expired attempt never reveals
         // whether the submitted digits were otherwise correct.
-        if (!$user->two_factor_expires_at || now()->greaterThan($user->two_factor_expires_at)) {
+        if (! $user->two_factor_expires_at || now()->greaterThan($user->two_factor_expires_at)) {
             return redirect()->route('login')
                 ->withErrors(['email' => 'Verification code expired. Please login again.']);
         }
 
         // Hash::check is constant-time; the previous loose != compared a secret
         // with PHP's numeric-string juggling rules.
-        if (!$user->two_factor_code || !Hash::check($request->two_factor_code, $user->two_factor_code)) {
+        if (! $user->two_factor_code || ! Hash::check($request->two_factor_code, $user->two_factor_code)) {
             return back()->withErrors([
                 'two_factor_code' => 'Invalid verification code.',
             ]);
@@ -248,7 +251,7 @@ class AuthController extends Controller
         $assignedAppIds = Application::where('application_type', 'APEL C')
             ->where('evaluator_id', $evaluatorId)
             ->pluck('id')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->toArray();
 
         $pendingCount = empty($assignedAppIds)

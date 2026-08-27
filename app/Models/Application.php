@@ -9,6 +9,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class Application extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'applications';
 
     protected $fillable = [

@@ -29,8 +29,8 @@ trait RefreshesMongoDatabase
         if (! is_string($name) || ! str_contains($name, 'testing')) {
             $this->fail(
                 "Refusing to truncate '{$name}': the test database name must contain "
-                . "'testing'. Check DB_DATABASE in phpunit.xml — this guard exists so a "
-                . "misconfigured suite cannot delete real applicant data."
+                ."'testing'. Check DB_DATABASE in phpunit.xml — this guard exists so a "
+                .'misconfigured suite cannot delete real applicant data.'
             );
         }
 

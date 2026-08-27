@@ -5,22 +5,23 @@ namespace App\Http\Controllers\Evaluator;
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
 use App\Models\Application;
+use App\Models\AssessmentSubmission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicationReviewController extends Controller
 {
     public function index()
     {
         $applications = Application::where('status', '!=', 'Draft')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->orderBy('submission_date', 'desc')
             ->get();
@@ -31,9 +32,9 @@ class ApplicationReviewController extends Controller
     public function show($id)
     {
         $application = Application::where('_id', $id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
@@ -52,21 +53,21 @@ class ApplicationReviewController extends Controller
                 $application,
                 ApelStage::UNDER_REVIEW,
                 [],
-                'Opened by ' . Auth::user()->name . '.',
+                'Opened by '.Auth::user()->name.'.',
             );
 
             $this->sendMail(
                 $application->user_id,
                 'UTM APEL Review Started',
-                "Your application is now being assessed.\n\n" .
-                    "Reference: {$application->reference()}\n" .
-                    "Programme / Course: {$application->program_applied}\n\n" .
+                "Your application is now being assessed.\n\n".
+                    "Reference: {$application->reference()}\n".
+                    "Programme / Course: {$application->program_applied}\n\n".
                     $application->stageExplanation()
             );
         }
 
         if ($application->application_type === 'APEL C' && ($application->assessment_type ?? '') === 'portfolio') {
-            \App\Models\AssessmentSubmission::firstOrCreate(
+            AssessmentSubmission::firstOrCreate(
                 ['application_id' => (string) $application->_id],
                 [
                     'student_id' => (string) $application->user_id,
@@ -83,9 +84,9 @@ class ApplicationReviewController extends Controller
     public function update(Request $request, $id)
     {
         $application = Application::where('_id', $id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->firstOrFail();
 
@@ -93,10 +94,10 @@ class ApplicationReviewController extends Controller
             $isEvaluator1 = (string) $application->evaluator_id === (string) Auth::id();
             $isEvaluator2 = (string) ($application->evaluator_2_id ?? '') === (string) Auth::id();
 
-            if ($isEvaluator1 && !empty($application->evaluator_1_reviewed_at)) {
+            if ($isEvaluator1 && ! empty($application->evaluator_1_reviewed_at)) {
                 return redirect()->back()->with('error', 'You have already reviewed this application.');
             }
-            if ($isEvaluator2 && !empty($application->evaluator_2_reviewed_at)) {
+            if ($isEvaluator2 && ! empty($application->evaluator_2_reviewed_at)) {
                 return redirect()->back()->with('error', 'You have already reviewed this application.');
             }
 
@@ -141,7 +142,7 @@ class ApplicationReviewController extends Controller
 
             // Consolidate
             $isSingleEvaluator = empty($application->evaluator_2_id);
-            $bothReviewed = !empty($application->evaluator_1_reviewed_at) && !empty($application->evaluator_2_reviewed_at);
+            $bothReviewed = ! empty($application->evaluator_1_reviewed_at) && ! empty($application->evaluator_2_reviewed_at);
 
             if ($isSingleEvaluator || $bothReviewed) {
                 $split = false;
@@ -164,7 +165,7 @@ class ApplicationReviewController extends Controller
                      */
                     $finalRec = $split ? 'split' : $first;
                     $feedback = "Evaluator 1 ({$first}): {$application->evaluator_1_feedback}"
-                        . "\n\nEvaluator 2 ({$second}): {$application->evaluator_2_feedback}";
+                        ."\n\nEvaluator 2 ({$second}): {$application->evaluator_2_feedback}";
                 }
 
                 $application = StageMachine::transition(
@@ -185,7 +186,7 @@ class ApplicationReviewController extends Controller
                     $application,
                     ApelStage::PARTIALLY_REVIEWED,
                     [],
-                    Auth::user()->name . ' submitted their review; awaiting the second evaluator.',
+                    Auth::user()->name.' submitted their review; awaiting the second evaluator.',
                 );
             }
 
@@ -194,9 +195,9 @@ class ApplicationReviewController extends Controller
             $this->sendMail(
                 $application->user_id,
                 'UTM APEL A Review Progress',
-                "There has been progress on your application.\n\n" .
-                    "Reference: {$application->reference()}\n" .
-                    "Programme: {$application->program_applied}\n\n" .
+                "There has been progress on your application.\n\n".
+                    "Reference: {$application->reference()}\n".
+                    "Programme: {$application->program_applied}\n\n".
                     $application->stageExplanation()
             );
 
@@ -216,7 +217,7 @@ class ApplicationReviewController extends Controller
          | status. Grading already advances the stage, so all this action does
          | now is attach the evaluator's written remarks.
          */
-        $hasGraded = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)
+        $hasGraded = AssessmentSubmission::where('application_id', (string) $application->_id)
             ->whereNotNull('graded_at')
             ->exists();
 
@@ -241,9 +242,9 @@ class ApplicationReviewController extends Controller
     public function apelAIndex()
     {
         $applications = Application::where('application_type', 'APEL A')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('evaluator_id', (string) Auth::id())
-                      ->orWhere('evaluator_2_id', (string) Auth::id());
+                    ->orWhere('evaluator_2_id', (string) Auth::id());
             })
             ->orderBy('submission_date', 'desc')
             ->get();
@@ -255,14 +256,14 @@ class ApplicationReviewController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Evaluator review mail error: ' . $e->getMessage());
+            Log::error('Evaluator review mail error: '.$e->getMessage());
         }
     }
 }

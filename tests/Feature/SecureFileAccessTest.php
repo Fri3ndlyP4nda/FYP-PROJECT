@@ -355,12 +355,12 @@ class SecureFileAccessTest extends FeatureTestCase
         if (! in_array($response->getStatusCode(), [403, 404], true)) {
             $this->markTestIncomplete(
                 'BUG: SecureFileController::stream() calls Storage::disk(\'private\')->exists($path) '
-                . 'without guarding against League\Flysystem\PathTraversalDetected. A stored path of '
-                . '"../../.env" is refused by Flysystem — no file escapes the disk — but the exception '
-                . 'is uncaught, so the request answers 500 instead of 404. belongsToApplication() cannot '
-                . 'catch this because the path IS one of the application\'s recorded paths. Fix: normalise '
-                . 'and reject paths containing ".." (and leading "/") in stream(), or wrap the exists() '
-                . 'call so a FilesystemException becomes abort(404).',
+                .'without guarding against League\Flysystem\PathTraversalDetected. A stored path of '
+                .'"../../.env" is refused by Flysystem — no file escapes the disk — but the exception '
+                .'is uncaught, so the request answers 500 instead of 404. belongsToApplication() cannot '
+                .'catch this because the path IS one of the application\'s recorded paths. Fix: normalise '
+                .'and reject paths containing ".." (and leading "/") in stream(), or wrap the exists() '
+                .'call so a FilesystemException becomes abort(404).',
             );
         }
     }

@@ -1,0 +1,75 @@
+name: tests
+
+on:
+  push:
+    branches: [main, master, 'fix/**', 'feat/**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      # The suite needs a real MongoDB: every model pins $connection = 'mongodb',
+      # and the unique:users,email rule resolves against the default connection,
+      # so sqlite gives them nothing to talk to.
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          # mongodb is not bundled with PHP; without it every model fails to boot.
+          extensions: mbstring, bcmath, curl, dom, fileinfo, mongodb
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run tests
+        # phpunit.xml already points at mongodb://127.0.0.1:27017 / apel_testing,
+        # which is exactly what the service container above exposes.
+        run: php artisan test
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, mongodb
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Check formatting
+        # --test reports violations without rewriting, so CI never pushes changes.
+        run: ./vendor/bin/pint --test

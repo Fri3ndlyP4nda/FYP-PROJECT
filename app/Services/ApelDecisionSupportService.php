@@ -216,9 +216,9 @@ class ApelDecisionSupportService
                     ->get();
 
                 $activeApplications = $assignedApplications->filter(function ($application) {
-                    return !in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
-                        && !in_array($application->final_decision ?? '', ['approved', 'rejected'])
-                        && !in_array($application->credit_decision ?? '', ['approved', 'rejected']);
+                    return ! in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
+                        && ! in_array($application->final_decision ?? '', ['approved', 'rejected'])
+                        && ! in_array($application->credit_decision ?? '', ['approved', 'rejected']);
                 });
 
                 $applicationIds = $assignedApplications
@@ -272,9 +272,9 @@ class ApelDecisionSupportService
         $applications = Application::where('status', '!=', 'Draft')->get();
 
         $activeApplications = $applications->filter(function ($application) {
-            return !in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
-                && !in_array($application->final_decision ?? '', ['approved', 'rejected'])
-                && !in_array($application->credit_decision ?? '', ['approved', 'rejected']);
+            return ! in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
+                && ! in_array($application->final_decision ?? '', ['approved', 'rejected'])
+                && ! in_array($application->credit_decision ?? '', ['approved', 'rejected']);
         });
 
         $delayedApplications = $activeApplications->filter(function ($application) {
@@ -469,7 +469,7 @@ class ApelDecisionSupportService
 
     private function dateValue($value): ?Carbon
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 

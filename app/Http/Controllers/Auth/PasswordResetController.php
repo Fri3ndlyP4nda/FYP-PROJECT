@@ -50,7 +50,7 @@ class PasswordResetController extends Controller
                 'created_at' => now(),
             ]);
 
-            $resetLink = url('/reset-password/' . $plainToken . '?email=' . urlencode($email));
+            $resetLink = url('/reset-password/'.$plainToken.'?email='.urlencode($email));
 
             try {
                 Mail::to($email)->send(new ResetPasswordMail($user, $resetLink));
@@ -62,7 +62,7 @@ class PasswordResetController extends Controller
                  * call in the application already logs and swallows; this one was
                  * the sole leak.
                  */
-                Log::error('Password reset mail error: ' . $e->getMessage());
+                Log::error('Password reset mail error: '.$e->getMessage());
             }
         }
 
@@ -76,7 +76,7 @@ class PasswordResetController extends Controller
     {
         $email = $request->query('email');
 
-        if (!$email) {
+        if (! $email) {
             return redirect()->route('password.request')
                 ->withErrors(['email' => 'Invalid reset link.']);
         }
@@ -108,7 +108,7 @@ class PasswordResetController extends Controller
 
         $record = PasswordResetToken::where('email', $email)->first();
 
-        if (!$record) {
+        if (! $record) {
             return back()->withErrors([
                 'email' => 'Invalid or expired password reset request.',
             ])->withInput();
@@ -124,7 +124,7 @@ class PasswordResetController extends Controller
             ])->withInput();
         }
 
-        if (!Hash::check($request->token, $record->token)) {
+        if (! Hash::check($request->token, $record->token)) {
             return back()->withErrors([
                 'email' => 'Invalid reset token.',
             ])->withInput();
@@ -132,7 +132,7 @@ class PasswordResetController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'email' => 'User account not found.',
             ])->withInput();

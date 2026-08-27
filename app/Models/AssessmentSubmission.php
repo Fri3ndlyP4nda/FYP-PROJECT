@@ -7,6 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class AssessmentSubmission extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'assessment_submissions';
 
     protected $fillable = [

@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Student;
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
+use App\Mail\GenericQueueMail;
 use App\Models\Application;
 use App\Models\AssessmentPaper;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Mail\GenericQueueMail;
+use Illuminate\Support\Facades\Mail;
 
 class AssessmentSubmissionController extends Controller
 {
@@ -27,7 +28,7 @@ class AssessmentSubmissionController extends Controller
             ->where('status', 'active')
             ->first();
 
-        if (!$paper) {
+        if (! $paper) {
             abort(404, 'No assessment paper available yet.');
         }
 
@@ -48,7 +49,7 @@ class AssessmentSubmissionController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        if ($paper->submission_deadline && \Carbon\Carbon::parse($paper->submission_deadline)->isPast()) {
+        if ($paper->submission_deadline && Carbon::parse($paper->submission_deadline)->isPast()) {
             return redirect()->route('student.assessment.show', $application->_id)
                 ->withErrors(['error' => 'The submission deadline has passed and you can no longer submit your assessment.']);
         }
@@ -57,7 +58,7 @@ class AssessmentSubmissionController extends Controller
             ->where('student_id', (string) Auth::id())
             ->first();
 
-        if ($existing && !empty($existing->answer_file)) {
+        if ($existing && ! empty($existing->answer_file)) {
             return redirect()->route('student.assessment.show', $application->_id)
                 ->with('success', 'Assessment already submitted.');
         }
@@ -115,19 +116,19 @@ class AssessmentSubmissionController extends Controller
         $this->sendMail(
             Auth::id(),
             'UTM APEL C Assessment Received',
-            "Your answer has been received.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Course: {$application->program_applied}\n\n" .
+            "Your answer has been received.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Course: {$application->program_applied}\n\n".
                 $application->stageExplanation()
         );
 
         $this->sendMail(
             $application->evaluator_id,
             'UTM APEL C Answer Ready for Grading',
-            "A candidate has submitted an answer script for grading.\n\n" .
-                "Reference: {$application->reference()}\n" .
-                "Course: {$application->program_applied}\n\n" .
-                "Please sign in to the APEL Management System to grade it."
+            "A candidate has submitted an answer script for grading.\n\n".
+                "Reference: {$application->reference()}\n".
+                "Course: {$application->program_applied}\n\n".
+                'Please sign in to the APEL Management System to grade it.'
         );
 
         return redirect()->route('student.assessment.show', $application->_id)
@@ -138,14 +139,14 @@ class AssessmentSubmissionController extends Controller
     {
         $user = User::where('_id', (string) $userId)->first();
 
-        if (!$user || !$user->email) {
+        if (! $user || ! $user->email) {
             return;
         }
 
         try {
             Mail::to($user->email)->queue(new GenericQueueMail($subject, $body));
         } catch (\Exception $e) {
-            Log::error('Assessment submission mail error: ' . $e->getMessage());
+            Log::error('Assessment submission mail error: '.$e->getMessage());
         }
     }
 }

@@ -340,11 +340,11 @@ class EligibilityTest extends TestCase
      */
     private function ageCriterion(?int $age): array
     {
-        $application = new Application();
+        $application = new Application;
         $application->application_type = 'APEL A';
         $application->age = $age;
 
-        $scorecard = (new ApelDecisionSupportService())->evaluateApelA($application);
+        $scorecard = (new ApelDecisionSupportService)->evaluateApelA($application);
 
         foreach ($scorecard['criteria'] as $criterion) {
             if ($criterion['name'] === 'Minimum age requirement') {

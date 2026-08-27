@@ -25,7 +25,7 @@ trait MakesApelRecords
         $n++;
 
         return User::create(array_merge([
-            'name' => ucfirst($role) . " {$n}",
+            'name' => ucfirst($role)." {$n}",
             'email' => "{$role}{$n}@apel.test",
             'password' => Hash::make('TestPassword123'),
             'role' => $role,

@@ -45,11 +45,11 @@ class ApelAWorkflowTest extends FeatureTestCase
      * throw for every application of either type.
      */
     private const STAGE_ACCESSOR_BUG = 'BUG: Application::stage() collides with the "stage" attribute. '
-        . 'mongodb/laravel-mongodb 5.7 DocumentModel::getAttribute() prefers a same-named method over $attributes, '
-        . 'so StageMachine::current() (StageMachine.php:72) re-enters Application::stage() and dies with '
-        . '"Undefined property: App\Models\Application::$stage". Every stage read and every transition throws, '
-        . 'so the whole APEL workflow returns 500. Reading the raw attribute in StageMachine::current() — or '
-        . 'renaming the model method — makes all of these tests pass unchanged.';
+        .'mongodb/laravel-mongodb 5.7 DocumentModel::getAttribute() prefers a same-named method over $attributes, '
+        .'so StageMachine::current() (StageMachine.php:72) re-enters Application::stage() and dies with '
+        .'"Undefined property: App\Models\Application::$stage". Every stage read and every transition throws, '
+        .'so the whole APEL workflow returns 500. Reading the raw attribute in StageMachine::current() — or '
+        .'renaming the model method — makes all of these tests pass unchanged.';
 
     /**
      * Stop a workflow test at its first line while the defect above is present,
@@ -92,7 +92,7 @@ class ApelAWorkflowTest extends FeatureTestCase
         try {
             $stage = $saved->stage();
         } catch (\Throwable $e) {
-            $this->markTestIncomplete(self::STAGE_ACCESSOR_BUG . ' Observed: ' . $e->getMessage());
+            $this->markTestIncomplete(self::STAGE_ACCESSOR_BUG.' Observed: '.$e->getMessage());
         }
 
         $this->assertSame(ApelStage::PAYMENT_DUE, $stage);
