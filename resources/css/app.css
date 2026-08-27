@@ -1777,3 +1777,374 @@ td.num,
     font-size: 12.5px;
     text-align: center;
 }
+
+/*
+|------------------------------------------------------------------------------
+| Triage console
+|------------------------------------------------------------------------------
+|
+| A working surface rather than a page: a fixed-height split with an
+| independently scrolling queue beside a detail pane. The queue is grouped by
+| who is blocking, so the group that needs the viewer sits at the top and the
+| rest is context.
+|
+| The screen fills the viewport below the navbar and does not scroll as a whole
+| — each pane scrolls itself, so the queue header and the case header stay put
+| while you work down a list.
+*/
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.console {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+.console-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.console-bar-lead h1 { font-size: 20px; margin-top: 2px; }
+
+/* Where work is piling up. Numbers first, labels quiet. */
+.pressure { display: flex; gap: 28px; margin: 0; flex-wrap: wrap; }
+
+.pressure-item { margin: 0; }
+
+.pressure-item dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 1px;
+}
+
+.pressure-item dd {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 650;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.pressure-item.is-live dd { color: var(--accent); }
+.pressure-item.is-warn dd { color: var(--attention); }
+
+.console-split {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+}
+
+/* ---- queue ---- */
+
+.queue {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid var(--line);
+    background: var(--surface-sunk);
+}
+
+.queue-search {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-sunk);
+}
+
+.queue-search input { font-size: 13px; padding: 7px 10px; }
+
+.queue-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+
+.queue-group { border-bottom: 1px solid var(--line); }
+.queue-group[hidden] { display: none; }
+
+.queue-group-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    padding: 9px 14px;
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+.queue-count {
+    padding: 1px 7px;
+    border-radius: var(--r-full);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+}
+
+.queue-count.is-live {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+
+.queue-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+}
+
+.queue-row:last-child { border-bottom: 0; }
+.queue-row:hover { background: var(--surface-sunk); text-decoration: none; }
+.queue-row[hidden] { display: none; }
+
+/* The open row is marked by a fill AND a left bar, so it does not depend on
+   colour perception alone. */
+.queue-row.is-open {
+    background: var(--accent-tint);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.queue-row-main { min-width: 0; }
+
+.queue-row-name {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 550;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-row-sub {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.queue-row-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex: none;
+}
+
+.queue-row-age {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-4);
+    font-variant-numeric: tabular-nums;
+}
+
+.queue-row-age.is-stale { color: var(--attention); font-weight: 600; }
+
+.queue-clear {
+    padding: 18px 14px;
+    margin: 0;
+    color: var(--ink-3);
+    font-size: 13px;
+    background: var(--surface);
+}
+
+/* ---- case pane ---- */
+
+.case {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 26px 40px;
+    background: var(--ground);
+}
+
+.case-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+.case-head h2 { font-size: 20px; margin: 3px 0 2px; }
+
+/* The next action. The one thing the viewer is here to resolve. */
+.act {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ink-4);
+    border-radius: var(--r);
+    background: var(--surface);
+}
+
+.act--attention { border-left-color: var(--attention); background: var(--attention-tint); }
+.act--good { border-left-color: var(--good); background: var(--good-tint); }
+.act--bad { border-left-color: var(--bad); background: var(--bad-tint); }
+.act--appeal { border-left-color: var(--appeal); background: var(--appeal-tint); }
+.act--progress,
+.act--neutral { border-left-color: var(--ink-4); background: var(--surface); }
+
+.act-body { min-width: 0; flex: 1; }
+.act-title { margin: 0 0 3px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.act-detail { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 62ch; }
+
+.act-deadline {
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--attention);
+    font-weight: 600;
+}
+
+.case-block {
+    padding: 18px;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--surface);
+}
+
+/* ---- rail ---- */
+
+.rail {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+}
+
+.rail-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    min-width: 82px;
+    text-align: center;
+}
+
+/* The connector sits behind the marks and stops before the last node. */
+.rail-node:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: calc(50% + 16px);
+    right: calc(-50% + 16px);
+    height: 2px;
+    background: var(--line);
+}
+
+.rail-node--done:not(:last-child)::after { background: var(--good); }
+
+.rail-mark {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-full);
+    border: 2px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rail-node--done .rail-mark { background: var(--good); border-color: var(--good); color: #fff; }
+.rail-node--failed .rail-mark { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+.rail-node--current .rail-mark {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--ring);
+}
+
+.rail-label { font-size: 10.5px; line-height: 1.3; color: var(--ink-3); max-width: 94px; }
+.rail-node--current .rail-label { color: var(--ink); font-weight: 600; }
+
+/* ---- facts ---- */
+
+.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin: 0;
+}
+
+.facts > div { margin: 0; }
+
+.facts dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 2px;
+}
+
+.facts dd { margin: 0; font-size: 13.5px; color: var(--ink); font-weight: 500; }
+
+.case-foot { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---- narrow ---- */
+
+@media (max-width: 900px) {
+    /* Stop pretending to be an app: let the whole thing scroll as one page. */
+    .console { height: auto; overflow: visible; }
+    .console-split { grid-template-columns: minmax(0, 1fr); }
+    .queue { border-right: 0; border-bottom: 1px solid var(--line); max-height: 340px; }
+    .case { padding: 18px 16px 40px; }
+    .pressure { gap: 18px; }
+}

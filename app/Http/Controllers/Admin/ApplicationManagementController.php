@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\IllegalStageTransition;
+use App\Domain\Apel\NextAction;
 use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
 use App\Mail\GenericQueueMail;
@@ -22,23 +23,93 @@ class ApplicationManagementController extends Controller
 {
     public function __construct(private ApelDecisionSupportService $decisionSupport) {}
 
-    public function index()
+    /**
+     * The triage console.
+     *
+     * This used to be a table of every application sorted by target year, which
+     * answered a question nobody has. An APEL application is a turn-based
+     * object: at any moment it is blocked on exactly one party. So the queue is
+     * grouped by WHO IS BLOCKING rather than by date, and the group that needs
+     * the administrator comes first.
+     *
+     * NextAction already computed whose turn it is and what they must do - it
+     * was only being used on the detail page. Grouping by it here is the whole
+     * idea of this screen.
+     */
+    public function index(Request $request)
     {
-        $all = Application::where('stage', '!=', ApelStage::DRAFT->value)->get();
+        $viewer = Auth::user();
 
-        $apelA = $all->where('application_type', 'APEL A')
-            ->sortByDesc(function ($app) {
-                return $app->target_year ?? date('Y', strtotime($app->submission_date));
-            });
+        $applications = Application::where('stage', '!=', ApelStage::DRAFT->value)->get();
 
-        $apelC = $all->where('application_type', 'APEL C')
-            ->sortByDesc(function ($app) {
-                return $app->target_year ?? date('Y', strtotime($app->submission_date));
-            });
+        // Resolve every applicant name in one query rather than one per row.
+        $names = User::whereIn('_id', $applications->pluck('user_id')->filter()->unique()->values()->all())
+            ->get()
+            ->mapWithKeys(fn (User $u) => [(string) $u->_id => $u->name]);
 
-        $applications = $apelA->merge($apelC);
+        $rows = $applications->map(function (Application $application) use ($viewer, $names) {
+            $action = NextAction::for($application, $viewer);
+            $stage = $application->stage();
 
-        return view('admin.applications.index', compact('applications'));
+            return [
+                'model' => $application,
+                'id' => (string) $application->_id,
+                'student' => $names[(string) $application->user_id] ?? 'Unknown applicant',
+                'stage' => $stage,
+                'action' => $action,
+                'blocked_on' => self::blockedOn($stage, $action),
+                'since' => $application->status_updated_at ?? $application->submission_date,
+            ];
+        });
+
+        $needsYou = $rows->where('blocked_on', 'you')
+            ->sortBy(fn ($r) => $r['since'])
+            ->values();
+
+        $elsewhere = $rows->reject(fn ($r) => in_array($r['blocked_on'], ['you', 'closed'], true))
+            ->sortBy(fn ($r) => $r['since'])
+            ->groupBy('blocked_on');
+
+        $closed = $rows->where('blocked_on', 'closed')
+            ->sortByDesc(fn ($r) => $r['since'])
+            ->values();
+
+        // Which application is open in the detail pane. Falling back to the
+        // oldest thing that actually needs the administrator is the useful
+        // default; landing on an arbitrary closed record is not.
+        $selectedId = (string) $request->query('open', '');
+        $selected = $rows->firstWhere('id', $selectedId)
+            ?? $needsYou->first()
+            ?? $rows->first();
+
+        $metrics = $this->decisionSupport->workflowMetrics();
+
+        return view('admin.applications.index', compact(
+            'needsYou', 'elsewhere', 'closed', 'selected', 'metrics'
+        ));
+    }
+
+    /**
+     * Who is this application waiting on?
+     *
+     * NextAction returns null for a stage where the viewer's role has nothing to
+     * do — for an administrator that is evaluator_assigned and under_review,
+     * where the ball is genuinely with the evaluator. Reading "no action" as
+     * "needs you" put those in the administrator's own queue and made the
+     * headline count wrong, which would defeat the point of grouping by turn.
+     */
+    private static function blockedOn(ApelStage $stage, ?array $action): string
+    {
+        if ($stage->isTerminal()) {
+            return 'closed';
+        }
+
+        // Silence from NextAction means this stage is not the viewer's move.
+        if ($action === null) {
+            return 'the evaluator';
+        }
+
+        return $action['waiting_on'] ?? 'you';
     }
 
     public function assignForm($id)
@@ -730,7 +801,8 @@ class ApplicationManagementController extends Controller
     {
         $value = (string) $value;
 
-        if ($value !== '' && str_contains('=+-@	', $value[0])) {
+        if ($value !== '' && str_contains('=+-@	
+', $value[0])) {
             return "'".$value;
         }
 

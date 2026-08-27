@@ -1,292 +1,219 @@
 @extends('layouts.app')
 
 @section('content')
-    @php
-        $total = $applications->count();
-        $pending = $applications->where('status', 'pending')->count();
-        $approved = $applications->where('status', 'approved')->count();
-        $rejected = $applications->where('status', 'rejected')->count();
-        $assigned = $applications->whereNotNull('evaluator_id')->count();
-    @endphp
+    {{--
+        The triage console.
 
-    <style>
-        .filter-btn:hover:not(.active) {
-            color: var(--maroon) !important;
-            background: rgba(139, 30, 63, 0.04) !important;
-        }
-    </style>
+        This screen used to be a table of every application sorted by target
+        year — a shape that answers a question nobody actually has. An APEL
+        application is a turn-based object: at any moment it is blocked on
+        exactly one party. So the queue is grouped by WHO IS BLOCKING, the group
+        that needs the administrator sits at the top, and selecting a row opens
+        it beside the list rather than navigating away and back.
+    --}}
+    <div class="console">
 
-    <div class="container admin-shell">
-        <section class="page-hero">
-            <div>
-                <span class="section-pill">Admin Management</span>
-                <h2>Manage Applications</h2>
-                <p class="muted page-hero-text">
-                    Review student submissions, monitor workflow progress, and assign evaluators based on APEL A or APEL C
-                    process needs.
-                </p>
+        {{-- Where work is piling up. Sourced from workflowMetrics(). --}}
+        <section class="console-bar" aria-label="Queue health">
+            <div class="console-bar-lead">
+                <span class="section-pill">Queue</span>
+                <h1>Applications</h1>
             </div>
 
-            <div class="hero-actions" style="display: flex; gap: 12px; align-items: center;">
-                <a href="{{ route('admin.reports.apel_a') }}" target="_blank" class="btn btn-secondary">
-                    📊 Export APEL.A Report
-                </a>
-                <a href="{{ route('admin.reports.apel_c') }}" target="_blank" class="btn btn-secondary">
-                    📊 Export APEL.C Report
-                </a>
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-            </div>
+            <dl class="pressure">
+                <div class="pressure-item {{ $needsYou->count() ? 'is-live' : '' }}">
+                    <dt>Needs you</dt>
+                    <dd>{{ $needsYou->count() }}</dd>
+                </div>
+                <div class="pressure-item {{ ($metrics['delayed_count'] ?? 0) ? 'is-warn' : '' }}">
+                    <dt>Stalled &gt; 7 days</dt>
+                    <dd>{{ $metrics['delayed_count'] ?? 0 }}</dd>
+                </div>
+                <div class="pressure-item">
+                    <dt>Awaiting payment</dt>
+                    <dd>{{ $metrics['pending_payment_count'] ?? 0 }}</dd>
+                </div>
+                <div class="pressure-item">
+                    <dt>Median days to decide</dt>
+                    <dd>{{ $metrics['average_processing_days'] ?? 0 }}</dd>
+                </div>
+            </dl>
         </section>
 
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
+        <div class="console-split">
 
-        <section class="admin-stats-grid">
-            <div class="admin-stat-card">
-                <span>Total Applications</span>
-                <strong>{{ $total }}</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Pending</span>
-                <strong>{{ $pending }}</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Approved</span>
-                <strong>{{ $approved }}</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Rejected</span>
-                <strong>{{ $rejected }}</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Assigned Evaluator</span>
-                <strong>{{ $assigned }}</strong>
-            </div>
-        </section>
-
-        <section class="table-card">
-            <div class="table-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                <div>
-                    <h3>Application Overview</h3>
-                    <p>Open each application to continue the correct APEL workflow.</p>
+            {{-- ------------------------------------------------------------
+                 Queue — grouped by who is blocking, not by date
+            ------------------------------------------------------------- --}}
+            <aside class="queue" aria-label="Application queue">
+                <div class="queue-search">
+                    <input type="search" id="queue-filter" placeholder="Filter by name or programme…"
+                           aria-label="Filter the queue" autocomplete="off">
                 </div>
 
-                {{-- Queue Filters --}}
-                <div class="queue-filters" style="display: flex; gap: 8px; background: var(--maroon-tint); padding: 4px; border-radius: 10px;">
-                    <button type="button" class="filter-btn active" data-filter="all" style="border: none; background: #ffffff; color: var(--maroon); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-                        All ({{ $total }})
-                    </button>
-                    <button type="button" class="filter-btn" data-filter="APEL A" style="border: none; background: transparent; color: var(--ink-3); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                        APEL A ({{ $applications->where('application_type', 'APEL A')->count() }})
-                    </button>
-                    <button type="button" class="filter-btn" data-filter="APEL C" style="border: none; background: transparent; color: var(--ink-3); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                        APEL C ({{ $applications->where('application_type', 'APEL C')->count() }})
-                    </button>
-                </div>
-            </div>
+                <div class="queue-scroll">
+                    <section class="queue-group" data-group="you">
+                        <h2 class="queue-group-head">
+                            <span>Needs you</span>
+                            <span class="queue-count is-live">{{ $needsYou->count() }}</span>
+                        </h2>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Type</th>
-                            <th>Program / Course</th>
-                            <th>Year</th>
-                            <th>Submission Date</th>
-                            <th>Status</th>
-                            <th>Workflow Stage</th>
-                            <th>Evaluator</th>
-                            <th style="width: 220px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($applications as $application)
-                            <tr>
-                                <td>{{ \App\Models\User::where('_id', $application->user_id)->value('name') ?? 'Unknown' }}
-                                </td>
-
-                                <td>
-                                    @if ($application->application_type === 'APEL A')
-                                        <span class="type-badge type-apel-a">APEL A</span>
-                                    @else
-                                        <span class="type-badge type-apel-c">APEL C</span>
-                                    @endif
-                                </td>
-
-                                <td>{{ $application->program_applied }}</td>
-                                <td>
-                                    <strong>{{ $application->target_year ?? date('Y', strtotime($application->submission_date)) }}</strong>
-                                </td>
-                                <td>{{ $application->submission_date }}</td>
-
-                                <td>
-                                    @php
-                                        $status = $application->status ?? 'Pre-Application Submitted';
-                                    @endphp
-
-                                    @if (str_contains(strtolower($status), 'approved'))
-                                        <span class="badge badge-approved">{{ $status }}</span>
-                                    @elseif (str_contains(strtolower($status), 'rejected') || str_contains(strtolower($status), 'failed'))
-                                        <span class="badge badge-rejected">{{ $status }}</span>
-                                    @else
-                                        <span class="badge badge-pending">{{ $status }}</span>
-                                    @endif
-
-                                    @if (($application->appeal_status ?? null) === 'submitted')
-                                        <br><br>
-
-                                        <span class="badge badge-pending">
-                                            Appeal Submitted
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    @if (in_array($application->status ?? '', ['Final Approved', 'Final Rejected']))
-                                        <span class="stage-badge">Completed</span>
-                                    @elseif ($application->application_type === 'APEL A')
-                                        <span class="stage-badge">
-                                            {{ ucfirst(str_replace('_', ' ', $application->review_stage ?? 'submitted')) }}
-                                        </span>
-                                    @else
-                                        <span class="stage-badge">
-                                            {{ $application->evaluator_id ? 'Ready for assessment flow' : 'Waiting for assignment' }}
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    @php
-                                         $eval1 = $application->evaluator_id ? \App\Models\User::where('_id', $application->evaluator_id)->value('name') : null;
-                                         $eval2 = $application->evaluator_2_id ? \App\Models\User::where('_id', $application->evaluator_2_id)->value('name') : null;
-                                         $evalNames = 'Not Assigned';
-                                         if ($eval1 && $eval2) {
-                                             $evalNames = "{$eval1} & {$eval2}";
-                                         } elseif ($eval1) {
-                                             $evalNames = $eval1;
-                                         }
-                                     @endphp
-                                    {{ $evalNames }}
-                                </td>
-
-                                <td>
-                                    <div class="table-actions">
-                                        <a href="{{ route('admin.applications.assign.form', $application->_id) }}"
-                                            class="btn btn-sm">
-                                            Manage
-                                        </a>
-
-                                        @if (in_array($application->status ?? 'Pre-Application Submitted', ['Pre-Application Submitted', 'Under Advisor Review']))
-                                            <form method="POST"
-                                                action="{{ route('admin.applications.update_status', $application->_id) }}"
-                                                style="display:inline;">
-                                                @csrf
-                                                <input type="hidden" name="status" value="Advisor Approved">
-                                                <button type="submit" class="btn btn-sm">Approve</button>
-                                            </form>
-
-                                            <form method="POST"
-                                                action="{{ route('admin.applications.update_status', $application->_id) }}"
-                                                style="display:inline;">
-                                                @csrf
-                                                <input type="hidden" name="status" value="Advisor Rejected">
-                                                <button type="submit" class="btn btn-sm btn-secondary">Reject</button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
+                        @forelse ($needsYou as $row)
+                            @include('admin.applications._queue-row', ['row' => $row, 'selected' => $selected])
                         @empty
-                            <tr class="no-records-row">
-                                <td colspan="8">
-                                    <div class="table-empty">
-                                        <div class="empty-mark small-empty-mark">01</div>
-                                        <h4>No applications found</h4>
-                                        <p>No student applications are available right now.</p>
-                                    </div>
-                                </td>
-                            </tr>
+                            <p class="queue-clear">Nothing is waiting on you.</p>
                         @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                    </section>
+
+                    @foreach ($elsewhere as $who => $group)
+                        <section class="queue-group" data-group="{{ $who }}">
+                            <h2 class="queue-group-head">
+                                <span>With {{ $who }}</span>
+                                <span class="queue-count">{{ $group->count() }}</span>
+                            </h2>
+                            @foreach ($group as $row)
+                                @include('admin.applications._queue-row', ['row' => $row, 'selected' => $selected])
+                            @endforeach
+                        </section>
+                    @endforeach
+
+                    @if ($closed->count())
+                        <section class="queue-group" data-group="closed">
+                            <h2 class="queue-group-head">
+                                <span>Closed</span>
+                                <span class="queue-count">{{ $closed->count() }}</span>
+                            </h2>
+                            @foreach ($closed as $row)
+                                @include('admin.applications._queue-row', ['row' => $row, 'selected' => $selected])
+                            @endforeach
+                        </section>
+                    @endif
+                </div>
+            </aside>
+
+            {{-- ------------------------------------------------------------
+                 Detail — the case file, opened beside the queue
+            ------------------------------------------------------------- --}}
+            <main class="case" aria-live="polite">
+                @if (! $selected)
+                    <div class="empty">
+                        <div class="empty-mark" aria-hidden="true">—</div>
+                        <p class="empty-title">No applications yet</p>
+                        <p class="empty-body">Submitted applications appear here for triage.</p>
+                    </div>
+                @else
+                    @php
+                        $app = $selected['model'];
+                        $action = $selected['action'];
+                    @endphp
+
+                    <header class="case-head">
+                        <div>
+                            <span class="section-pill">{{ $app->type() }}</span>
+                            <h2>{{ $selected['student'] }}</h2>
+                            <p class="muted">{{ $app->program_applied ?: 'No programme recorded' }}</p>
+                        </div>
+                        <span class="badge badge--{{ $selected['stage']->tone() }}">
+                            {{ $selected['stage']->label($app->type()) }}
+                        </span>
+                    </header>
+
+                    {{-- The answer to "what do I do about this?" leads. --}}
+                    @if ($action)
+                        <section class="act act--{{ $action['tone'] }}">
+                            <div class="act-body">
+                                <p class="act-title">{{ $action['title'] }}</p>
+                                <p class="act-detail">{{ $action['body'] }}</p>
+                                @if (! empty($action['deadline']))
+                                    <p class="act-deadline">
+                                        Due {{ \Carbon\Carbon::parse($action['deadline'])->format('j M Y, H:i') }}
+                                    </p>
+                                @endif
+                            </div>
+                            @if (! empty($action['cta']) && Route::has($action['cta']['route']))
+                                <a class="btn" href="{{ route($action['cta']['route'], $action['cta']['params']) }}">
+                                    {{ $action['cta']['label'] }}
+                                </a>
+                            @endif
+                        </section>
+                    @endif
+
+                    {{-- Where it has reached. Ticks and crosses, not colour alone. --}}
+                    <section class="case-block">
+                        <h3 class="section-title">Progress</h3>
+                        <ol class="rail">
+                            @foreach ($app->rail() as $node)
+                                <li class="rail-node rail-node--{{ $node['state'] ?? 'todo' }}">
+                                    <span class="rail-mark" aria-hidden="true">
+                                        @if (($node['state'] ?? '') === 'done') &check;
+                                        @elseif (($node['state'] ?? '') === 'failed') &times;
+                                        @else {{ $loop->iteration }}
+                                        @endif
+                                    </span>
+                                    <span class="rail-label">{{ $node['label'] ?? '' }}</span>
+                                    @if (($node['state'] ?? '') === 'current')
+                                        <span class="sr-only">(current step)</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ol>
+                    </section>
+
+                    <section class="case-block">
+                        <h3 class="section-title">Record</h3>
+                        <dl class="facts">
+                            <div><dt>Submitted</dt>
+                                <dd>{{ $app->submission_date ? \Carbon\Carbon::parse($app->submission_date)->format('j M Y') : '—' }}</dd></div>
+                            <div><dt>Last movement</dt>
+                                <dd>{{ $selected['since'] ? \Carbon\Carbon::parse($selected['since'])->diffForHumans() : '—' }}</dd></div>
+                            <div><dt>Payment</dt>
+                                <dd>{{ ucfirst($app->payment_status ?? 'pending') }}</dd></div>
+                            <div><dt>Blocked on</dt>
+                                <dd>{{ $selected['blocked_on'] === 'you' ? 'You' : ucfirst($selected['blocked_on']) }}</dd></div>
+                        </dl>
+                    </section>
+
+                    <footer class="case-foot">
+                        <a class="btn btn-secondary"
+                           href="{{ route('admin.applications.assign.form', $selected['id']) }}">
+                            Open full record
+                        </a>
+                        @if (Route::has('student.applications.print'))
+                            <a class="btn btn-secondary" target="_blank" rel="noopener noreferrer"
+                               href="{{ route('student.applications.print', $selected['id']) }}">
+                                Print portfolio
+                            </a>
+                        @endif
+                    </footer>
+                @endif
+            </main>
+        </div>
     </div>
+@endsection
 
+@push('scripts')
     <script>
+        // Filter the queue in place. Groups whose rows are all hidden collapse
+        // too, so the counts on screen never contradict what is visible.
         document.addEventListener('DOMContentLoaded', function () {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const rows = document.querySelectorAll('tbody tr');
+            const box = document.getElementById('queue-filter');
+            if (!box) return;
 
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const filter = this.getAttribute('data-filter');
+            box.addEventListener('input', function () {
+                const q = box.value.trim().toLowerCase();
 
-                    // Update button active states and inline styles
-                    filterButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.style.background = 'transparent';
-                        btn.style.color = 'var(--ink-3)';
-                        btn.style.boxShadow = 'none';
-                    });
-                    this.classList.add('active');
-                    this.style.background = '#ffffff';
-                    this.style.color = '#6e1730';
-                    this.style.boxShadow = '0 2px 6px rgba(0,0,0,0.05)';
+                document.querySelectorAll('.queue-group').forEach(function (group) {
+                    let shown = 0;
 
-                    let visibleCount = 0;
-                    rows.forEach(row => {
-                        if (row.id === 'empty-filter-row' || row.classList.contains('no-records-row')) {
-                            return;
-                        }
-
-                        const typeBadge = row.querySelector('.type-badge');
-                        if (typeBadge) {
-                            const type = typeBadge.textContent.trim();
-                            if (filter === 'all' || type === filter) {
-                                row.style.display = '';
-                                visibleCount++;
-                            } else {
-                                row.style.display = 'none';
-                            }
-                        }
+                    group.querySelectorAll('.queue-row').forEach(function (row) {
+                        const hit = !q || (row.dataset.search || '').includes(q);
+                        row.hidden = !hit;
+                        if (hit) shown++;
                     });
 
-                    // Manage empty filter row
-                    const emptyRow = document.getElementById('empty-filter-row');
-                    const noRecordsRow = document.querySelector('.no-records-row');
-                    
-                    if (noRecordsRow) {
-                        return; // If queue was already empty, keep original empty row
-                    }
-
-                    if (visibleCount === 0) {
-                        if (!emptyRow) {
-                            const newEmptyRow = document.createElement('tr');
-                            newEmptyRow.id = 'empty-filter-row';
-                            newEmptyRow.innerHTML = `
-                                <td colspan="8">
-                                    <div class="table-empty" style="padding: 40px 0;">
-                                        <div class="empty-mark small-empty-mark">01</div>
-                                        <h4>No applications found</h4>
-                                        <p>There are no ${filter} applications in your queue.</p>
-                                    </div>
-                                </td>
-                            `;
-                            document.querySelector('tbody').appendChild(newEmptyRow);
-                        } else {
-                            emptyRow.querySelector('p').textContent = `There are no ${filter} applications in your queue.`;
-                            emptyRow.style.display = '';
-                        }
-                    } else if (emptyRow) {
-                        emptyRow.style.display = 'none';
-                    }
+                    group.hidden = shown === 0;
                 });
             });
         });
     </script>
-@endsection
+@endpush
