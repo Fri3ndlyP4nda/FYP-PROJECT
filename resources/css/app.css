@@ -1,5 +1,601 @@
 /*
 |==============================================================================
+| APEL — "Ledger"
+|==============================================================================
+|
+| The subject is not a SaaS product. It is a university weighing whether a
+| person's working life counts as academic credit. The candidate is typically
+| 30-45, employed, often the first in their family at university, and has paid
+| a fee to be judged. The dominant feeling on their side of the screen is
+| uncertainty, so the job of every surface here is to resolve it: where am I,
+| what happens next, who is holding this.
+|
+| Three decisions follow from that.
+|
+| FLUID, NOT FIXED. Nothing is a rigid column. Type and space are clamp()-based
+| and containers use min(), so content grows into the viewport instead of
+| stranding it. The previous build put the sign-in panel in a 420px column
+| beside a 1fr column whose content capped at 42ch — at 1900px that left ~980px
+| of dead screen in the middle. A layout that can stand space up like that is
+| the wrong layout, not a layout with a bug.
+|
+| THE SPINE IS THE STRUCTURE. An application is a journey with a position on
+| it. That journey runs down the page as a continuous vertical rail with the
+| record hanging off it — the spine of a dossier. It is not a stepper glued to
+| a header; it is how the page is built.
+|
+| ONE INTERACTIVE COLOUR. Red, amber and green are spoken for — rejected,
+| your turn, approved — and must never be spent on decoration or an outcome
+| stops meaning anything. That forces the accent into the blue family, so the
+| choice is made specific rather than safe: an electric indigo, not the
+| institutional mid-blue it replaces.
+|
+*/
+
+:root {
+    /* Ground leans warm-neutral rather than cool zinc: less clinical, and it
+       lets the electric accent read as genuinely cool against it. */
+    --void: #0e1116;
+    --sheet: #161b22;
+    --sheet-2: #1c222b;
+    --rule: #262e39;
+    --rule-2: #354050;
+
+    --ink: #e9eef4;
+    --ink-2: #b3bdcb;
+    --ink-3: #7d8896;
+    --ink-4: #868f9d;   /* was #5a6472 - 2.88:1, unreadable for hints */
+
+    /* #4d6bff carried white text at only 4.32:1 - below AA, on the primary
+       call to action. Darkened until white passes; the lighter --live-2 stays
+       for links and hovers, where it sits on the ground rather than under text. */
+    --live: #4763f5;
+    --live-2: #8ba0ff;
+    --live-dim: rgba(77, 107, 255, .14);
+    --live-line: rgba(77, 107, 255, .34);
+    --on-live: #ffffff;
+
+    --yes: #35d39a;
+    --yes-dim: rgba(53, 211, 154, .12);
+    --no: #fb7185;
+    --no-dim: rgba(251, 113, 133, .12);
+    --now: #fbbf24;
+    --now-dim: rgba(251, 191, 36, .12);
+    --appeal: #a78bfa;
+    --appeal-dim: rgba(167, 139, 250, .12);
+
+    --display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    --body: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --data: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Fluid scale. Every step grows with the viewport, so a wide screen gets a
+       bigger page rather than the same page with margins either side. */
+    --t-xs: clamp(.68rem, .64rem + .12vw, .74rem);
+    --t-sm: clamp(.78rem, .74rem + .14vw, .86rem);
+    --t-md: clamp(.88rem, .84rem + .16vw, .96rem);
+    --t-lg: clamp(1.02rem, .95rem + .3vw, 1.18rem);
+    --t-xl: clamp(1.3rem, 1.1rem + .8vw, 1.85rem);
+    --t-2xl: clamp(1.7rem, 1.25rem + 2vw, 3rem);
+    --t-3xl: clamp(2.2rem, 1.4rem + 3.4vw, 4.4rem);
+
+    --s-1: clamp(.25rem, .22rem + .12vw, .35rem);
+    --s-2: clamp(.5rem, .44rem + .22vw, .7rem);
+    --s-3: clamp(.8rem, .7rem + .35vw, 1.1rem);
+    --s-4: clamp(1.2rem, 1rem + .6vw, 1.8rem);
+    --s-5: clamp(1.8rem, 1.4rem + 1.2vw, 3rem);
+    --s-6: clamp(2.6rem, 1.8rem + 2.4vw, 5rem);
+
+    --r-1: 8px;
+    --r-2: 14px;
+    --r-3: 22px;
+    --r-pill: 999px;
+
+    --lift: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px -14px rgba(0, 0, 0, .8);
+    --glow: 0 0 0 1px var(--live-line), 0 0 28px -6px rgba(77, 107, 255, .5);
+    --ring: 0 0 0 3px rgba(77, 107, 255, .38);
+}
+
+/* Light is a genuine second theme, not an inversion: the ground becomes warm
+   paper and the accent darkens so it still carries on a bright surface. */
+:root[data-theme='light'] {
+    --void: #f4f5f7;
+    --sheet: #ffffff;
+    --sheet-2: #f8f9fb;
+    --rule: #e3e6ec;
+    --rule-2: #cdd3dd;
+
+    --ink: #11151b;
+    --ink-2: #39424f;
+    --ink-3: #667081;
+    --ink-4: #6a7382;   /* was #8b95a3 - 3.03:1 */
+
+    --live: #2f4fe0;
+    --live-2: #1f3ac4;
+    --live-dim: rgba(47, 79, 224, .09);
+    --live-line: rgba(47, 79, 224, .26);
+    --on-live: #ffffff;
+
+    --yes: #067a53;
+    --yes-dim: rgba(6, 122, 83, .1);
+    --no: #c02a45;
+    --no-dim: rgba(192, 42, 69, .09);
+    --now: #9a6206;
+    --now-dim: rgba(154, 98, 6, .1);
+    --appeal: #6d43d8;
+    --appeal-dim: rgba(109, 67, 216, .1);
+
+    --lift: 0 1px 2px rgba(16, 22, 32, .05), 0 12px 30px -16px rgba(16, 22, 32, .22);
+    --glow: 0 0 0 1px var(--live-line), 0 0 24px -10px rgba(47, 79, 224, .5);
+    --ring: 0 0 0 3px rgba(47, 79, 224, .28);
+}
+
+/*
+|------------------------------------------------------------------------------
+| Base
+|------------------------------------------------------------------------------
+*/
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: var(--t-md);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -.028em;
+    color: var(--ink);
+    text-wrap: balance;
+}
+
+h1 { font-size: var(--t-2xl); }
+h2 { font-size: var(--t-xl); }
+h3 { font-size: var(--t-lg); }
+h4 { font-size: var(--t-md); font-weight: 600; letter-spacing: -.01em; }
+
+p { margin: 0 0 var(--s-2); }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--live-2); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--live-2);
+    outline-offset: 2px;
+    border-radius: var(--r-1);
+}
+
+::selection { background: var(--live-dim); color: var(--ink); }
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* The one shared measure. min() rather than max-width so it is fluid all the
+   way down and never needs a breakpoint to stop overflowing. */
+.wrap { width: min(100% - var(--s-4) * 2, 1240px); margin-inline: auto; }
+
+/*
+|------------------------------------------------------------------------------
+| Front door
+|------------------------------------------------------------------------------
+|
+| Not a marketing page. Everyone who lands here was told to come here, so there
+| is nothing to sell — the job is to get them in, and to answer the question a
+| first-time candidate actually arrives with: what am I about to be put
+| through, and how long is it.
+|
+| The journey is therefore real content, drawn as the spine that structures the
+| rest of the product. It is the same component, introduced at the front door.
+*/
+
+/*
+ * Two columns that actually meet.
+ *
+ * The first attempt gave each side its own 1fr column and then capped the
+ * content inside them - 46ch on the left, 27rem justified right - so both
+ * columns held something narrower than themselves, pushed to opposite edges,
+ * with the difference pooling in the middle. Measured at 1280px that was still
+ * a 464px void: the same failure as the 1fr / 420px split it replaced.
+ *
+ * The column takes its width from the panel it holds, the telling side takes
+ * everything left over, and any capping happens on the paragraph that needs a
+ * readable measure rather than on the column.
+ */
+.door {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(19rem, 32%, 26rem);
+    align-items: center;
+    gap: var(--s-5);
+    min-height: 100vh;
+    padding: var(--s-5) 0;
+}
+
+.door-tell { min-width: 0; }
+
+.door-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-bottom: var(--s-4);
+}
+
+.door-mark-glyph {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: var(--r-1);
+    background: var(--live);
+    color: var(--on-live);
+    font-family: var(--data);
+    font-size: var(--t-xs);
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.door-mark-name {
+    font-family: var(--display);
+    font-size: var(--t-md);
+    font-weight: 600;
+    letter-spacing: -.02em;
+}
+
+.door-mark-sub {
+    display: block;
+    font-size: var(--t-xs);
+    color: var(--ink-3);
+    letter-spacing: .01em;
+}
+
+.door-head {
+    max-width: 15ch;
+    font-size: var(--t-3xl);
+    margin-bottom: var(--s-3);
+}
+
+/* The one flourish: the operative phrase carries the accent as a written
+   underline rather than a highlight block, so it reads as annotation. */
+.door-head em {
+    font-style: normal;
+    background-image: linear-gradient(var(--live-2), var(--live-2));
+    background-repeat: no-repeat;
+    background-position: 0 92%;
+    background-size: 100% .12em;
+    padding-bottom: .04em;
+}
+
+.door-lede {
+    max-width: 40ch;
+    font-size: var(--t-lg);
+    color: var(--ink-2);
+    line-height: 1.5;
+    margin-bottom: var(--s-5);
+}
+
+.door-panel {
+    justify-self: stretch;
+    width: 100%;
+    padding: var(--s-5);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-3);
+    background: var(--sheet);
+    box-shadow: var(--lift);
+}
+
+.door-panel h2 { font-size: var(--t-xl); margin-bottom: var(--s-1); }
+.door-panel-sub { color: var(--ink-3); font-size: var(--t-sm); margin-bottom: var(--s-4); }
+
+.door-foot {
+    margin-top: var(--s-4);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--rule);
+    font-size: var(--t-sm);
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--s-2);
+}
+
+.door-colophon {
+    margin-top: var(--s-5);
+    font-family: var(--data);
+    font-size: var(--t-xs);
+    color: var(--ink-4);
+    letter-spacing: .04em;
+}
+
+/*
+|------------------------------------------------------------------------------
+| The spine
+|------------------------------------------------------------------------------
+|
+| The signature. A continuous vertical rail with the journey hanging off it.
+| Position is carried three ways at once — the rail fills to the current node,
+| the node is marked, and the label changes weight — so it survives greyscale,
+| colour blindness, and a screen reader.
+*/
+
+.spine {
+    position: relative;
+    margin: 0;
+    padding: 0 0 0 var(--s-5);
+    list-style: none;
+}
+
+/* The rail itself, and the portion already travelled drawn over it. */
+.spine::before,
+.spine::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--s-2) + 5px);
+    width: 2px;
+    border-radius: var(--r-pill);
+}
+
+.spine::before { top: .6rem; bottom: .6rem; background: var(--rule); }
+
+.spine::after {
+    top: .6rem;
+    height: var(--spine-done, 0%);
+    background: linear-gradient(var(--live), var(--live-2));
+    box-shadow: 0 0 12px -2px var(--live);
+    transition: height .5s cubic-bezier(.22, 1, .36, 1);
+}
+
+.spine-node {
+    position: relative;
+    padding: 0 0 var(--s-4);
+}
+
+.spine-node:last-child { padding-bottom: 0; }
+
+.spine-node::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--s-5) + var(--s-2));
+    top: .45rem;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--r-pill);
+    background: var(--void);
+    border: 2px solid var(--rule-2);
+}
+
+.spine-node[data-state='done']::before { background: var(--live); border-color: var(--live); }
+.spine-node[data-state='failed']::before { background: var(--no); border-color: var(--no); }
+
+.spine-node[data-state='current']::before {
+    background: var(--live);
+    border-color: var(--live);
+    box-shadow: 0 0 0 5px var(--live-dim), 0 0 16px -2px var(--live);
+}
+
+.spine-label {
+    display: block;
+    font-family: var(--display);
+    font-size: var(--t-md);
+    font-weight: 500;
+    letter-spacing: -.015em;
+    color: var(--ink-3);
+}
+
+.spine-node[data-state='done'] .spine-label { color: var(--ink-2); }
+.spine-node[data-state='current'] .spine-label { color: var(--ink); font-weight: 700; }
+
+.spine-note {
+    display: block;
+    font-size: var(--t-sm);
+    color: var(--ink-4);
+    margin-top: 1px;
+    max-width: 44ch;
+}
+
+.spine-node[data-state='current'] .spine-note { color: var(--ink-3); }
+
+.spine-when {
+    display: block;
+    font-family: var(--data);
+    font-size: var(--t-xs);
+    color: var(--ink-4);
+    margin-top: var(--s-1);
+    letter-spacing: .02em;
+}
+
+/*
+|------------------------------------------------------------------------------
+| Form controls
+|------------------------------------------------------------------------------
+*/
+
+.field { margin-bottom: var(--s-3); }
+
+.field > label,
+label.field-label {
+    display: block;
+    margin-bottom: var(--s-1);
+    font-size: var(--t-sm);
+    font-weight: 500;
+    color: var(--ink-2);
+}
+
+.field input,
+.field select,
+.field textarea,
+input.control,
+select.control,
+textarea.control {
+    width: 100%;
+    padding: .7rem .85rem;
+    border: 1px solid var(--rule-2);
+    border-radius: var(--r-1);
+    background: var(--sheet-2);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: var(--t-md);
+    line-height: 1.5;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.field input::placeholder,
+.field textarea::placeholder { color: var(--ink-4); }
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    outline: none;
+    border-color: var(--live);
+    background: var(--sheet);
+    box-shadow: var(--ring);
+}
+
+.field-hint { margin-top: var(--s-1); font-size: var(--t-xs); color: var(--ink-4); }
+
+.field-peek { position: relative; }
+
+.field-peek input { padding-right: 2.6rem; }
+
+.peek-btn {
+    position: absolute;
+    right: .45rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-1);
+    background: none;
+    color: var(--ink-3);
+    cursor: pointer;
+}
+
+.peek-btn:hover { background: var(--sheet); color: var(--ink); }
+
+/* The captcha is a sum, so it is set as one: the question typeset in data type,
+   the answer immediately after it, reading as a single line of arithmetic. */
+.sum { display: flex; align-items: stretch; gap: var(--s-2); }
+
+.sum-q {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: 0 .9rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-1);
+    background: var(--sheet-2);
+    font-family: var(--data);
+    font-size: var(--t-md);
+    font-weight: 500;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+
+.sum input { flex: 1; min-width: 0; }
+
+.go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .8rem 1.1rem;
+    border: 0;
+    border-radius: var(--r-1);
+    background: var(--live);
+    color: var(--on-live);
+    font-family: inherit;
+    font-size: var(--t-md);
+    font-weight: 600;
+    letter-spacing: -.005em;
+    cursor: pointer;
+    transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.go:hover { background: var(--live-2); box-shadow: var(--glow); }
+.go:active { transform: translateY(1px); }
+
+.go-arrow { transition: transform .2s cubic-bezier(.22, 1, .36, 1); }
+.go:hover .go-arrow { transform: translateX(3px); }
+
+.notice {
+    display: flex;
+    gap: var(--s-2);
+    padding: .7rem .85rem;
+    margin-bottom: var(--s-3);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--ink-4);
+    border-radius: var(--r-1);
+    background: var(--sheet-2);
+    font-size: var(--t-sm);
+    color: var(--ink-2);
+}
+
+.notice--bad { border-left-color: var(--no); background: var(--no-dim); color: var(--no); }
+.notice--good { border-left-color: var(--yes); background: var(--yes-dim); color: var(--yes); }
+
+@media (max-width: 60rem) {
+    /* The columns must collapse explicitly. Leaving the two-track grid in place
+       and only relaxing the panel meant that at 375px the 1fr telling column was
+       squeezed to 4px while clamp()'s 19rem floor held the panel at 304px - the
+       two sat side by side on a phone with the left column effectively erased. */
+    .door {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: auto;
+        padding: var(--s-5) 0 var(--s-6);
+        gap: var(--s-5);
+    }
+
+    .door-panel { justify-self: stretch; width: 100%; }
+    .door-head { max-width: 18ch; }
+    .door-lede { max-width: none; }
+}
+
+/*
+ * Comfortable hit targets on touch. 44px is the floor people can reliably hit;
+ * the desktop-density control was 36px, which is fine with a mouse and not with
+ * a thumb. Applied by pointer type rather than width so a touch laptop gets it
+ * too.
+ */
+@media (pointer: coarse) {
+    .field input,
+    .field select,
+    .field textarea,
+    .sum-q { min-height: 44px; }
+
+    .go { min-height: 48px; }
+    .peek-btn { width: 44px; height: 44px; }
+}
+/*
+|==============================================================================
 | UTM APEL — design system
 |==============================================================================
 |
@@ -28,157 +624,8 @@
 |------------------------------------------------------------------------------
 */
 
-:root {
-    /* Neutral ramp — cool zinc. Surfaces sit above the ground, never below. */
-    --ground: #f4f4f5;
-    --surface: #ffffff;
-    --surface-sunk: #fafafa;
-    --surface-raised: #ffffff;
-    --overlay: rgba(9, 9, 11, 0.45);
 
-    --line: #e4e4e7;
-    --line-strong: #d4d4d8;
 
-    --ink: #18181b;
-    --ink-2: #3f3f46;
-    --ink-3: #71717a;
-    --ink-4: #a1a1aa;
-
-    /* Interaction. One accent, used sparingly. */
-    --accent: #0f62fe;
-    --accent-hover: #0353e9;
-    --accent-active: #002d9c;
-    --accent-tint: #edf3ff;
-    --accent-line: #b8ccff;
-    --on-accent: #ffffff;
-
-    /* Status. Meaning only — never decoration. */
-    --good: #15803d;
-    --good-tint: #f0fdf4;
-    --good-line: #bbf7d0;
-
-    --bad: #b91c1c;
-    --bad-tint: #fef2f2;
-    --bad-line: #fecaca;
-
-    --attention: #b45309;
-    --attention-tint: #fffbeb;
-    --attention-line: #fde68a;
-
-    /* In progress / with staff. Neutral on purpose. */
-    --progress: #52525b;
-    --progress-tint: #f4f4f5;
-    --progress-line: #d4d4d8;
-
-    /* Appeals sit outside the ramp so they never read as a normal outcome. */
-    --appeal: #6d28d9;
-    --appeal-tint: #f5f3ff;
-    --appeal-line: #ddd6fe;
-
-    --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-
-    --r-sm: 6px;
-    --r: 8px;
-    --r-lg: 12px;
-    --r-full: 999px;
-
-    /* Barely-there depth. Borders do the work, not shadows. */
-    --shadow-sm: 0 1px 2px rgba(9, 9, 11, .04);
-    --shadow: 0 1px 3px rgba(9, 9, 11, .06), 0 1px 2px rgba(9, 9, 11, .04);
-    --shadow-lg: 0 10px 24px -8px rgba(9, 9, 11, .12);
-
-    --ring: 0 0 0 3px rgba(15, 98, 254, .28);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) {
-        --ground: #09090b;
-        --surface: #18181b;
-        --surface-sunk: #131316;
-        --surface-raised: #1f1f23;
-        --overlay: rgba(0, 0, 0, .6);
-
-        --line: #27272a;
-        --line-strong: #3f3f46;
-
-        --ink: #fafafa;
-        --ink-2: #d4d4d8;
-        --ink-3: #a1a1aa;
-        --ink-4: #71717a;
-
-        --accent: #78a9ff;
-        --accent-hover: #a6c8ff;
-        --accent-active: #d0e2ff;
-        --accent-tint: #1c2b47;
-        --accent-line: #2f4a7a;
-        --on-accent: #0b1729;
-
-        --good: #4ade80;
-        --good-tint: #14271b;
-        --good-line: #235c36;
-
-        --bad: #f87171;
-        --bad-tint: #2b1516;
-        --bad-line: #6b2626;
-
-        --attention: #fbbf24;
-        --attention-tint: #2a1f0c;
-        --attention-line: #6b4d15;
-
-        --progress: #a1a1aa;
-        --progress-tint: #1f1f23;
-        --progress-line: #3f3f46;
-
-        --appeal: #c4b5fd;
-        --appeal-tint: #221a38;
-        --appeal-line: #4a3a7a;
-
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
-        --shadow: 0 1px 3px rgba(0, 0, 0, .5);
-        --shadow-lg: 0 10px 24px -8px rgba(0, 0, 0, .7);
-        --ring: 0 0 0 3px rgba(120, 169, 255, .3);
-    }
-}
-
-:root[data-theme='dark'] {
-    --ground: #09090b;
-    --surface: #18181b;
-    --surface-sunk: #131316;
-    --surface-raised: #1f1f23;
-    --overlay: rgba(0, 0, 0, .6);
-    --line: #27272a;
-    --line-strong: #3f3f46;
-    --ink: #fafafa;
-    --ink-2: #d4d4d8;
-    --ink-3: #a1a1aa;
-    --ink-4: #71717a;
-    --accent: #78a9ff;
-    --accent-hover: #a6c8ff;
-    --accent-active: #d0e2ff;
-    --accent-tint: #1c2b47;
-    --accent-line: #2f4a7a;
-    --on-accent: #0b1729;
-    --good: #4ade80;
-    --good-tint: #14271b;
-    --good-line: #235c36;
-    --bad: #f87171;
-    --bad-tint: #2b1516;
-    --bad-line: #6b2626;
-    --attention: #fbbf24;
-    --attention-tint: #2a1f0c;
-    --attention-line: #6b4d15;
-    --progress: #a1a1aa;
-    --progress-tint: #1f1f23;
-    --progress-line: #3f3f46;
-    --appeal: #c4b5fd;
-    --appeal-tint: #221a38;
-    --appeal-line: #4a3a7a;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
-    --shadow: 0 1px 3px rgba(0, 0, 0, .5);
-    --shadow-lg: 0 10px 24px -8px rgba(0, 0, 0, .7);
-    --ring: 0 0 0 3px rgba(120, 169, 255, .3);
-}
 
 /*
 |------------------------------------------------------------------------------
