@@ -1,82 +1,113 @@
 /*
 |==============================================================================
-| APEL — "Ledger"
+| UTM APEL — design system
 |==============================================================================
 |
-| The subject is not a SaaS product. It is a university weighing whether a
-| person's working life counts as academic credit. The candidate is typically
-| 30-45, employed, often the first in their family at university, and has paid
-| a fee to be judged. The dominant feeling on their side of the screen is
-| uncertainty, so the job of every surface here is to resolve it: where am I,
-| what happens next, who is holding this.
+| ONE token vocabulary. The previous build had two: a new set (--void, --sheet,
+| --live, --body) layered on top of a component library still written against
+| the old one (--ground, --surface, --accent, --font-sans). Deleting the old
+| :root left roughly seventy rules pointing at variables that no longer
+| existed, so `background: var(--ground)` on body resolved to nothing and the
+| page rendered light text on an unpainted surface — 1.17:1 on the heading —
+| while `font-family: var(--font-sans)` fell all the way back to Times New
+| Roman. Every name used anywhere is therefore defined here, once.
 |
-| Three decisions follow from that.
+| Identity is UTM maroon. It is the university's colour and this is the
+| university's system; a candidate should be able to tell at a glance whose
+| service they are on.
 |
-| FLUID, NOT FIXED. Nothing is a rigid column. Type and space are clamp()-based
-| and containers use min(), so content grows into the viewport instead of
-| stranding it. The previous build put the sign-in panel in a 420px column
-| beside a 1fr column whose content capped at 42ch — at 1900px that left ~980px
-| of dead screen in the middle. A layout that can stand space up like that is
-| the wrong layout, not a layout with a bug.
+| Maroon is red-family, which is normally where "rejected" lives, so the two
+| are kept apart by ROLE rather than by hue: maroon only ever appears as brand
+| and interaction — the mark, primary buttons, the current step, focus. Outcome
+| lives only in badges, and never borrows the brand colour. Nothing filled with
+| maroon is ever reporting a result.
 |
-| THE SPINE IS THE STRUCTURE. An application is a journey with a position on
-| it. That journey runs down the page as a continuous vertical rail with the
-| record hanging off it — the spine of a dossier. It is not a stepper glued to
-| a header; it is how the page is built.
-|
-| ONE INTERACTIVE COLOUR. Red, amber and green are spoken for — rejected,
-| your turn, approved — and must never be spent on decoration or an outcome
-| stops meaning anything. That forces the accent into the blue family, so the
-| choice is made specific rather than safe: an electric indigo, not the
-| institutional mid-blue it replaces.
+| Type is fluid. Every size is clamp()-based, so a wider screen gets a larger
+| page rather than the same page with wider margins.
 |
 */
 
 :root {
-    /* Ground leans warm-neutral rather than cool zinc: less clinical, and it
-       lets the electric accent read as genuinely cool against it. */
-    --void: #0e1116;
-    --sheet: #161b22;
-    --sheet-2: #1c222b;
-    --rule: #262e39;
-    --rule-2: #354050;
+    color-scheme: light;
 
-    --ink: #e9eef4;
-    --ink-2: #b3bdcb;
-    --ink-3: #7d8896;
-    --ink-4: #868f9d;   /* was #5a6472 - 2.88:1, unreadable for hints */
+    /* Surfaces — clean institutional near-white, not a warm cream. */
+    --ground: #f4f5f7;
+    --surface: #ffffff;
+    --surface-sunk: #f8f9fa;
+    --surface-raised: #ffffff;
+    --overlay: rgba(23, 20, 21, .45);
 
-    /* #4d6bff carried white text at only 4.32:1 - below AA, on the primary
-       call to action. Darkened until white passes; the lighter --live-2 stays
-       for links and hovers, where it sits on the ground rather than under text. */
-    --live: #4763f5;
-    --live-2: #8ba0ff;
-    --live-dim: rgba(77, 107, 255, .14);
-    --live-line: rgba(77, 107, 255, .34);
-    --on-live: #ffffff;
+    --line: #e4e2e4;
+    --line-strong: #cfccce;
 
-    --yes: #35d39a;
-    --yes-dim: rgba(53, 211, 154, .12);
-    --no: #fb7185;
-    --no-dim: rgba(251, 113, 133, .12);
-    --now: #fbbf24;
-    --now-dim: rgba(251, 191, 36, .12);
-    --appeal: #a78bfa;
-    --appeal-dim: rgba(167, 139, 250, .12);
+    --ink: #1a1618;
+    --ink-2: #464043;
+    --ink-3: #6d666a;
+    --ink-4: #6a6367;
 
-    --display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
-    --body: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --data: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    /* UTM maroon. Brand and interaction only. */
+    --accent: #8b1e3f;
+    --accent-hover: #73182f;
+    --accent-active: #5d1326;
+    --accent-tint: #fbeef2;
+    --accent-line: #e8c4d0;
+    --on-accent: #ffffff;
 
-    /* Fluid scale. Every step grows with the viewport, so a wide screen gets a
-       bigger page rather than the same page with margins either side. */
-    --t-xs: clamp(.68rem, .64rem + .12vw, .74rem);
-    --t-sm: clamp(.78rem, .74rem + .14vw, .86rem);
-    --t-md: clamp(.88rem, .84rem + .16vw, .96rem);
-    --t-lg: clamp(1.02rem, .95rem + .3vw, 1.18rem);
-    --t-xl: clamp(1.3rem, 1.1rem + .8vw, 1.85rem);
-    --t-2xl: clamp(1.7rem, 1.25rem + 2vw, 3rem);
-    --t-3xl: clamp(2.2rem, 1.4rem + 3.4vw, 4.4rem);
+    /* Outcome. Badges only. */
+    --good: #14683f;
+    --good-tint: #edf7f1;
+    --good-line: #b6ddc7;
+
+    --bad: #b3251f;
+    --bad-tint: #fdefee;
+    --bad-line: #f2c4c0;
+
+    --attention: #8a5a09;
+    --attention-tint: #fdf5e6;
+    --attention-line: #ecd39a;
+
+    --progress: #55505a;
+    --progress-tint: #f3f2f4;
+    --progress-line: #d6d3d8;
+
+    --appeal: #5b3ea8;
+    --appeal-tint: #f3f0fb;
+    --appeal-line: #d3c8ee;
+
+    /* Aliases so the door and spine keep working off the same values. */
+    --void: var(--ground);
+    --sheet: var(--surface);
+    --sheet-2: var(--surface-sunk);
+    --rule: var(--line);
+    --rule-2: var(--line-strong);
+    --live: var(--accent);
+    --live-2: var(--accent-hover);
+    --live-dim: var(--accent-tint);
+    --live-line: var(--accent-line);
+    --on-live: var(--on-accent);
+    --yes: var(--good);
+    --yes-dim: var(--good-tint);
+    --no: var(--bad);
+    --no-dim: var(--bad-tint);
+    --now: var(--attention);
+    --now-dim: var(--attention-tint);
+    --appeal-dim: var(--appeal-tint);
+
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-display: 'Bricolage Grotesque', var(--font-sans);
+    --display: var(--font-display);
+    --body: var(--font-sans);
+    --data: var(--font-mono);
+
+    /* Fluid scale. */
+    --t-xs: clamp(.69rem, .66rem + .1vw, .75rem);
+    --t-sm: clamp(.79rem, .76rem + .12vw, .86rem);
+    --t-md: clamp(.88rem, .85rem + .14vw, .95rem);
+    --t-lg: clamp(1rem, .95rem + .24vw, 1.14rem);
+    --t-xl: clamp(1.25rem, 1.08rem + .68vw, 1.7rem);
+    --t-2xl: clamp(1.6rem, 1.2rem + 1.7vw, 2.6rem);
+    --t-3xl: clamp(2rem, 1.35rem + 2.7vw, 3.6rem);
 
     --s-1: clamp(.25rem, .22rem + .12vw, .35rem);
     --s-2: clamp(.5rem, .44rem + .22vw, .7rem);
@@ -85,49 +116,81 @@
     --s-5: clamp(1.8rem, 1.4rem + 1.2vw, 3rem);
     --s-6: clamp(2.6rem, 1.8rem + 2.4vw, 5rem);
 
-    --r-1: 8px;
-    --r-2: 14px;
-    --r-3: 22px;
-    --r-pill: 999px;
+    --r-sm: 6px;
+    --r: 8px;
+    --r-lg: 14px;
+    --r-full: 999px;
+    --r-1: var(--r);
+    --r-2: var(--r-lg);
+    --r-3: 20px;
+    --r-pill: var(--r-full);
 
-    --lift: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px -14px rgba(0, 0, 0, .8);
-    --glow: 0 0 0 1px var(--live-line), 0 0 28px -6px rgba(77, 107, 255, .5);
-    --ring: 0 0 0 3px rgba(77, 107, 255, .38);
+    --shadow-sm: 0 1px 2px rgba(26, 22, 24, .04);
+    --shadow: 0 1px 3px rgba(26, 22, 24, .07), 0 1px 2px rgba(26, 22, 24, .04);
+    --shadow-lg: 0 14px 34px -16px rgba(26, 22, 24, .26);
+    --lift: var(--shadow-lg);
+    --glow: 0 0 0 1px var(--accent-line), 0 8px 24px -12px rgba(139, 30, 63, .5);
+    --ring: 0 0 0 3px rgba(139, 30, 63, .22);
+}
+
+/*
+| Dark is a real second theme rather than an inversion: maroon is lifted to a
+| rose that still reads as the same identity but carries on a dark ground,
+| where the print maroon would go muddy.
+*/
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --ground: #141115;
+    --surface: #1c181d;
+    --surface-sunk: #171418;
+    --surface-raised: #232028;
+    --overlay: rgba(0, 0, 0, .6);
+
+    --line: #2f2a31;
+    --line-strong: #443d47;
+
+    --ink: #f4f1f3;
+    --ink-2: #cdc6cb;
+    --ink-3: #a49ca2;
+    --ink-4: #9a929a;
+
+    --accent: #e0819e;
+    --accent-hover: #eca0b7;
+    --accent-active: #f3bccc;
+    --accent-tint: #33202a;
+    --accent-line: #5e3a49;
+    --on-accent: #2a0d17;
+
+    --good: #4cc98c;
+    --good-tint: #14271e;
+    --good-line: #2b5c42;
+
+    --bad: #f58a84;
+    --bad-tint: #2c1817;
+    --bad-line: #6a2f2c;
+
+    --attention: #e0aa4a;
+    --attention-tint: #2a2110;
+    --attention-line: #63491d;
+
+    --progress: #a49ca2;
+    --progress-tint: #221e24;
+    --progress-line: #443d47;
+
+    --appeal: #b49df0;
+    --appeal-tint: #241d38;
+    --appeal-line: #4b3d78;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .45);
+    --shadow: 0 1px 3px rgba(0, 0, 0, .55);
+    --shadow-lg: 0 14px 34px -16px rgba(0, 0, 0, .75);
+    --glow: 0 0 0 1px var(--accent-line), 0 8px 26px -12px rgba(224, 129, 158, .45);
+    --ring: 0 0 0 3px rgba(224, 129, 158, .3);
 }
 
 /* Light is a genuine second theme, not an inversion: the ground becomes warm
    paper and the accent darkens so it still carries on a bright surface. */
-:root[data-theme='light'] {
-    --void: #f4f5f7;
-    --sheet: #ffffff;
-    --sheet-2: #f8f9fb;
-    --rule: #e3e6ec;
-    --rule-2: #cdd3dd;
-
-    --ink: #11151b;
-    --ink-2: #39424f;
-    --ink-3: #667081;
-    --ink-4: #6a7382;   /* was #8b95a3 - 3.03:1 */
-
-    --live: #2f4fe0;
-    --live-2: #1f3ac4;
-    --live-dim: rgba(47, 79, 224, .09);
-    --live-line: rgba(47, 79, 224, .26);
-    --on-live: #ffffff;
-
-    --yes: #067a53;
-    --yes-dim: rgba(6, 122, 83, .1);
-    --no: #c02a45;
-    --no-dim: rgba(192, 42, 69, .09);
-    --now: #9a6206;
-    --now-dim: rgba(154, 98, 6, .1);
-    --appeal: #6d43d8;
-    --appeal-dim: rgba(109, 67, 216, .1);
-
-    --lift: 0 1px 2px rgba(16, 22, 32, .05), 0 12px 30px -16px rgba(16, 22, 32, .22);
-    --glow: 0 0 0 1px var(--live-line), 0 0 24px -10px rgba(47, 79, 224, .5);
-    --ring: 0 0 0 3px rgba(47, 79, 224, .28);
-}
 
 /*
 |------------------------------------------------------------------------------
