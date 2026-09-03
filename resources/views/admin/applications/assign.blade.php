@@ -1,1292 +1,513 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container admin-shell">
-        <section class="page-hero">
-            <div>
-                <span class="section-pill">
-                    {{ $application->application_type === 'APEL A' ? 'APEL A Assignment' : 'APEL C Assignment' }}
-                </span>
-                <h2>
-                    {{ $application->application_type === 'APEL A' ? 'Manage APEL A Review Assignment' : 'Assign Evaluator for APEL C' }}
-                </h2>
-                <p class="muted page-hero-text">
-                    @if ($application->application_type === 'APEL A')
-                        Assign an evaluator to review the admission application and provide an admission recommendation.
-                    @else
-                        Assign an evaluator to continue the assessment paper and grading workflow for this APEL C
-                        application.
-                    @endif
-                </p>
-            </div>
+    {{--
+        The registry's working screen for one application.
 
-            <div class="hero-actions" style="display: flex; gap: 12px; align-items: center;">
-                <a href="{{ route('student.applications.print', $application->_id) }}" target="_blank" class="btn">🖨️ Export PDF Report</a>
-                @if ($application->application_type === 'APEL A')
-                    <a href="{{ route('admin.applications.brief', $application->_id) }}" target="_blank" class="btn">
-                        Evaluator Brief
+        Six forms live here - advisor recommendation, payment verification,
+        evaluator assignment, the two finalisations, and a manual stage
+        override - and the old page rendered all of them at once, so an officer
+        looking at a draft was shown a "Final Credit Decision" form for a case
+        that had not been assessed. Every one of them is now gated on the stage,
+        which is the same thing the controller checks, so the page can only
+        offer moves the workflow will actually accept.
+
+        That also fixes a gate that could never open. The advisor form was shown
+        only when status was 'Pre-Application Submitted' or 'Under Advisor
+        Review'; StageMachine writes status as $stage->label($type), which for
+        those two stages is "Pre-application submitted" and "Advisor review".
+        Neither string matched, so the form never rendered - and an APEL C
+        application reaching advisor review had no way for the registry to
+        record the decision. It was invisible only because no application was
+        sitting at that stage.
+    --}}
+    @php
+        use App\Domain\Apel\ApelStage;
+        use App\Domain\Apel\StageMachine;
+        use App\Support\ApplicationCase;
+
+        $stage = ApplicationCase::stageOf($application);
+        $type = (string) $application->application_type;
+        $isC = $type === 'APEL C';
+
+        $student = \App\Models\User::where('_id', (string) $application->user_id)->first();
+
+        // Every gate below reads the stage, never a status string.
+        $canAdvise = $isC && in_array($stage, [ApelStage::SUBMITTED, ApelStage::ADVISOR_REVIEW], true);
+        $canTakePayment = in_array($stage, [ApelStage::PAYMENT_SUBMITTED], true);
+        $canAssign = in_array($stage, [ApelStage::PAYMENT_VERIFIED, ApelStage::EVALUATOR_ASSIGNED], true);
+        $canFinalise = $stage === ApelStage::AWAITING_DECISION;
+
+        $nextStages = $stage ? StageMachine::nextStages($application) : [];
+
+        $assigned = collect([$application->evaluator_id, $application->evaluator_2_id])
+            ->filter()
+            ->map(fn ($id) => \App\Models\User::where('_id', (string) $id)->value('name') ?: 'Unknown')
+            ->values();
+    @endphp
+
+    <div class="deck deck--narrow">
+        <header class="deck-head">
+            <div>
+                <p class="deck-eyebrow">
+                    {{ $type }} &nbsp;·&nbsp; {{ strtoupper(substr((string) $application->_id, -6)) }}
+                </p>
+                <h1 class="deck-title">{{ $student?->name ?? 'Candidate no longer on file' }}</h1>
+            </div>
+            <div class="deck-acts">
+                <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">The queue</a>
+                @if (! $isC && Route::has('admin.applications.brief'))
+                    <a href="{{ route('admin.applications.brief', $application->_id) }}" class="btn btn-secondary">
+                        Evaluator brief
                     </a>
                 @endif
-                <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">Back to Applications</a>
             </div>
-        </section>
+        </header>
 
         @if (session('success'))
-            <div class="alert alert-success" style="margin-bottom: 20px;">
-                {{ session('success') }}
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
+        @if ($errors->any())
+            <div class="notice notice--bad" role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
             </div>
         @endif
 
-        <div class="review-layout">
-            <div class="review-main">
-                <section class="record-card">
-                    <div class="record-top">
-                        <div>
-                            <p class="record-kicker">{{ $application->application_type }}</p>
-                            <h3>{{ $application->program_applied }}</h3>
-                        </div>
-
-                        <div class="record-top-right">
-                            @if ($application->status == 'pending')
-                                <span class="badge badge-pending">Pending</span>
-                            @elseif ($application->status == 'approved')
-                                <span class="badge badge-approved">Approved</span>
-                            @elseif ($application->status == 'rejected')
-                                <span class="badge badge-rejected">Rejected</span>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="record-meta-grid">
-                        <div class="meta-box">
-                            <span class="meta-label">Student Name</span>
-                            <strong>{{ \App\Models\User::where('_id', $application->user_id)->value('name') ?? 'Unknown' }}</strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Submission Date</span>
-                            <strong>{{ $application->submission_date }}</strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Current Evaluator</span>
-                            <strong>{{ \App\Models\User::where('_id', $application->evaluator_id)->value('name') ?? 'Not Assigned' }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="record-meta-grid">
-                        <div class="meta-box">
-                            <span class="meta-label">Application Type</span>
-                            <strong>{{ $application->application_type }}</strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Workflow Stage</span>
-                            <strong>
-                                @if (in_array($application->status ?? '', ['Final Approved', 'Final Rejected']))
-                                    Completed
-                                @elseif ($application->application_type === 'APEL A')
-                                    {{ ucfirst(str_replace('_', ' ', $application->review_stage ?? 'submitted')) }}
-                                @else
-                                    {{ $application->evaluator_id ? 'Assessment flow in progress' : 'Waiting for evaluator assignment' }}
-                                @endif
-                            </strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Admission Decision</span>
-                            <strong>
-                                @if ($application->application_type === 'APEL A')
-                                    {{ ucfirst(str_replace('_', ' ', $application->admission_decision ?? 'pending')) }}
-                                @else
-                                    Not applicable
-                                @endif
-                            </strong>
-                        </div>
-                    </div>
-
-                    @if (($apelAEligibility ?? null) && $application->application_type === 'APEL A')
-                        <div class="record-panel" style="margin-top: 18px; border: 1px solid #d1fae5; background: #f0fdf4;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap;">
-                                <div>
-                                    <h4 style="margin-bottom: 6px;">APEL A Eligibility Decision Support</h4>
-                                    <p class="feedback-text" style="margin-bottom: 0;">
-                                        {{ $apelAEligibility['summary'] }}
-                                    </p>
-                                </div>
-
-                                <div style="min-width: 180px;">
-                                    <span class="meta-label">Readiness Score</span>
-                                    <strong style="display: block; font-size: 34px; line-height: 1; color: #065f46;">
-                                        {{ $apelAEligibility['score'] }}%
-                                    </strong>
-                                    <span class="badge badge-approved" style="margin-top: 8px; display: inline-flex;">
-                                        {{ $apelAEligibility['recommendation'] }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div style="height: 10px; background: #d1fae5; border-radius: 999px; overflow: hidden; margin: 18px 0;">
-                                <div style="height: 100%; width: {{ $apelAEligibility['score'] }}%; background: var(--good);"></div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                                @foreach ($apelAEligibility['criteria'] as $criterion)
-                                    @php
-                                        $criterionColor = match ($criterion['status']) {
-                                            'pass' => '#146b45',
-                                            'warning' => '#8a5a0c',
-                                            default => '#a32a20',
-                                        };
-                                    @endphp
-
-                                    <div style="background: #ffffff; border: 1px solid var(--line); border-radius: 8px; padding: 12px;">
-                                        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start;">
-                                            <strong style="font-size: 13.5px; color: var(--ink);">{{ $criterion['name'] }}</strong>
-                                            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: {{ $criterionColor }};">
-                                                {{ $criterion['status'] }}
-                                            </span>
-                                        </div>
-                                        <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 6px;">
-                                            <strong>Value:</strong> {{ $criterion['value'] }}
-                                        </div>
-                                        <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 4px;">
-                                            {{ $criterion['message'] }}
-                                        </div>
-                                        <div style="font-size: 12px; color: var(--ink-3); margin-top: 8px;">
-                                            {{ $criterion['points'] }}/{{ $criterion['max_points'] }} points
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            @if (($evaluatorBrief ?? null) && $evaluatorBrief['evidence_gaps']->count() > 0)
-                                <div style="margin-top: 18px; background: #ffffff; border: 1px solid var(--line); border-radius: 8px; padding: 14px;">
-                                    <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start;">
-                                        <div>
-                                            <h4 style="margin-bottom: 6px;">Evidence Gap Analyzer</h4>
-                                            <p class="feedback-text" style="margin-bottom: 0;">
-                                                The system highlights weak or missing evidence so evaluators can review faster.
-                                            </p>
-                                        </div>
-                                        <span class="badge badge-pending">
-                                            {{ $evaluatorBrief['classification']['label'] }}
-                                        </span>
-                                    </div>
-
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 12px;">
-                                        @foreach ($evaluatorBrief['evidence_gaps'] as $gap)
-                                            <div style="border: 1px solid var(--surface-sunk); border-radius: 8px; padding: 10px; background: var(--surface-sunk);">
-                                                <strong style="font-size: 13px; color: var(--ink);">{{ $gap['area'] }}</strong>
-                                                <div style="font-size: 12px; color: var(--ink-3); margin-top: 4px;">
-                                                    Severity: {{ ucfirst($gap['severity']) }}
-                                                </div>
-                                                <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 6px;">
-                                                    {{ $gap['message'] }}
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @elseif (($evaluatorBrief ?? null) && $application->application_type === 'APEL A')
-                                <div style="margin-top: 18px; background: #ffffff; border: 1px solid #d1fae5; border-radius: 8px; padding: 14px;">
-                                    <h4 style="margin-bottom: 6px;">Evidence Gap Analyzer</h4>
-                                    <p class="feedback-text" style="margin-bottom: 0;">
-                                        No evidence gaps detected. The application can be reviewed using the generated evaluator brief.
-                                    </p>
-                                </div>
-                            @endif
-
-                            @if (($evaluatorBrief ?? null) && $application->application_type === 'APEL A')
-                                <div style="margin-top: 14px; background: #ffffff; border: 1px solid var(--line); border-radius: 8px; padding: 14px;">
-                                    <h4 style="margin-bottom: 8px;">Evaluator Focus Points</h4>
-                                    <ul style="margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 13px;">
-                                        @foreach ($evaluatorBrief['focus_areas'] as $focus)
-                                            <li style="margin-bottom: 6px;">
-                                                <strong>{{ $focus['title'] }}:</strong> {{ $focus['detail'] }}
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-
-                    <div class="record-panel">
-                        <h4>Internal Application Form Details</h4>
-
-                        @if (($application->appeal_status ?? null) === 'submitted')
-                            <section class="record-card" style="margin-top: 24px; border: 2px solid #f59e0b;">
-                                <div class="record-top">
-                                    <div>
-                                        <p class="record-kicker">APPEAL REQUEST</p>
-                                        <h3>Student Appeal Submission</h3>
-                                    </div>
-
-                                    <div>
-                                        <span class="badge badge-pending">
-                                            Appeal Submitted
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div class="record-panel">
-                                    <p class="feedback-text">
-                                        The student has submitted an appeal for re-evaluation of this APEL C application.
-                                    </p>
-                                    @if($application->appeal_remarks)
-                                        <p class="feedback-text" style="margin-top: 10px; background: #fffbeb; border: 1px solid var(--attention-tint); padding: 12px; border-radius: 8px;">
-                                            <strong>Student Appeal Reason:</strong><br>
-                                            <em>{{ $application->appeal_remarks }}</em>
-                                        </p>
-                                    @endif
-                                </div>
-
-                                <form method="POST"
-                                    action="{{ route('admin.applications.update_status', $application->_id) }}">
-
-                                    @csrf
-
-                                    <input type="hidden" name="status" value="Assessment In Progress">
-
-                                    <button type="submit" class="btn">
-                                        Reopen Assessment
-                                    </button>
-                                </form>
-                            </section>
-                        @endif
-
-                        @if ($application->application_type === 'APEL A')
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px; margin-bottom: 15px; font-size: 13.5px; color: var(--ink-2);">
-                                <div><strong>Age:</strong> {{ $application->age ?? 'Not provided' }}</div>
-                                <div><strong>University:</strong> {{ $application->university_name ?? 'Not provided' }}</div>
-                                <div><strong>Company:</strong> {{ $application->company_name ?? 'Not provided' }}</div>
-                            </div>
-
-                            <p class="feedback-text">
-                                <strong>Highest Qualification:</strong>
-                                {{ $application->highest_qualification ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Current Job:</strong>
-                                {{ $application->current_job ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Working Experience:</strong>
-                                {{ $application->working_experience_years ?? '0' }} year(s)
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Experience Details:</strong><br>
-                                {{ $application->working_experience_details ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Reason for Applying:</strong><br>
-                                {{ $application->reason_applying ?? 'Not provided' }}
-                            </p>
-                        @else
-                            <p class="feedback-text">
-                                <strong>Course:</strong>
-                                {{ $application->credit_course_name ?? 'Not provided' }}
-                                @if ($application->credit_course_code)
-                                    ({{ $application->credit_course_code }})
-                                @endif
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Prior Learning / Work Experience:</strong><br>
-                                {{ $application->prior_learning_experience ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Self-Assessment Statement:</strong><br>
-                                {{ $application->self_assessment_statement ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Evidence Description:</strong><br>
-                                {{ $application->evidence_description ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Portfolio Summary:</strong><br>
-                                {{ $application->portfolio_summary ?? 'Not provided' }}
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Evidence File(s):</strong><br>
-
-                                @if (!empty($application->evidence_file))
-                                    @foreach ($application->evidence_file as $file)
-                                        @php
-                                            $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
-                                            $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
-                                        @endphp
-                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank">
-                                            {{ $fileName }}
-                                        </a><br>
-                                    @endforeach
-                                @else
-                                    No evidence file uploaded.
-                                @endif
-                            </p>
-
-                            <p class="feedback-text">
-                                <strong>Portfolio File(s):</strong><br>
-
-                                @if (!empty($application->portfolio_file))
-                                    @foreach ($application->portfolio_file as $file)
-                                        @php
-                                            $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
-                                            $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
-                                        @endphp
-                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank">
-                                            {{ $fileName }}
-                                        </a><br>
-                                    @endforeach
-                                @else
-                                    No portfolio file uploaded.
-                                @endif
-                            </p>
-
-                            @if ($application->application_type === 'APEL C')
-                                <!-- Dynamic Style Overrides -->
-                                <style>
-                                    .cards-container {
-                                        display: flex;
-                                        flex-direction: column;
-                                        gap: 16px;
-                                        margin-bottom: 20px;
-                                    }
-                                    .row-card {
-                                        background: #ffffff;
-                                        border: 1px solid var(--line);
-                                        border-radius: 12px;
-                                        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                                        overflow: hidden;
-                                    }
-                                    .row-card-header {
-                                        background: #fafafb;
-                                        border-bottom: 1px solid var(--line);
-                                        padding: 10px 16px;
-                                        display: flex;
-                                        justify-content: space-between;
-                                        align-items: center;
-                                        font-weight: 600;
-                                        color: var(--maroon);
-                                    }
-                                    .row-card-body {
-                                        padding: 16px;
-                                        display: grid;
-                                        gap: 12px;
-                                    }
-                                    .row-card-body .field-col {
-                                        display: flex;
-                                        flex-direction: column;
-                                        gap: 4px;
-                                    }
-                                    .row-card-body label {
-                                        font-size: 11px;
-                                        font-weight: 600;
-                                        color: var(--ink-2);
-                                        margin-bottom: 0 !important;
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.05em;
-                                    }
-                                    .row-card-body strong {
-                                        font-size: 13.5px;
-                                        color: var(--ink);
-                                    }
-                                    .details-tab-content {
-                                        animation: fadeIn 0.2s ease-in-out;
-                                    }
-                                    @keyframes fadeIn {
-                                        from { opacity: 0; transform: translateY(4px); }
-                                        to { opacity: 1; transform: translateY(0); }
-                                    }
-                                    .form-tabs .tab-link.active {
-                                        color: #ffffff !important;
-                                        background: var(--maroon) !important;
-                                        border-radius: 6px;
-                                    }
-                                </style>
-
-                                <!-- Submitted Pre-Application Details Card -->
-                                <div style="margin-top: 24px; border-top: 1px dashed var(--line); padding-top: 20px;">
-                                    <h4 style="font-size: 14.5px; font-weight: 700; color: var(--maroon); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Submitted Pre-Application Form Data</h4>
-
-                                    <div class="form-tabs" style="margin-top: 10px; display: flex; gap: 6px; border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-bottom: 15px;">
-                                        <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Personal Particulars</button>
-                                        <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Formal Learning</button>
-                                        <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Experience & Training</button>
-                                        <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Other Learning</button>
-                                    </div>
-
-                                    <!-- TAB 1: Personal Particulars -->
-                                    <div id="details-particulars" class="details-tab-content" style="display: block;">
-                                        @php
-                                            $personal = $application->pre_app_data['personal_particulars'] ?? [];
-                                            $studentUser = \App\Models\User::find($application->user_id);
-                                        @endphp
-                                        <div class="record-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 15px;">
-                                            <div class="meta-box">
-                                                <span class="meta-label">Full Name</span>
-                                                <strong>{{ $personal['name'] ?? ($studentUser->name ?? 'N/A') }}</strong>
-                                            </div>
-                                            <div class="meta-box">
-                                                <span class="meta-label">Matric No.</span>
-                                                <strong>{{ $personal['matric_no'] ?? 'N/A' }}</strong>
-                                            </div>
-                                            <div class="meta-box">
-                                                <span class="meta-label">Identity Card No.</span>
-                                                <strong>{{ $personal['ic_no'] ?? 'N/A' }}</strong>
-                                            </div>
-                                            <div class="meta-box">
-                                                <span class="meta-label">Highest Academic Qualification</span>
-                                                <strong>{{ $personal['highest_qualification'] ?? 'N/A' }}</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- TAB 2: Formal Learning -->
-                                    <div id="details-education" class="details-tab-content" style="display: none;">
-                                        @php
-                                            $formal = $application->pre_app_data['formal_learning'] ?? [];
-                                        @endphp
-                                        @if(!empty($formal) && count($formal) > 0 && (!empty($formal[0]['title_of_certification']) || !empty($formal[0]['awarding_body'])))
-                                            <div class="cards-container">
-                                                @foreach ($formal as $idx => $item)
-                                                    @if(!empty($item['title_of_certification']) || !empty($item['awarding_body']))
-                                                        <div class="row-card">
-                                                            <div class="row-card-header">
-                                                                <span>Education Entry #{{ $idx + 1 }}</span>
-                                                            </div>
-                                                            <div class="row-card-body education-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                                                <div class="field-col" style="grid-column: span 3;">
-                                                                    <label>Year Awarded</label>
-                                                                    <strong>{{ $item['year_awarded'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col" style="grid-column: span 9;">
-                                                                    <label>Title of Certification</label>
-                                                                    <strong>{{ $item['title_of_certification'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col" style="grid-column: span 6;">
-                                                                    <label>Level of Award</label>
-                                                                    <strong>{{ $item['level_of_award'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col" style="grid-column: span 6;">
-                                                                    <label>Awarding Body</label>
-                                                                    <strong>{{ $item['awarding_body'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No formal learning recorded.</p>
-                                        @endif
-                                    </div>
-
-                                    <!-- TAB 3: Experience & Training -->
-                                    <div id="details-experience" class="details-tab-content" style="display: none;">
-                                        @php
-                                            $jobs = $application->pre_app_data['experiential_learning'] ?? [];
-                                            $trainings = $application->pre_app_data['training_activities'] ?? [];
-                                            $skillsList = [
-                                                "Knowledge & Understanding", "Cognitive skills", "Practical Skills", "Interpersonal Skills",
-                                                "Communication skills", "Digital skills", "Numeracy skills", "Leadership, Autonomy & Responsibility",
-                                                "Personal Skills", "Entrepreneurial skills", "Ethics and Professionalism skills"
-                                            ];
-                                        @endphp
-                                        
-                                        <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Experiential Learning (Employment History)</h5>
-                                        @if(!empty($jobs) && count($jobs) > 0 && (!empty($jobs[0]['employer_name']) || !empty($jobs[0]['position_held'])))
-                                            <div class="cards-container" style="margin-bottom: 25px;">
-                                                @foreach ($jobs as $idx => $item)
-                                                    @if(!empty($item['employer_name']) || !empty($item['position_held']))
-                                                        <div class="row-card">
-                                                            <div class="row-card-header">
-                                                                <span>Employer Entry #{{ $idx + 1 }}</span>
-                                                            </div>
-                                                            <div class="row-card-body employment-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                                                <div class="field-col employer-name" style="grid-column: span 6;">
-                                                                    <label>Employer Name</label>
-                                                                    <strong>{{ $item['employer_name'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col contact-address" style="grid-column: span 6;">
-                                                                    <label>Contact Address</label>
-                                                                    <strong>{{ $item['contact_address'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col time-from" style="grid-column: span 3;">
-                                                                    <label>From (Month/Year)</label>
-                                                                    <strong>{{ $item['time_from'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col time-to" style="grid-column: span 3;">
-                                                                    <label>To (Month/Year)</label>
-                                                                    <strong>{{ $item['time_to'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col position-held" style="grid-column: span 6;">
-                                                                    <label>Position Held</label>
-                                                                    <strong>{{ $item['position_held'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col job-roles" style="grid-column: span 12;">
-                                                                    <label>Job Roles / Performed</label>
-                                                                    <p style="margin: 4px 0 0 0; color: var(--ink-2); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px; margin-bottom: 25px;">No employment history recorded.</p>
-                                        @endif
-
-                                        <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Training Activities</h5>
-                                        @if(!empty($trainings) && count($trainings) > 0 && (!empty($trainings[0]['course_name']) || !empty($trainings[0]['location'])))
-                                            <div class="cards-container">
-                                                @foreach ($trainings as $idx => $item)
-                                                    @if(!empty($item['course_name']) || !empty($item['location']))
-                                                        <div class="row-card">
-                                                            <div class="row-card-header">
-                                                                <span>Training Entry #{{ $idx + 1 }}</span>
-                                                            </div>
-                                                            <div class="row-card-body training-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                                                <div class="field-col course-name" style="grid-column: span 6;">
-                                                                    <label>Course/Training Name</label>
-                                                                    <strong>{{ $item['course_name'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col location" style="grid-column: span 6;">
-                                                                    <label>Location</label>
-                                                                    <strong>{{ $item['location'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col date-duration" style="grid-column: span 6;">
-                                                                    <label>Date & Duration</label>
-                                                                    <strong>{{ $item['date_duration'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col activity-type" style="grid-column: span 6;">
-                                                                    <label>Activity Type</label>
-                                                                    <strong>{{ $item['activity_type'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col skills-learnt" style="grid-column: span 12;">
-                                                                    <label>Skills Checklist / Learnt</label>
-                                                                    <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
-                                                                        @php
-                                                                            $checkedSkills = $item['skills_learnt'] ?? [];
-                                                                        @endphp
-                                                                        @foreach ($skillsList as $sIdx => $sName)
-                                                                            <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
-                                                                                <span style="font-size: 13px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
-                                                                                <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
-                                                                            </div>
-                                                                        @endforeach
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No training activities recorded.</p>
-                                        @endif
-                                    </div>
-
-                                    <!-- TAB 4: Other Learning -->
-                                    <div id="details-other-skills" class="details-tab-content" style="display: none;">
-                                        @php
-                                            $otherSkills = $application->pre_app_data['other_learning_skills'] ?? [];
-                                            $langSkills = $application->pre_app_data['language_skills'] ?? [];
-                                            $skillsList = [
-                                                "Knowledge & Understanding", "Cognitive skills", "Practical Skills", "Interpersonal Skills",
-                                                "Communication skills", "Digital skills", "Numeracy skills", "Leadership, Autonomy & Responsibility",
-                                                "Personal Skills", "Entrepreneurial skills", "Ethics and Professionalism skills"
-                                            ];
-                                        @endphp
-
-                                        <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Other Learning Skills / Activities</h5>
-                                        @if(!empty($otherSkills) && count($otherSkills) > 0 && (!empty($otherSkills[0]['other_activities']) || !empty($otherSkills[0]['year'])))
-                                            <div class="cards-container" style="margin-bottom: 25px;">
-                                                @foreach ($otherSkills as $idx => $item)
-                                                    @if(!empty($item['other_activities']) || !empty($item['year']))
-                                                        <div class="row-card">
-                                                            <div class="row-card-header">
-                                                                <span>Other Activity Entry #{{ $idx + 1 }}</span>
-                                                            </div>
-                                                            <div class="row-card-body other-skills-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                                                <div class="field-col other-activities" style="grid-column: span 9;">
-                                                                    <label>Description</label>
-                                                                    <strong>{{ $item['other_activities'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col year" style="grid-column: span 3;">
-                                                                    <label>Year</label>
-                                                                    <strong>{{ $item['year'] ?? 'N/A' }}</strong>
-                                                                </div>
-                                                                <div class="field-col skills-learnt" style="grid-column: span 12;">
-                                                                    <label>Skills Checklist / Learnt</label>
-                                                                    <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
-                                                                        @php
-                                                                            $checkedSkills = $item['skills_learnt'] ?? [];
-                                                                        @endphp
-                                                                        @foreach ($skillsList as $sIdx => $sName)
-                                                                            <div style="font-size: 12px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
-                                                                                <span style="font-size: 13px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
-                                                                                <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
-                                                                            </div>
-                                                                        @endforeach
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px; margin-bottom: 25px;">No other learning activities recorded.</p>
-                                        @endif
-
-                                        <h5 style="color: var(--maroon); margin-bottom: 12px; font-size: 13.5px; font-weight: bold; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">Language Skills</h5>
-                                        @if(!empty($langSkills))
-                                            <table class="dynamic-table" style="width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px;">
-                                                <thead>
-                                                    <tr style="background: #fafafb; border-bottom: 1px solid var(--line);">
-                                                        <th style="padding: 10px; text-align: left; font-size: 12px; color: var(--ink-2); font-weight: 600;">Language</th>
-                                                        <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Listening</th>
-                                                        <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Reading</th>
-                                                        <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Speaking</th>
-                                                        <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Writing</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($langSkills as $item)
-                                                        <tr style="border-bottom: 1px solid var(--line);">
-                                                            <td style="padding: 10px; font-size: 13px; font-weight: 600; color: var(--ink);">{{ $item['language'] ?? 'N/A' }}</td>
-                                                            <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['listening'] ?? '3' }} / 4</td>
-                                                            <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['reading'] ?? '3' }} / 4</td>
-                                                            <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['speaking'] ?? '3' }} / 4</td>
-                                                            <td style="padding: 10px; text-align: center; font-size: 13px; color: var(--ink-2);">{{ $item['writing'] ?? '3' }} / 4</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        @else
-                                            <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13px;">No language skills recorded.</p>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <script>
-                                    function openDetailsTab(evt, tabId) {
-                                        const contents = document.getElementsByClassName("details-tab-content");
-                                        for (let i = 0; i < contents.length; i++) {
-                                            contents[i].style.display = "none";
-                                        }
-                                        
-                                        const links = evt.currentTarget.parentElement.querySelectorAll(".tab-link");
-                                        links.forEach(link => {
-                                            link.classList.remove("active");
-                                            link.style.color = "var(--ink-3)";
-                                            link.style.background = "transparent";
-                                        });
-                                        
-                                        document.getElementById(tabId).style.display = "block";
-                                        evt.currentTarget.classList.add("active");
-                                    }
-
-                                    document.addEventListener("DOMContentLoaded", function() {
-                                        const activeLink = document.querySelector(".form-tabs .tab-link.active");
-                                        if (activeLink) {
-                                            activeLink.classList.add("active");
-                                        }
-                                    });
-                                </script>
-                            @endif
-                        @endif
-                    </div>
-
-                    <div class="record-panel">
-                        <h4>Evaluator Feedback</h4>
-                        @php
-                            $eval1 = $application->evaluator_id ? \App\Models\User::where('_id', $application->evaluator_id)->value('name') : null;
-                            $eval2 = $application->evaluator_2_id ? \App\Models\User::where('_id', $application->evaluator_2_id)->value('name') : null;
-
-                            $hasFeedback = false;
-                        @endphp
-
-                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-                            @if ($application->application_type === 'APEL A')
-                                @if ($eval1)
-                                    <div style="background: var(--surface-sunk); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--maroon-tint);">
-                                        <strong>{{ $eval1 }} (First Reviewer):</strong>
-                                        <div style="margin-top: 5px; font-size: 13px; color: var(--ink-2);">
-                                            @if ($application->evaluator_1_reviewed_at)
-                                                <div>Recommendation: <strong style="color: {{ $application->evaluator_1_decision === 'recommended' ? 'var(--good)' : 'var(--bad)' }};">{{ ucfirst($application->evaluator_1_decision) }}</strong></div>
-                                                <div style="margin-top: 4px; font-style: italic;">"{{ $application->evaluator_1_feedback ?? 'No feedback text provided' }}"</div>
-                                                @php $hasFeedback = true; @endphp
-                                            @else
-                                                <span style="color: var(--ink-3); font-style: italic;">No feedback submitted yet.</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if ($eval2)
-                                    <div style="background: var(--surface-sunk); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--maroon-tint);">
-                                        <strong>{{ $eval2 }} (Second Reviewer):</strong>
-                                        <div style="margin-top: 5px; font-size: 13px; color: var(--ink-2);">
-                                            @if ($application->evaluator_2_reviewed_at)
-                                                <div>Recommendation: <strong style="color: {{ $application->evaluator_2_decision === 'recommended' ? 'var(--good)' : 'var(--bad)' }};">{{ ucfirst($application->evaluator_2_decision) }}</strong></div>
-                                                <div style="margin-top: 4px; font-style: italic;">"{{ $application->evaluator_2_feedback ?? 'No feedback text provided' }}"</div>
-                                                @php $hasFeedback = true; @endphp
-                                            @else
-                                                <span style="color: var(--ink-3); font-style: italic;">No feedback submitted yet.</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            @else
-                                {{-- APEL C --}}
-                                @php
-                                    $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
-                                @endphp
-                                @if ($eval1)
-                                    <div style="background: var(--surface-sunk); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--maroon-tint);">
-                                        <strong>{{ $eval1 }} (First Evaluator):</strong>
-                                        <div style="margin-top: 5px; font-size: 13px; color: var(--ink-2);">
-                                            @if ($submission && $submission->evaluator_1_graded_at)
-                                                @if (($application->assessment_type ?? '') === 'portfolio')
-                                                    <div>Result: <strong style="color: {{ $submission->evaluator_1_result === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ $submission->evaluator_1_result === 'pass' ? 'Approved' : 'Rejected' }}</strong></div>
-                                                @else
-                                                    <div>Score: <strong>{{ $submission->evaluator_1_score }}%</strong> | Result: <strong style="color: {{ $submission->evaluator_1_result === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ ucfirst($submission->evaluator_1_result) }}</strong></div>
-                                                @endif
-                                                @if(isset($submission->evaluator_1_clo1))
-                                                    <div style="font-size: 11.5px; color: var(--ink-2); margin-top: 2px;">
-                                                        CLO Scores: CLO1: <strong>{{ $submission->evaluator_1_clo1 }}/10</strong> | CLO2: <strong>{{ $submission->evaluator_1_clo2 }}/10</strong> | CLO3: <strong>{{ $submission->evaluator_1_clo3 }}/10</strong> | CLO4: <strong>{{ $submission->evaluator_1_clo4 }}/10</strong>
-                                                    </div>
-                                                @endif
-                                                <div style="margin-top: 4px; font-style: italic;">"{{ $submission->evaluator_1_feedback ?? 'No feedback text provided' }}"</div>
-                                                @php $hasFeedback = true; @endphp
-                                            @else
-                                                <span style="color: var(--ink-3); font-style: italic;">No feedback submitted yet.</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if ($eval2)
-                                    <div style="background: var(--surface-sunk); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--maroon-tint);">
-                                        <strong>{{ $eval2 }} (Second Evaluator):</strong>
-                                        <div style="margin-top: 5px; font-size: 13px; color: var(--ink-2);">
-                                            @if ($submission && $submission->evaluator_2_graded_at)
-                                                @if (($application->assessment_type ?? '') === 'portfolio')
-                                                    <div>Result: <strong style="color: {{ $submission->evaluator_2_result === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ $submission->evaluator_2_result === 'pass' ? 'Approved' : 'Rejected' }}</strong></div>
-                                                @else
-                                                    <div>Score: <strong>{{ $submission->evaluator_2_score }}%</strong> | Result: <strong style="color: {{ $submission->evaluator_2_result === 'pass' ? 'var(--good)' : 'var(--bad)' }};">{{ ucfirst($submission->evaluator_2_result) }}</strong></div>
-                                                @endif
-                                                @if(isset($submission->evaluator_2_clo1))
-                                                    <div style="font-size: 11.5px; color: var(--ink-2); margin-top: 2px;">
-                                                        CLO Scores: CLO1: <strong>{{ $submission->evaluator_2_clo1 }}/10</strong> | CLO2: <strong>{{ $submission->evaluator_2_clo2 }}/10</strong> | CLO3: <strong>{{ $submission->evaluator_2_clo3 }}/10</strong> | CLO4: <strong>{{ $submission->evaluator_2_clo4 }}/10</strong>
-                                                    </div>
-                                                @endif
-                                                <div style="margin-top: 4px; font-style: italic;">"{{ $submission->evaluator_2_feedback ?? 'No feedback text provided' }}"</div>
-                                                @php $hasFeedback = true; @endphp
-                                            @else
-                                                <span style="color: var(--ink-3); font-style: italic;">No feedback submitted yet.</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            @endif
-
-                            @if (!$hasFeedback)
-                                <p class="feedback-text" style="color: var(--ink-3); font-style: italic; margin: 0;">No evaluator feedback has been added yet.</p>
-                            @endif
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <aside class="review-side">
-                @if ($application->application_type === 'APEL C' && in_array($application->status ?? 'Pre-Application Submitted', ['Pre-Application Submitted', 'Under Advisor Review']))
-                    {{-- ADVISOR REVIEW FORM --}}
-                    <section class="card form-main-card" style="margin-bottom:20px;">
-                        <h3 class="side-form-title">APEL C Advisor Recommendation</h3>
-                        <form method="POST" action="{{ route('admin.applications.advisor_approve', $application->_id) }}">
-                            @csrf
-                            
-                            <label for="f-advisor-name">Advisor Name</label>
-                            <select name="advisor_name" required id="f-advisor-name">
-                                <option value="">-- Select Advisor --</option>
-                                <option value="Ts Dr. Maheyzah Md Siraj">Ts Dr. Maheyzah Md Siraj</option>
-                                <option value="Dr. Hajar">Dr. Hajar</option>
-                            </select>
-                            
-                            <label style="margin-top: 15px; display: block;">CLO Attainment Score (1-4)</label>
-                            <p style="font-size: 11px; color: #5b626a; margin-top: 2px; margin-bottom: 8px;">Rate student's competence for each Course Learning Outcome:</p>
-                            
-                            <table class="dynamic-table" style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                                <thead>
-                                    <tr>
-                                        <th style="font-size: 11.5px; border: 1px solid var(--line); padding: 6px; background: var(--surface-sunk);">CLO</th>
-                                        <th style="font-size: 11.5px; border: 1px solid var(--line); padding: 6px; background: var(--surface-sunk); width: 80px;">Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (['CLO1: Analyse governance & frameworks' => 'clo1', 'CLO2: Evaluate security applications' => 'clo2', 'CLO3: Complete risk lifecycle' => 'clo3', 'CLO4: Construct plans & tools' => 'clo4'] as $label => $key)
-                                        <tr>
-                                            <td style="font-size: 11px; border: 1px solid var(--line); padding: 6px; line-height: 1.3;">{{ $label }}</td>
-                                            <td style="border: 1px solid var(--line); padding: 6px;">
-                                                <select name="advisor_evaluation[{{ $key }}]" required class="clo-score" style="width: 100%; font-size: 11px; padding: 4px;">
-                                                    <option value="4">4 - Excellent</option>
-                                                    <option value="3">3 - Good</option>
-                                                    <option value="2">2 - Fair</option>
-                                                    <option value="1">1 - Poor</option>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                            
-                            <label for="recommendation_status">Recommendation</label>
-                            <select name="recommendation_status" id="recommendation_status" required>
-                                <option value="Recommended">Recommended (All CLOs >= 3)</option>
-                                <option value="NOT recommended">NOT recommended</option>
-                            </select>
-                            
-                            <label for="f-mode-of-assessment" style="margin-top: 15px; display: block;">Recommended Mode of Assessment</label>
-                            <select name="mode_of_assessment" required id="f-mode-of-assessment">
-                                <option value="portfolio">Portfolio Submission</option>
-                                <option value="test">Challenge Test</option>
-                            </select>
-                            
-                            <label for="f-advisor-remarks" style="margin-top: 15px; display: block;">Advisor Remarks</label>
-                            <textarea name="advisor_remarks" rows="3" placeholder="Write advisor evaluation comments..." id="f-advisor-remarks"></textarea>
-                            
-                            <div class="form-submit-row">
-                                <button type="submit" class="btn">Submit Advisor Recommendation</button>
-                            </div>
-                        </form>
-                    </section>
+        <section class="lede-card lede-card--{{ $stage?->tone() ?? 'progress' }}" aria-labelledby="now-head">
+            <p class="lede-kicker">Where this is</p>
+            <h2 class="lede-head" id="now-head">{{ $stage?->label($type) ?? 'No recorded stage' }}</h2>
+            <p class="lede-body">
+                @if ($canAdvise)
+                    Waiting for the advisor's recommendation to be recorded.
+                @elseif ($canTakePayment)
+                    A receipt is in and needs checking against the faculty record.
+                @elseif ($canAssign)
+                    Payment is verified. This needs an evaluator.
+                @elseif ($canFinalise)
+                    Every review is in. This is the registry's decision to make.
+                @elseif ($stage?->isTerminal())
+                    Decided. Nothing further will happen to this application.
                 @else
-                    {{-- PAYMENT VERIFICATION --}}
-                    <section class="card form-main-card" style="margin-bottom:20px;">
-                        <h3 class="side-form-title">Payment Verification</h3>
-                        <form method="POST" action="{{ route('admin.applications.update_payment', $application->_id) }}">
-                            @csrf
-                            <label>Payment Type</label>
-                            <input type="text" value="{{ $application->payment_type ?? 'Application Fee' }}" readonly>
+                    Nothing is waiting on the registry. The next step belongs to
+                    {{ $stage?->awaitsStudent() ? 'the candidate' : 'an evaluator' }}.
+                @endif
+            </p>
+        </section>
 
-                        <select name="payment_status" required {{ ($application->payment_status ?? '') === 'verified' ? 'disabled' : '' }}>
-                            <option value="pending"
-                                {{ ($application->payment_status ?? 'pending') === 'pending' ? 'selected' : '' }}>
-                                Pending
-                            </option>
+        <div class="split">
+            <section class="panel" aria-labelledby="case-head">
+                <h2 class="panel-head" id="case-head">The case</h2>
+                <dl class="kv">
+                    <div>
+                        <dt>{{ $isC ? 'Course' : 'Programme' }}</dt>
+                        <dd>
+                            {{ $isC
+                                ? ($application->credit_course_name ?: ($application->credit_course_code ?: 'Not stated'))
+                                : ($application->program_applied ?: 'Not stated') }}
+                        </dd>
+                    </div>
+                    @if ($student)
+                        <div><dt>Email</dt><dd>{{ $student->email }}</dd></div>
+                    @endif
+                    @if ($application->company_name)
+                        <div><dt>Employer</dt><dd>{{ $application->company_name }}</dd></div>
+                    @endif
+                    <div>
+                        <dt>Submitted</dt>
+                        <dd>
+                            {{ $application->submission_date
+                                ? \Carbon\Carbon::parse($application->submission_date)->format('j M Y')
+                                : 'Not recorded' }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Evaluators</dt>
+                        <dd>{{ $assigned->isEmpty() ? 'None assigned' : $assigned->join(', ') }}</dd>
+                    </div>
+                </dl>
+            </section>
 
-                            <option value="submitted"
-                                {{ ($application->payment_status ?? '') === 'submitted' ? 'selected' : '' }}>
-                                Submitted
-                            </option>
+            <section class="panel" aria-labelledby="ev-head">
+                <h2 class="panel-head" id="ev-head">What was uploaded</h2>
 
-                            <option value="verified"
-                                {{ ($application->payment_status ?? '') === 'verified' ? 'selected' : '' }}>
-                                Verified
-                            </option>
+                @php
+                    $groups = ['evidence_file' => 'Evidence', 'portfolio_file' => 'Portfolio', 'supporting_docs' => 'Supporting', 'payment_receipt' => 'Receipt'];
+                    $any = collect($groups)->keys()->contains(fn ($f) => filled($application->{$f}));
+                @endphp
 
-                            <option value="rejected"
-                                {{ ($application->payment_status ?? '') === 'rejected' ? 'selected' : '' }}>
-                                Rejected
-                            </option>
+                @if ($any)
+                    <ul class="files">
+                        @foreach ($groups as $field => $label)
+                            @php $files = $application->{$field}; @endphp
+                            @continue(blank($files))
+                            @foreach ((array) $files as $file)
+                                @php
+                                    $path = is_array($file) ? ($file['path'] ?? '') : (string) $file;
+                                    $name = is_array($file) ? ($file['name'] ?? basename($path)) : basename($path);
+                                @endphp
+                                @continue($path === '')
+                                <li>
+                                    <span class="files-kind">{{ $label }}</span>
+                                    <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $path]) }}"
+                                       target="_blank" rel="noopener">{{ $name }}</a>
+                                </li>
+                            @endforeach
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="muted">Nothing has been uploaded.</p>
+                @endif
+            </section>
+        </div>
+
+        {{-- ADVISOR — APEL C only, and only while it is genuinely awaited. --}}
+        @if ($canAdvise)
+            <section class="panel" aria-labelledby="adv-head">
+                <h2 class="panel-head" id="adv-head">Record the advisor's recommendation</h2>
+
+                <form method="POST" action="{{ route('admin.applications.advisor_approve', $application->_id) }}"
+                      class="stack-form">
+                    @csrf
+
+                    <div class="field">
+                        <label for="f-advisor-name">Advisor</label>
+                        <select name="advisor_name" id="f-advisor-name" required>
+                            <option value="" selected disabled>Choose one</option>
+                            <option value="Ts Dr. Maheyzah Md Siraj">Ts Dr. Maheyzah Md Siraj</option>
+                            <option value="Dr. Hajar">Dr. Hajar</option>
                         </select>
+                        <x-field-error name="advisor_name" />
+                    </div>
 
-                        <label>Payment Receipt</label>
-
-                        @if ($application->payment_receipt)
-                            <p class="feedback-text">
-                                <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $application->payment_receipt]) }}" target="_blank"
-                                    class="link">
-                                    View Uploaded Receipt
-                                </a>
-                            </p>
-                        @else
-                            <p class="feedback-text">No payment receipt uploaded yet.</p>
-                        @endif
-
-                        <label for="f-payment-remarks">Payment Remarks</label>
-                        <textarea name="payment_remarks" id="f-payment-remarks" rows="4" placeholder="Write payment verification remarks..." {{ ($application->payment_status ?? '') === 'verified' ? 'readonly' : '' }}>{{ $application->payment_remarks ?? '' }}</textarea>
-
-                        @if (($application->payment_status ?? '') !== 'verified')
-                            <div class="form-submit-row">
-                                <button type="submit" class="btn">
-                                    Update Payment
-                                </button>
+                    <fieldset class="marks">
+                        <legend class="sr-only">Course learning outcome attainment</legend>
+                        @foreach (['clo1', 'clo2', 'clo3', 'clo4'] as $i => $key)
+                            <div class="mark">
+                                <label for="f-adv-{{ $key }}">Outcome {{ $i + 1 }}</label>
+                                <div class="mark-row">
+                                    <input type="number" id="f-adv-{{ $key }}"
+                                           name="advisor_evaluation[{{ $key }}]"
+                                           min="1" max="4" step="1" required inputmode="numeric"
+                                           value="{{ old('advisor_evaluation.'.$key) }}">
+                                    <span class="mark-of">/ 4</span>
+                                </div>
                             </div>
-                        @else
-                            <p class="feedback-text" style="color: var(--good); font-weight: 600; margin-top: 15px; display: flex; align-items: center; gap: 6px;">
-                                <span style="font-size: 16px;">✓</span> Payment Verified
-                            </p>
-                        @endif
-                    </form>
-                </section>
+                        @endforeach
+                    </fieldset>
+                    <p class="field-hint">The advisor's judgement of competence per outcome, 1 to 4.</p>
+                    <x-field-error name="advisor_evaluation" />
 
-                {{-- ASSIGN EVALUATOR --}}
-                <section class="card form-main-card">
-                    <h3 class="side-form-title">
-                        {{ $application->application_type === 'APEL A' ? 'Assign APEL A Reviewer' : 'Assign APEL C Evaluator' }}
-                    </h3>
+                    <div class="field">
+                        <label for="recommendation_status">Recommendation</label>
+                        <select name="recommendation_status" id="recommendation_status" required>
+                            <option value="" selected disabled>Choose one</option>
+                            <option value="Recommended">Recommended &mdash; proceed to assessment</option>
+                            <option value="NOT recommended">Not recommended &mdash; stop here, no fee is taken</option>
+                        </select>
+                        <x-field-error name="recommendation_status" />
+                    </div>
 
-                    @if ($errors->any())
-                        <div class="alert alert-error">
-                            <ul style="padding-left: 18px;">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                    <div class="field">
+                        <label for="f-mode">Mode of assessment</label>
+                        <select name="mode_of_assessment" id="f-mode" required>
+                            <option value="" selected disabled>Choose one</option>
+                            <option value="portfolio">Portfolio</option>
+                            <option value="test">Written paper</option>
+                        </select>
+                        <x-field-error name="mode_of_assessment" />
+                    </div>
 
-                    @php
-                        $isAssigned = !empty($application->evaluator_id);
-                    @endphp
+                    <div class="field">
+                        <label for="f-advisor-remarks">Advisor remarks</label>
+                        <textarea name="advisor_remarks" id="f-advisor-remarks" rows="4"
+                                  maxlength="1000">{{ old('advisor_remarks') }}</textarea>
+                        <x-field-error name="advisor_remarks" />
+                    </div>
 
-                    @if ($isAssigned)
-                        <div style="background-color: #ecfdf5; border: 1px solid #d1fae5; color: #065f46; padding: 12px; border-radius: 8px; font-size: 13.5px; font-weight: 555; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-                            <span>✓</span>
-                            <span>Evaluators are already assigned. Use the dropdowns below to update/change the assignment.</span>
-                        </div>
-                    @endif
+                    <button type="submit" class="btn btn-primary">Save the recommendation</button>
+                </form>
+            </section>
+        @endif
 
-                    <form method="POST" action="{{ route('admin.applications.assign', $application->_id) }}">
+        {{-- PAYMENT --}}
+        @if ($canTakePayment)
+            <section class="panel" aria-labelledby="pay-head">
+                <h2 class="panel-head" id="pay-head">Check the payment</h2>
+
+                @if ($application->payment_receipt)
+                    <p class="note">
+                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $application->payment_receipt]) }}"
+                           target="_blank" rel="noopener">Open the receipt the candidate uploaded</a>
+                    </p>
+                @endif
+                @if (filled($application->payment_remarks))
+                    <div class="said">
+                        <h3>What the candidate said</h3>
+                        <p>{{ $application->payment_remarks }}</p>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('admin.applications.update_payment', $application->_id) }}"
+                      class="stack-form">
+                    @csrf
+
+                    <div class="field">
+                        <label for="f-pay-status">Decision</label>
+                        <select name="payment_status" id="f-pay-status" required>
+                            <option value="" selected disabled>Choose one</option>
+                            <option value="verified">Verified &mdash; the fee is paid</option>
+                            <option value="rejected">Not accepted &mdash; send it back</option>
+                        </select>
+                        <x-field-error name="payment_status" />
+                    </div>
+
+                    <div class="field">
+                        <label for="f-pay-ref">Faculty receipt reference</label>
+                        <input type="text" name="payment_reference" id="f-pay-ref" maxlength="255"
+                               value="{{ old('payment_reference') }}">
+                        {{-- required_if verified: the controller says so, so the label does too. --}}
+                        <p class="field-hint">Required when verifying &mdash; what you checked it against.</p>
+                        <x-field-error name="payment_reference" />
+                    </div>
+
+                    <div class="field">
+                        <label for="f-pay-remarks">Reason, if not accepted</label>
+                        <textarea name="payment_remarks" id="f-pay-remarks" rows="3"
+                                  maxlength="1000">{{ old('payment_remarks') }}</textarea>
+                        <p class="field-hint">Required when rejecting &mdash; the candidate sees this and must be able to fix it.</p>
+                        <x-field-error name="payment_remarks" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Record the decision</button>
+                </form>
+            </section>
+        @endif
+
+        {{-- ASSIGNMENT --}}
+        @if ($canAssign)
+            <section class="panel" aria-labelledby="asg-head">
+                <h2 class="panel-head" id="asg-head">Assign evaluators</h2>
+
+                @if (!empty($evaluatorRecommendations) && count($evaluatorRecommendations) > 0)
+                    <p class="clo-rule">
+                        Ranked by current load and past turnaround. A second evaluator is optional;
+                        when there are two, the application waits for both.
+                    </p>
+
+                    <ul class="flags">
+                        @foreach ($evaluatorRecommendations as $rec)
+                            <li class="flag">
+                                <strong>{{ $rec['name'] }}</strong>
+                                <span>{{ $rec['recommendation_reason'] ?? '' }}</span>
+                                <small>
+                                    {{ $rec['active_assignments'] }} active ·
+                                    {{ $rec['pending_submissions'] }} to mark ·
+                                    {{ $rec['completed_reviews'] }} done
+                                    @if (($rec['average_completion_days'] ?? 0) > 0)
+                                        · {{ $rec['average_completion_days'] }} days average
+                                    @endif
+                                </small>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                <form method="POST" action="{{ route('admin.applications.assign', $application->_id) }}"
+                      class="stack-form">
+                    @csrf
+
+                    <div class="field">
+                        <label for="f-eval-1">Evaluator</label>
+                        <select name="evaluator_id" id="f-eval-1" required>
+                            <option value="" selected disabled>Choose one</option>
+                            @foreach ($evaluators as $evaluator)
+                                <option value="{{ $evaluator->_id }}"
+                                        {{ (string) $application->evaluator_id === (string) $evaluator->_id ? 'selected' : '' }}>
+                                    {{ $evaluator->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <x-field-error name="evaluator_id" />
+                    </div>
+
+                    <div class="field">
+                        <label for="f-eval-2">Second evaluator</label>
+                        <select name="evaluator_2_id" id="f-eval-2">
+                            <option value="">None</option>
+                            @foreach ($evaluators as $evaluator)
+                                <option value="{{ $evaluator->_id }}"
+                                        {{ (string) $application->evaluator_2_id === (string) $evaluator->_id ? 'selected' : '' }}>
+                                    {{ $evaluator->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="field-hint">Optional, and must be someone different.</p>
+                        <x-field-error name="evaluator_2_id" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                </form>
+            </section>
+        @endif
+
+        {{-- FINAL DECISION --}}
+        @if ($canFinalise)
+            <section class="panel" aria-labelledby="fin-head">
+                <h2 class="panel-head" id="fin-head">Make the final decision</h2>
+
+                @if (filled($application->evaluator_feedback))
+                    <div class="said">
+                        <h3>Evaluator feedback</h3>
+                        <p>{{ $application->evaluator_feedback }}</p>
+                    </div>
+                @endif
+
+                <p class="note">This cannot be changed once saved.</p>
+
+                @if ($isC)
+                    <form method="POST" action="{{ route('admin.applications.finalize_apel_c', $application->_id) }}"
+                          class="stack-form">
                         @csrf
 
-                        @php
-                            $recommendations = $evaluatorRecommendations ?? collect();
-                            $recommendationMap = $recommendations->keyBy('id');
-                            $recommendedEvaluatorId = ($recommendations->first() ?? [])['id'] ?? null;
-                        @endphp
-
-                        @if ($recommendations->count() > 0)
-                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
-                                <strong style="display: block; color: #1e3a8a; font-size: 13.5px; margin-bottom: 8px;">
-                                    Smart Evaluator Recommendation
-                                </strong>
-                                <p class="feedback-text" style="margin-bottom: 12px;">
-                                    Evaluators are ranked by active assignments, pending submissions, and average completion time.
-                                </p>
-
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
-                                    @foreach ($recommendations->take(3) as $index => $recommendation)
-                                        <div style="background: #ffffff; border: 1px solid #dbeafe; border-radius: 8px; padding: 10px;">
-                                            <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center;">
-                                                <strong style="font-size: 13.5px; color: var(--ink);">
-                                                    {{ $recommendation['name'] }}
-                                                </strong>
-                                                @if ($index === 0)
-                                                    <span style="font-size: 11px; color: #1d4ed8; font-weight: 700;">BEST FIT</span>
-                                                @endif
-                                            </div>
-                                            <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 6px;">
-                                                Active: {{ $recommendation['active_assignments'] }} |
-                                                Pending: {{ $recommendation['pending_submissions'] }}
-                                            </div>
-                                            <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 4px;">
-                                                Avg completion:
-                                                {{ $recommendation['average_completion_days'] ?? 'N/A' }} day(s)
-                                            </div>
-                                            <div style="font-size: 12px; color: var(--ink-3); margin-top: 6px;">
-                                                {{ $recommendation['recommendation_reason'] }}
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        <label for="f-evaluator-id">Select First Evaluator</label>
-                        <select name="evaluator_id" required id="f-evaluator-id">
-                            <option value="">-- Select Evaluator 1 --</option>
-                            @foreach ($evaluators as $evaluator)
-                                @php
-                                    $recommendation = $recommendationMap->get((string) $evaluator->_id);
-                                    $selectFirst = (string) ($application->evaluator_id ?? '') === (string) $evaluator->_id
-                                        || (!$isAssigned && (string) $recommendedEvaluatorId === (string) $evaluator->_id);
-                                @endphp
-                                <option value="{{ $evaluator->_id }}"
-                                    {{ $selectFirst ? 'selected' : '' }}>
-                                    {{ $evaluator->name }}
-                                    @if ($recommendation)
-                                        - active {{ $recommendation['active_assignments'] }}, pending {{ $recommendation['pending_submissions'] }}
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <label for="f-evaluator-2-id" style="margin-top: 15px; display: block;">Select Second Evaluator</label>
-                        <select name="evaluator_2_id" id="f-evaluator-2-id">
-                            <option value="">-- Select Evaluator 2 (Optional) --</option>
-                            @foreach ($evaluators as $evaluator)
-                                @php
-                                    $recommendation = $recommendationMap->get((string) $evaluator->_id);
-                                    $selectSecond = (string) ($application->evaluator_2_id ?? '') === (string) $evaluator->_id;
-                                @endphp
-                                <option value="{{ $evaluator->_id }}"
-                                    {{ $selectSecond ? 'selected' : '' }}>
-                                    {{ $evaluator->name }}
-                                    @if ($recommendation)
-                                        - active {{ $recommendation['active_assignments'] }}, pending {{ $recommendation['pending_submissions'] }}
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
-
-                        @if ($application->application_type === 'APEL C')
-                            <label for="f-assessment-type" style="margin-top: 15px; display: block;">Select Assessment Type</label>
-                            <select name="assessment_type" required id="f-assessment-type">
-                                <option value="">-- Select Assessment Type --</option>
-                                <option value="portfolio" {{ ($application->assessment_type ?? '') === 'portfolio' ? 'selected' : '' }}>
-                                    Portfolio
-                                </option>
-                                <option value="test" {{ ($application->assessment_type ?? '') === 'test' ? 'selected' : '' }}>
-                                    Test
-                                </option>
+                        <div class="field">
+                            <label for="f-credit">Credit decision</label>
+                            <select name="credit_decision" id="f-credit" required>
+                                <option value="" selected disabled>Choose one</option>
+                                <option value="approved">Award the credit</option>
+                                <option value="rejected">Do not award</option>
                             </select>
-                        @endif
-
-                        <div class="tip-box tip-box-light">
-                            <strong>Reminder</strong>
-                            <p>
-                                @if ($application->application_type === 'APEL A')
-                                    This evaluator will review the admission application and provide the recommendation
-                                    outcome.
-                                @else
-                                    This evaluator will continue the assessment paper upload and grading process for APEL C.
-                                @endif
-                            </p>
+                            <x-field-error name="credit_decision" />
                         </div>
 
-                        <div class="form-submit-row">
-                            <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">Cancel</a>
-                            @if (($application->payment_status ?? 'pending') === 'verified')
-                                <button type="submit" class="btn">
-                                    {{ $isAssigned ? 'Update Evaluator' : ($application->application_type === 'APEL A' ? 'Assign Reviewer' : 'Assign Evaluator') }}
-                                </button>
-                            @else
-                                <button type="button" class="btn btn-secondary" disabled>
-                                    Verify Payment First
-                                </button>
-                            @endif
+                        <div class="field">
+                            <label for="f-course-code">Course code</label>
+                            <input type="text" name="credit_course_code" id="f-course-code" maxlength="100"
+                                   value="{{ old('credit_course_code', $application->credit_course_code) }}">
+                            <x-field-error name="credit_course_code" />
                         </div>
+
+                        <div class="field">
+                            <label for="f-course-name">Course name</label>
+                            <input type="text" name="credit_course_name" id="f-course-name" maxlength="255"
+                                   value="{{ old('credit_course_name', $application->credit_course_name) }}">
+                            <x-field-error name="credit_course_name" />
+                        </div>
+
+                        <div class="field">
+                            <label for="f-credit-remarks">Remarks</label>
+                            <textarea name="credit_remarks" id="f-credit-remarks" rows="4"
+                                      maxlength="1000">{{ old('credit_remarks') }}</textarea>
+                            <p class="field-hint">The candidate sees this with their outcome.</p>
+                            <x-field-error name="credit_remarks" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save the decision</button>
                     </form>
-                </section>
+                @else
+                    <form method="POST" action="{{ route('admin.applications.finalize_apel_a', $application->_id) }}"
+                          class="stack-form">
+                        @csrf
 
-                @if ($application->application_type === 'APEL A')
-                    @php
-                        $isSingleEvaluator = empty($application->evaluator_2_id);
-                        $bothReviewedA = !empty($application->evaluator_1_reviewed_at) && !empty($application->evaluator_2_reviewed_at);
-                        $canFinalizeA = $isSingleEvaluator ? !empty($application->evaluator_1_reviewed_at) : $bothReviewedA;
-                    @endphp
-
-                    <section class="card form-main-card" style="margin-top: 20px;">
-                        <h3 class="side-form-title">Final Admin Decision</h3>
-
-                        <form method="POST"
-                            action="{{ route('admin.applications.finalize_apel_a', $application->_id) }}">
-                            @csrf
-
-                            <label for="f-final-decision">Final Decision</label>
-                            <select name="final_decision" id="f-final-decision" required {{ !$canFinalizeA || in_array($application->final_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
-                                <option value="pending"
-                                    {{ ($application->final_decision ?? 'pending') === 'pending' ? 'selected' : '' }}>
-                                    Pending
-                                </option>
-                                <option value="approved"
-                                    {{ ($application->final_decision ?? '') === 'approved' ? 'selected' : '' }}>
-                                    Approved
-                                </option>
-                                <option value="rejected"
-                                    {{ ($application->final_decision ?? '') === 'rejected' ? 'selected' : '' }}>
-                                    Rejected
-                                </option>
+                        <div class="field">
+                            <label for="f-final">Admission decision</label>
+                            <select name="final_decision" id="f-final" required>
+                                <option value="" selected disabled>Choose one</option>
+                                <option value="approved">Admit</option>
+                                <option value="rejected">Do not admit</option>
                             </select>
+                            <x-field-error name="final_decision" />
+                        </div>
 
-                            <label for="f-final-decision-remarks">Final Decision Remarks</label>
-                            <textarea name="final_decision_remarks" id="f-final-decision-remarks" rows="6" placeholder="Write final admin remarks here..." {{ !$canFinalizeA || in_array($application->final_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ $application->final_decision_remarks }}</textarea>
+                        <div class="field">
+                            <label for="f-final-remarks">Remarks</label>
+                            <textarea name="final_decision_remarks" id="f-final-remarks" rows="4"
+                                      maxlength="1000">{{ old('final_decision_remarks') }}</textarea>
+                            <p class="field-hint">The candidate sees this with their outcome.</p>
+                            <x-field-error name="final_decision_remarks" />
+                        </div>
 
-                            <div class="tip-box tip-box-light">
-                                <strong>Important</strong>
-                                <p>
-                                    This is the final APEL A admission outcome shown to the student after evaluator
-                                    recommendations are submitted.
-                                </p>
-                            </div>
-
-                            @if (!$canFinalizeA)
-                                <div class="alert alert-warning" style="background-color: #fffbeb; border: 1px solid var(--attention-tint); color: var(--attention); padding: 10px 14px; border-radius: 8px; margin-top: 15px; font-size: 13.5px; font-weight: 600; text-align: center;">
-                                    ⚠️ Final decision cannot be made before the assigned evaluator(s) submit their feedback.
-                                </div>
-                            @elseif (!in_array($application->final_decision ?? '', ['approved', 'rejected']))
-                                <div class="form-submit-row">
-                                    <button type="submit" class="btn">Save Final Decision</button>
-                                </div>
-                            @else
-                                <p class="feedback-text" style="color: var(--good); font-weight: 600; margin-top: 15px; display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 16px;">✓</span> Decision Finalized ({{ ucfirst($application->final_decision) }})
-                                </p>
-                            @endif
-                        </form>
-                    </section>
+                        <button type="submit" class="btn btn-primary">Save the decision</button>
+                    </form>
                 @endif
+            </section>
+        @endif
 
-                @if ($application->application_type === 'APEL C')
-                    <section class="card form-main-card" style="margin-top: 20px; border-top: 4px solid var(--maroon);">
-                        <h3 class="side-form-title">Final Credit Decision</h3>
-
+        {{-- APEL A support, kept as reference where it exists. --}}
+        @if (! $isC && !empty($apelAEligibility['criteria']))
+            <details class="fold">
+                <summary>Entry scorecard</summary>
+                <ul class="checks">
+                    @foreach ($apelAEligibility['criteria'] as $criterion)
                         @php
-                            $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
+                            $status = strtolower((string) ($criterion['status'] ?? ''));
+                            [$mark, $state] = match ($status) {
+                                'pass' => ['✓', 'is-met'],
+                                'fail' => ['✕', 'is-unmet'],
+                                default => ['!', 'is-warned'],
+                            };
                         @endphp
+                        <li class="check {{ $state }}">
+                            <span class="check-mark" aria-hidden="true">{{ $mark }}</span>
+                            <span>
+                                <strong>{{ $criterion['name'] ?? 'Criterion' }}</strong>
+                                @if (!empty($criterion['message']))
+                                    <span class="check-msg">{{ $criterion['message'] }}</span>
+                                @endif
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            </details>
+        @endif
 
-                        @if ($submission && $submission->graded_at)
-                            <div style="background: #fffbeb; border: 1px solid var(--attention-tint); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                                <strong style="display: block; font-size: 13px; color: var(--attention); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Grading Outcome</strong>
-                                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2);">
-                                    @if (($application->assessment_type ?? '') === 'portfolio')
-                                        <div><strong>Result:</strong> 
-                                            @if ($submission->result === 'pass')
-                                                <span style="font-weight: 700; color: var(--good);">Approved (Recommended for Credit)</span>
-                                            @else
-                                                <span style="font-weight: 700; color: var(--bad);">Rejected (Not Recommended)</span>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <div><strong>Score:</strong> {{ $submission->score }}%</div>
-                                        <div><strong>Result:</strong> 
-                                            @if ($submission->result === 'pass')
-                                                <span style="font-weight: 700; color: var(--good);">Pass (Recommended for Credit)</span>
-                                            @else
-                                                <span style="font-weight: 700; color: var(--bad);">Fail (Not Recommended)</span>
-                                            @endif
-                                        </div>
-                                    @endif
-                                    @if ($submission->grader_feedback)
-                                        <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #f59e0b; color: var(--ink-2); font-style: italic;">
-                                            "{{ $submission->grader_feedback }}"
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @else
-                            <div style="background: var(--surface-sunk); border: 1px solid var(--line); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: var(--ink-3); text-align: center;">
-                                No assessment grading has been completed yet.
-                            </div>
-                        @endif
+        @if (filled($application->pre_app_data))
+            <details class="fold">
+                <summary>The submitted application</summary>
+                @include('student.apel_c._submitted', ['data' => $application->pre_app_data])
+            </details>
+        @endif
 
-                        @php
-                            $bothReviewedC = !empty($submission) && !empty($submission->graded_at);
-                        @endphp
+        {{--
+            The manual override. Last, folded, and built from
+            StageMachine::nextStages() - so it can only ever offer moves the
+            machine will accept, and a reason is required because it becomes
+            part of the audit trail.
+        --}}
+        @if (!empty($nextStages))
+            <details class="fold">
+                <summary>Move this by hand</summary>
 
-                        <form method="POST"
-                            action="{{ route('admin.applications.finalize_apel_c', $application->_id) }}">
-                            @csrf
+                <p class="muted">
+                    Only for correcting a mistake. Every move is recorded against your name.
+                </p>
 
-                            <label for="f-credit-decision">Credit Decision</label>
-                            @php
-                                $defaultDecision = $application->credit_decision ?? 'pending';
-                                if ($submission && $submission->result === 'fail' && $defaultDecision === 'pending') {
-                                    $defaultDecision = 'rejected';
-                                }
-                            @endphp
-                            <select name="credit_decision" id="f-credit-decision" required {{ !$bothReviewedC || in_array($application->credit_decision ?? '', ['approved', 'rejected']) ? 'disabled' : '' }}>
-                                <option value="pending"
-                                    {{ $defaultDecision === 'pending' ? 'selected' : '' }}>
-                                    Pending
-                                </option>
-                                <option value="approved"
-                                    {{ $defaultDecision === 'approved' ? 'selected' : '' }} {{ $submission && $submission->result === 'fail' ? 'disabled' : '' }}>
-                                    Approved
-                                </option>
-                                <option value="rejected"
-                                    {{ $defaultDecision === 'rejected' ? 'selected' : '' }}>
-                                    Rejected
-                                </option>
-                            </select>
+                <form method="POST" action="{{ route('admin.applications.update_status', $application->_id) }}"
+                      class="stack-form">
+                    @csrf
 
-                            <label for="credit_hours_approved">Approved Credit Hours</label>
-                            @php
-                                $hours = \App\Http\Controllers\Admin\ApplicationManagementController::getCreditHoursFromCourseCode($application->credit_course_code);
-                            @endphp
-                            <input type="number" name="credit_hours_approved" id="credit_hours_approved" readonly
-                                value="{{ $application->credit_hours_approved ?? $hours }}">
+                    <div class="field">
+                        <label for="f-stage">Move to</label>
+                        <select name="stage" id="f-stage" required>
+                            <option value="" selected disabled>Choose one</option>
+                            @foreach ($nextStages as $next)
+                                <option value="{{ $next->value }}">{{ $next->label($type) }}</option>
+                            @endforeach
+                        </select>
+                        <x-field-error name="stage" />
+                    </div>
 
-                            <label for="f-credit-course-code">Course Code</label>
-                            <input type="text" name="credit_course_code" readonly
-                                value="{{ old('credit_course_code', $application->credit_course_code) }}">
+                    <div class="field">
+                        <label for="f-reason">Why</label>
+                        <textarea name="reason" id="f-reason" rows="3" required maxlength="500"
+                                  placeholder="What went wrong, and what you are correcting."></textarea>
+                        <x-field-error name="reason" />
+                    </div>
 
-                            <label for="f-credit-course-name">Course Name</label>
-                            <input type="text" name="credit_course_name" readonly
-                                value="{{ old('credit_course_name', $application->credit_course_name) }}">
-
-                            <label for="f-credit-remarks">Credit Remarks</label>
-                            <textarea name="credit_remarks" id="f-credit-remarks" rows="6" placeholder="Write final credit decision remarks here..." {{ !$bothReviewedC || in_array($application->credit_decision ?? '', ['approved', 'rejected']) ? 'readonly' : '' }}>{{ old('credit_remarks', $application->credit_remarks) }}</textarea>
-
-                            <div class="tip-box tip-box-light">
-                                <strong>Important</strong>
-                                <p>
-                                    This is the final APEL C credit outcome shown to the student after assessment and
-                                    grading are completed.
-                                </p>
-                            </div>
-
-                            @if (!$bothReviewedC)
-                                <div class="alert alert-warning" style="background-color: #fffbeb; border: 1px solid var(--attention-tint); color: var(--attention); padding: 10px 14px; border-radius: 8px; margin-top: 15px; font-size: 13.5px; font-weight: 600; text-align: center;">
-                                    ⚠️ Final decision cannot be made before grading is completed by both evaluators.
-                                </div>
-                            @elseif (!in_array($application->credit_decision ?? '', ['approved', 'rejected']))
-                                <div class="form-submit-row">
-                                    <button type="submit" class="btn">Save Credit Decision</button>
-                                </div>
-                            @else
-                                <p class="feedback-text" style="color: var(--good); font-weight: 600; margin-top: 15px; display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 16px;">✓</span> Decision Finalized ({{ ucfirst($application->credit_decision) }})
-                                </p>
-                            @endif
-                        </form>
-                    </section>
-                @endif
-                @endif
-            </aside>
-        </div>
+                    <button type="submit" class="btn btn-secondary">Move it</button>
+                </form>
+            </details>
+        @endif
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Credit hours approved is calculated dynamically from course code
-            const scoreSelects = document.querySelectorAll('.clo-score');
-            const recSelect = document.getElementById('recommendation_status');
-            
-            function checkScores() {
-                if (!recSelect) return;
-                let anyLow = false;
-                scoreSelects.forEach(select => {
-                    if (parseInt(select.value) < 3) {
-                        anyLow = true;
-                    }
-                });
-                if (anyLow) {
-                    recSelect.value = "NOT recommended";
-                    recSelect.style.borderColor = "#a32a20";
-                } else {
-                    recSelect.value = "Recommended";
-                    recSelect.style.borderColor = "";
-                }
-            }
-            
-            scoreSelects.forEach(select => {
-                select.addEventListener('change', checkScores);
-            });
-        });
-    </script>
 @endsection

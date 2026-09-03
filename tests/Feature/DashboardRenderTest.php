@@ -439,4 +439,83 @@ class DashboardRenderTest extends FeatureTestCase
             ->assertOk()
             ->assertSee('What needs the office', false);
     }
+
+    /**
+     * The advisor recommendation form was gated on status being
+     * 'Pre-Application Submitted' or 'Under Advisor Review'. StageMachine
+     * writes status as $stage->label($type), which for those stages is
+     * "Pre-application submitted" and "Advisor review" - neither matched, so
+     * the form never rendered and an APEL C application reaching advisor
+     * review had no way for the registry to record the decision at all.
+     */
+    public function test_the_advisor_form_appears_while_the_advisor_decision_is_awaited(): void
+    {
+        $admin = $this->makeUser('admin');
+        $student = $this->makeStudent();
+
+        foreach ([ApelStage::SUBMITTED, ApelStage::ADVISOR_REVIEW] as $stage) {
+            $application = $this->makeApplication($student, [
+                'application_type' => 'APEL C',
+                'stage' => $stage->value,
+                'status' => 'Submitted',
+            ]);
+
+            $this->actingAs($admin)
+                ->get(route('admin.applications.assign.form', $application->_id))
+                ->assertOk()
+                ->assertSee('name="recommendation_status"', false)
+                ->assertSee('name="advisor_name"', false);
+        }
+    }
+
+    /** A form for a move the application cannot make must not be offered. */
+    public function test_the_registry_screen_only_offers_the_action_the_stage_allows(): void
+    {
+        $admin = $this->makeUser('admin');
+        $student = $this->makeStudent();
+
+        $draft = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::DRAFT->value,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.assign.form', $draft->_id))
+            ->assertOk()
+            // Nothing has been assessed, so no finalisation form.
+            ->assertDontSee('name="credit_decision"', false)
+            ->assertDontSee('name="evaluator_id"', false);
+
+        $ready = $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::PAYMENT_VERIFIED->value,
+            'status' => 'Submitted',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.applications.assign.form', $ready->_id))
+            ->assertOk()
+            ->assertSee('name="evaluator_id"', false)
+            ->assertDontSee('name="final_decision"', false);
+    }
+
+    public function test_the_registry_screen_renders_at_every_stage_for_both_tracks(): void
+    {
+        $admin = $this->makeUser('admin');
+        $student = $this->makeStudent();
+
+        foreach (['APEL A', 'APEL C'] as $type) {
+            foreach (ApelStage::cases() as $stage) {
+                $application = $this->makeApplication($student, [
+                    'application_type' => $type,
+                    'stage' => $stage->value,
+                    'status' => 'Submitted',
+                ]);
+
+                $this->actingAs($admin)
+                    ->get(route('admin.applications.assign.form', $application->_id))
+                    ->assertOk();
+            }
+        }
+    }
 }
