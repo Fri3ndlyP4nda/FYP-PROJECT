@@ -1,894 +1,382 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container app-shell">
-        <section class="page-hero">
+    {{--
+        One APEL C application, as the candidate reads it.
+
+        The progress tracker that stood here was hard-coded in Blade with its
+        own step list and a match() on $application->status. StageMachine writes
+        status as $stage->label($type), and none of the labels matched the arms,
+        which still expected the pre-stage-machine spellings - so all 19 stages
+        fell to `default => 0` and every candidate saw step 1 of 8 regardless of
+        where they actually were. It is now ApelStage::rail().
+
+        The panels below are ordered by when the candidate needs them: what to
+        do now, where it sits, the result, then the paperwork.
+    --}}
+    @php
+        use App\Domain\Apel\ApelStage;
+
+        $stage = $case['stage'];
+        $action = $case['action'];
+        $paymentStatus = $application->payment_status ?? 'pending';
+
+        $evaluatorName = $application->evaluator_id
+            ? (\App\Models\User::where('_id', $application->evaluator_id)->value('name') ?: 'Unknown')
+            : null;
+
+        $assessmentPaper = \App\Models\AssessmentPaper::where('application_id', (string) $application->_id)
+            ->where('status', 'active')
+            ->first();
+
+        $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
+
+        $isPortfolio = ($application->assessment_type ?? '') === 'portfolio';
+
+        // Gate the appeal on the stage. The old test also accepted
+        // status === 'Final Rejected', a string the application stopped writing
+        // when the stage machine landed - APEL C now records "Credit not
+        // awarded" - so that arm was dead and the panel depended entirely on
+        // credit_decision having been set.
+        $isRejected = $stage === ApelStage::REJECTED
+            || ($application->credit_decision ?? '') === 'rejected';
+    @endphp
+
+    <div class="deck deck--narrow">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">APEL C Result</span>
-                <h2>APEL C Application Details</h2>
-                <p class="muted page-hero-text">
-                    Review your APEL C assessment progress, grading outcome, and final credit approval decision.
+                <p class="deck-eyebrow">
+                    APEL C &nbsp;·&nbsp; {{ strtoupper(substr((string) $application->_id, -6)) }}
                 </p>
+                <h1 class="deck-title">
+                    {{ $application->credit_course_name ?: ($application->program_applied ?: 'Course not yet stated') }}
+                </h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('student.applications.print', $application->_id) }}" target="_blank" class="btn">🖨️ Print Portfolio</a>
-                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">Back to Applications</a>
+            <div class="deck-acts">
+                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">All applications</a>
+                <a href="{{ route('student.applications.print', $application->_id) }}"
+                   target="_blank" rel="noopener" class="btn btn-secondary">Print portfolio</a>
             </div>
-        </section>
+        </header>
 
-        {{-- Application Progress Tracker --}}
-        <section class="record-card" style="margin-bottom: 24px;">
-            <div class="record-top">
-                <div>
-                    <p class="record-kicker">Application Progress</p>
-                    <h3>APEL C Workflow Status</h3>
-                </div>
-
-                <div>
-                    <span class="badge badge-pending">
-                        Current Status: {{ $application->status ?? 'Pre-Application Submitted' }}
-                    </span>
-                </div>
-            </div>
-
-            @php
-                $currentStatus = $application->status ?? 'Pre-Application Submitted';
-                $isRejected = (($application->credit_decision ?? null) === 'rejected' || $currentStatus === 'Final Rejected');
-                $assessmentStepName = ($application->assessment_type ?? '') === 'portfolio' ? 'Portfolio Procedure' : 'Assessment In Progress';
-
-                if ($isRejected) {
-                    $steps = [
-                        'Pre-Application Submitted',
-                        'Under Advisor Review',
-                        'Advisor Approved',
-                        'Payment Pending',
-                        'Official Application Submitted',
-                        'Evaluator Assigned',
-                        $assessmentStepName,
-                        'Final Rejected',
-                    ];
-                } else {
-                    $steps = [
-                        'Pre-Application Submitted',
-                        'Under Advisor Review',
-                        'Advisor Approved',
-                        'Payment Pending',
-                        'Official Application Submitted',
-                        'Evaluator Assigned',
-                        $assessmentStepName,
-                        'Final Approved',
-                    ];
-                }
-
-                if ($currentStatus === 'Advisor Rejected') {
-                    $steps = ['Pre-Application Submitted', 'Under Advisor Review', 'Advisor Rejected'];
-                    $currentIndex = 2;
-                } elseif (($application->credit_status ?? null) === 'portfolio_failed') {
-                    $steps = [
-                        'Pre-Application Submitted',
-                        'Under Advisor Review',
-                        'Advisor Approved',
-                        'Payment Pending',
-                        'Official Application Submitted',
-                        'Evaluator Assigned',
-                        $assessmentStepName,
-                        'Portfolio Failed',
-                        'Appeal Available',
-                    ];
-                    $currentIndex = 7;
-                } elseif (($application->credit_status ?? null) === 'appeal_submitted') {
-                    $steps = [
-                        'Pre-Application Submitted',
-                        'Under Advisor Review',
-                        'Advisor Approved',
-                        'Payment Pending',
-                        'Official Application Submitted',
-                        'Evaluator Assigned',
-                        $assessmentStepName,
-                        'Portfolio Failed',
-                        'Appeal Submitted',
-                    ];
-                    $currentIndex = 8;
-                } else {
-                    $currentIndex = match ($currentStatus) {
-                        'Pre-Application Submitted' => 0,
-                        'Under Advisor Review' => 1,
-                        'Advisor Approved' => 2,
-                        
-                        'Payment Pending',
-                        'Payment Submitted',
-                        'Payment Verified',
-                        'Payment Rejected' => 3,
-                        
-                        'Official Application Submitted' => 4,
-                        'Assessor Assigned',
-                        'Evaluator Assigned' => 5,
-                        
-                        'Assessment In Progress',
-                        'Awaiting Final Decision',
-                        'Awaiting Credit Decision',
-                        'assessment_paper_uploaded' => 6,
-                        
-                        'Final Approved',
-                        'Final Rejected' => 7,
-                        
-                        default => 0,
-                    };
-                }
-            @endphp
-
-            @php
-                $percent = count($steps) > 1 ? ($currentIndex / (count($steps) - 1)) * 100 : 0;
-            @endphp
-            <div class="progress-timeline" style="margin-top: 20px;">
-                <div class="progress-timeline-line-filled" style="width: calc({{ $percent }}% - {{ 140 * ($percent / 100) }}px);"></div>
-                @foreach ($steps as $index => $step)
-                    @php
-                        $isCompleted = $index < $currentIndex;
-                        $isActive = $index === $currentIndex;
-                        $isFailed = ($isActive || $isCompleted) && (str_contains(strtolower($step), 'rejected') || str_contains(strtolower($step), 'failed'));
-                        
-                        $stepClass = '';
-                        if ($isFailed) {
-                            $stepClass = 'step-failed';
-                        } elseif ($isActive) {
-                            $stepClass = 'step-active';
-                        } elseif ($isCompleted) {
-                            $stepClass = 'step-completed';
-                        }
-                    @endphp
-                    <div class="timeline-step {{ $stepClass }}">
-                        <div class="step-icon">
-                            @if ($isFailed)
-                                ✕
-                            @elseif ($isCompleted)
-                                ✓
-                            @else
-                                {{ $index + 1 }}
-                            @endif
-                        </div>
-                        <div class="step-label" style="font-size: 10px;">{{ $step }}</div>
-                    </div>
+        @if (session('success'))
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
+        @if ($errors->any())
+            <div class="notice notice--bad" role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
                 @endforeach
             </div>
-        </section>
+        @endif
 
-        <section class="record-card">
-            <div class="record-top">
-                <div>
-                    <p class="record-kicker">{{ $application->application_type }}</p>
-                    <h3>{{ $application->program_applied }}</h3>
-                </div>
+        <section class="lede-card lede-card--{{ $stage?->tone() ?? 'progress' }}" aria-labelledby="now-head">
+            <p class="lede-kicker">Right now</p>
+            <h2 class="lede-head" id="now-head">
+                {{ $action['title'] ?? ($stage?->label('APEL C') ?? 'Not started') }}
+            </h2>
+            <p class="lede-body">{{ $action['body'] ?? $case['explanation'] }}</p>
 
-                <div>
-                    @if (($application->credit_decision ?? 'pending') === 'approved')
-                        <span class="badge badge-approved">Credit Approved</span>
-                    @elseif (($application->credit_decision ?? 'pending') === 'rejected')
-                        <span class="badge badge-rejected">Credit Rejected</span>
-                    @else
-                        <span class="badge badge-pending">Credit Decision Pending</span>
-                    @endif
-                </div>
-            </div>
-
-            <div class="record-meta-grid">
-                <div class="meta-box">
-                    <span class="meta-label">Submission Date</span>
-                    <strong>{{ $application->submission_date }}</strong>
-                </div>
-
-                <div class="meta-box">
-                    <span class="meta-label">Current Status</span>
-                    <strong>{{ $application->status ?? 'Pre-Application Submitted' }}</strong>
-                </div>
-
-                <div class="meta-box">
-                    <span class="meta-label">Credit Status</span>
-                    <strong>{{ ucfirst(str_replace('_', ' ', $application->credit_status ?? 'awaiting_assessment')) }}</strong>
-                </div>
-
-                <div class="meta-box">
-                    <span class="meta-label">Payment Status</span>
-                    <strong>{{ ucfirst($application->payment_status ?? 'pending') }}</strong>
-                </div>
-
-                <div class="meta-box">
-                    <span class="meta-label">Assigned Evaluator</span>
-                    <strong>
-                        @if ($application->evaluator_id)
-                            {{ \App\Models\User::where('_id', $application->evaluator_id)->value('name') ?? 'Unknown' }}
-                        @else
-                            Not Assigned
-                        @endif
-                    </strong>
-                </div>
-            </div>
-
-            <div class="record-body-grid">
-                <div class="record-panel">
-                    <h4>Credit Decision</h4>
-                    <p class="feedback-text">
-                        {{ ucfirst(str_replace('_', ' ', $application->credit_decision ?? 'pending')) }}
-                    </p>
-                </div>
-
-                <div class="record-panel">
-                    <h4>Approved Credit Hours</h4>
-                    <p class="feedback-text">
-                        {{ $application->credit_hours_approved ?? 'Not decided yet' }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="record-body-grid">
-                <div class="record-panel">
-                    <h4>Course Code</h4>
-                    <p class="feedback-text">
-                        {{ $application->credit_course_code ?? 'Not decided yet' }}
-                    </p>
-                </div>
-
-                <div class="record-panel">
-                    <h4>Course Name</h4>
-                    <p class="feedback-text">
-                        {{ $application->credit_course_name ?? 'Not decided yet' }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="record-panel">
-                <h4>Credit Remarks</h4>
-                <p class="feedback-text">
-                    {{ $application->credit_remarks ?? 'No credit remarks available yet.' }}
-                </p>
-            </div>
-
-            <div class="record-panel" style="margin-top: 20px;">
-                <h4>Evaluator Feedback</h4>
-                <p class="feedback-text" style="white-space: pre-wrap;">{{ $application->evaluator_feedback ?? 'No feedback has been provided yet.' }}</p>
-            </div>
-
-            <div class="record-panel" style="margin-top: 20px;">
-                <h4>Uploaded Evidence & Portfolio</h4>
-
-                <p class="feedback-text">
-                    <strong>Evidence File(s):</strong>
-                </p>
-
-                @if (!empty($application->evidence_file))
-                    <ul>
-                        @foreach ($application->evidence_file as $file)
-                            @php
-                                $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
-                                $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
-                            @endphp
-                            <li>
-                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank">
-                                    {{ $fileName }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                @else
-                    <p class="feedback-text">
-                        No evidence file uploaded.
-                    </p>
-                @endif
-
-                <p class="feedback-text">
-                    <strong>Portfolio File(s):</strong>
-                </p>
-
-                @if (!empty($application->portfolio_file))
-                    <ul>
-                        @foreach ($application->portfolio_file as $file)
-                            @php
-                                $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
-                                $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
-                            @endphp
-                            <li>
-                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank">
-                                    {{ $fileName }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                @else
-                    <p class="feedback-text">
-                        No portfolio file uploaded.
-                    </p>
-                @endif
-            </div>
-
-            @php
-                $assessmentPaper = \App\Models\AssessmentPaper::where('application_id', (string) $application->_id)
-                    ->where('status', 'active')
-                    ->first();
-            @endphp
-
-            @if (($application->assessment_type ?? '') === 'portfolio')
-                @php
-                    $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $application->_id)->first();
-                @endphp
-
-                @if ($submission && $submission->graded_at)
-                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid var(--good); background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="color: #065f46; margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                            <span>✓</span> Portfolio Evaluation Completed
-                        </h3>
-                        <div style="background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 8px; padding: 14px; margin-bottom: 15px; font-size: 13.5px; color: #065f46; line-height: 1.5;">
-                            Your portfolio evaluation is completed. The final grading details are as follows:
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; font-size: 14px;">
-                            <div>Overall Score: <strong style="font-size: 15px; color: var(--ink);">{{ $submission->score }}%</strong></div>
-                            <div>Outcome: <strong style="font-size: 15px; color: {{ $submission->result === 'pass' ? 'var(--good)' : 'var(--bad)' }}; text-transform: uppercase;">{{ $submission->result === 'pass' ? 'PASS' : 'FAIL' }}</strong></div>
-                        </div>
-
-                        <!-- CLO Scores if available -->
-                        @if(isset($submission->evaluator_1_clo1) || isset($submission->evaluator_2_clo1))
-                            <div style="background: var(--surface-sunk); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 15px;">
-                                <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 13px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.5px;">Evaluator Rubric Scores</h4>
-                                
-                                @if(isset($submission->evaluator_1_clo1))
-                                    <div style="margin-bottom: 10px;">
-                                        <strong style="font-size: 12px; color: var(--maroon); display: block; margin-bottom: 4px;">Evaluator 1 Scores:</strong>
-                                        <span style="font-size: 12.5px; color: var(--ink-2);">
-                                            CLO1: <strong>{{ $submission->evaluator_1_clo1 }}/10</strong> | 
-                                            CLO2: <strong>{{ $submission->evaluator_1_clo2 }}/10</strong> | 
-                                            CLO3: <strong>{{ $submission->evaluator_1_clo3 }}/10</strong> | 
-                                            CLO4: <strong>{{ $submission->evaluator_1_clo4 }}/10</strong>
-                                        </span>
-                                    </div>
-                                @endif
-
-                                @if(isset($submission->evaluator_2_clo1))
-                                    <div>
-                                        <strong style="font-size: 12px; color: var(--maroon); display: block; margin-bottom: 4px;">Evaluator 2 Scores:</strong>
-                                        <span style="font-size: 12.5px; color: var(--ink-2);">
-                                            CLO1: <strong>{{ $submission->evaluator_2_clo1 }}/10</strong> | 
-                                            CLO2: <strong>{{ $submission->evaluator_2_clo2 }}/10</strong> | 
-                                            CLO3: <strong>{{ $submission->evaluator_2_clo3 }}/10</strong> | 
-                                            CLO4: <strong>{{ $submission->evaluator_2_clo4 }}/10</strong>
-                                        </span>
-                                    </div>
-                                @endif
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="record-panel" style="margin-top: 20px; border-top: 4px solid var(--maroon); background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        <h3 style="color: var(--maroon); margin-bottom: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                            <span>📄</span> Portfolio Assessment In Progress
-                        </h3>
-                        <p style="font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 0;">
-                            Your advisor has recommended the <strong>Portfolio Mode of Assessment</strong>. The evaluator is currently reviewing your uploaded portfolio. No further action is required from you.
-                        </p>
-                    </div>
-                @endif
-            @else
-                <div class="record-panel" style="margin-top: 20px;">
-                    <h4>Assessment Paper</h4>
-
-                    @if ($assessmentPaper)
-                        <p class="feedback-text">
-                            The evaluator has uploaded an assessment paper for this APEL C application.
-                        </p>
-
-                        <p class="feedback-text">
-                            <strong>Assessment Title:</strong>
-                            {{ $assessmentPaper->title }}
-                        </p>
-
-                        <a href="{{ route('student.assessment.show', $application->_id) }}" class="btn">
-                            View Assessment Paper
+            @if ($action)
+                <div class="lede-foot">
+                    @if (!empty($action['cta']['route']) && Route::has($action['cta']['route']))
+                        <a class="btn btn-primary" href="{{ route($action['cta']['route'], $action['cta']['params']) }}">
+                            {{ $action['cta']['label'] }}
                         </a>
-                    @else
-                        <p class="feedback-text">
-                            No assessment paper has been uploaded yet. Please wait for the evaluator.
-                        </p>
+                    @endif
+                    @if (!empty($action['deadline']))
+                        <span class="lede-due">Due {{ $action['deadline']->format('j M Y') }}</span>
                     @endif
                 </div>
             @endif
+        </section>
 
-            <div class="record-panel" style="margin-top: 20px;">
-                <h4>Payment Submission</h4>
-
-                <p class="feedback-text">
-                    <strong>Payment Type:</strong>
-                    {{ $application->payment_type ?? 'APEL C Processing / Credit Transfer Fee' }}
-                </p>
-
-                <p class="feedback-text">
-                    <strong>Payment Status:</strong>
-                    {{ ucfirst($application->payment_status ?? 'pending') }}
-                </p>
-
-                @if ($application->payment_receipt)
-                    <p class="feedback-text">
-                        <strong>Uploaded Receipt:</strong>
-                        <a href="{{ asset('storage/' . $application->payment_receipt) }}" target="_blank" class="link">
-                            View Payment Receipt
-                        </a>
-                    </p>
-                @endif
-
-                @if (in_array($application->payment_status ?? 'pending', ['submitted', 'verified']) && $application->payment_remarks)
-                    <p class="feedback-text">
-                        <strong>Payment Remarks:</strong>
-                        {{ $application->payment_remarks }}
-                    </p>
-                @endif
-
-                @if (($application->payment_status ?? 'pending') === 'verified')
-                    <p class="feedback-text" style="color: var(--good); font-weight: 500; margin-top: 15px;">
-                        Your payment has been verified by the Faculty Academic Office.
-                    </p>
-                @elseif (($application->payment_status ?? 'pending') === 'submitted')
-                    <p class="feedback-text" style="color: #0d9488; font-weight: 500; margin-top: 15px;">
-                        You have submitted your payment receipt. Please wait for verification by the Faculty Academic Office.
-                    </p>
+        <div class="split">
+            <section class="panel" aria-labelledby="rail-head">
+                <h2 class="panel-head" id="rail-head">Where this sits</h2>
+                @if (!empty($case['rail']))
+                    <ol class="spine" style="--spine-done: {{ (int) $case['progress'] }}%">
+                        @foreach ($case['rail'] as $node)
+                            @php
+                                $state = $node['state'];
+                                if ($state !== 'upcoming' && in_array($node['tone'], ['bad', 'no'], true)) {
+                                    $state = 'failed';
+                                }
+                            @endphp
+                            <li class="spine-node" data-state="{{ $state }}">
+                                <span class="spine-label">{{ $node['label'] }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
                 @else
-                    <form method="POST" action="{{ route('student.applications.payment', $application->_id) }}"
-                        enctype="multipart/form-data" style="margin-top: 15px;">
-                        @csrf
+                    <p class="muted">This application has no recorded stage.</p>
+                @endif
+            </section>
 
-                        <label for="f-payment-receipt">Upload Payment Receipt</label>
-                        <input type="file" name="payment_receipt" accept=".pdf,.jpg,.jpeg,.png" required id="f-payment-receipt">
+            <section class="panel" aria-labelledby="record-head">
+                <h2 class="panel-head" id="record-head">The record</h2>
+                <dl class="kv">
+                    <div>
+                        <dt>Submitted</dt>
+                        <dd>
+                            @if ($stage === ApelStage::DRAFT)
+                                Not submitted yet
+                            @elseif ($application->submission_date)
+                                {{ \Carbon\Carbon::parse($application->submission_date)->format('j M Y') }}
+                            @else
+                                Not submitted yet
+                            @endif
+                        </dd>
+                    </div>
+                    <div><dt>Stage</dt><dd>{{ $stage?->label('APEL C') ?? 'Unknown' }}</dd></div>
+                    @if ($application->credit_course_code)
+                        <div><dt>Course</dt><dd>{{ $application->credit_course_code }}</dd></div>
+                    @endif
+                    <div>
+                        <dt>Assessment</dt>
+                        <dd>{{ $isPortfolio ? 'Portfolio' : 'Written paper' }}</dd>
+                    </div>
+                    <div><dt>Evaluator</dt><dd>{{ $evaluatorName ?? 'Not assigned yet' }}</dd></div>
+                </dl>
+            </section>
+        </div>
 
-                        <small style="display:block; margin-top:5px; color:var(--ink-3);">
-                            Allowed format: PDF, JPG, JPEG, PNG. Maximum size: 5MB.
-                        </small>
+        {{-- The result, only once there is one. --}}
+        @if ($stage?->isTerminal() || filled($application->credit_remarks) || filled($application->evaluator_feedback))
+            <section class="panel" aria-labelledby="outcome-head">
+                <h2 class="panel-head" id="outcome-head">The decision</h2>
 
-                        <label for="f-payment-remarks">Payment Remarks</label>
-                        <textarea name="payment_remarks" rows="4" placeholder="Example: Payment completed through PayHub." id="f-payment-remarks">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
+                @if ($stage?->isTerminal())
+                    <p class="outcome outcome--{{ $stage->tone() }}">{{ $stage->label('APEL C') }}</p>
+                @endif
 
-                        <div class="form-submit-row">
-                            <button type="submit" class="btn">
-                                Submit Payment Receipt
-                            </button>
+                @if (filled($application->credit_hours_approved))
+                    <dl class="kv">
+                        <div>
+                            <dt>Credit hours awarded</dt>
+                            <dd>{{ $application->credit_hours_approved }}</dd>
                         </div>
+                    </dl>
+                @endif
+
+                @if (filled($application->credit_remarks))
+                    <div class="said">
+                        <h3>Faculty remarks</h3>
+                        <p>{{ $application->credit_remarks }}</p>
+                    </div>
+                @endif
+
+                @if (filled($application->evaluator_feedback))
+                    <div class="said">
+                        <h3>Evaluator feedback</h3>
+                        <p>{{ $application->evaluator_feedback }}</p>
+                    </div>
+                @endif
+            </section>
+        @endif
+
+        {{-- Assessment: the graded result, or the way in to sitting it. --}}
+        <section class="panel" aria-labelledby="assess-head">
+            <h2 class="panel-head" id="assess-head">Assessment</h2>
+
+            @if ($submission && $submission->graded_at)
+                <p class="outcome outcome--{{ $submission->result === 'pass' ? 'good' : 'bad' }}">
+                    {{ $submission->result === 'pass' ? 'Passed' : 'Not passed' }}
+                    @if (filled($submission->score))
+                        &nbsp;·&nbsp; {{ $submission->score }}%
+                    @endif
+                </p>
+
+                @if (isset($submission->evaluator_1_clo1) || isset($submission->evaluator_2_clo1))
+                    {{--
+                        The rule is stated, not just the numbers. A candidate who
+                        scored well overall and still failed has no way to work
+                        out why from four marks alone, and this is the single
+                        question they will ask: you must reach 5 of 10 on every
+                        outcome, so a strong showing in three cannot carry a
+                        weak fourth (AssessmentGradingController:116).
+                    --}}
+                    <p class="muted clo-rule">
+                        Each outcome is marked out of 10. A pass needs at least 5 on
+                        <strong>every</strong> one of them &mdash; a high total cannot make up for a
+                        single outcome below 5.
+                    </p>
+
+                    @foreach ([1, 2] as $n)
+                        @continue(! isset($submission->{"evaluator_{$n}_clo1"}))
+                        <div class="clo-set">
+                            <h3>Evaluator {{ $n }}</h3>
+                            <ul class="clo-list">
+                                @foreach ([1, 2, 3, 4] as $i)
+                                    @php $mark = (int) $submission->{"evaluator_{$n}_clo{$i}"}; @endphp
+                                    <li class="clo {{ $mark >= 5 ? 'is-pass' : 'is-fail' }}">
+                                        <span class="clo-name">CLO{{ $i }}</span>
+                                        <span class="clo-mark">{{ $mark }}<span>/10</span></span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endforeach
+                @endif
+            @elseif ($isPortfolio)
+                <p>
+                    Your advisor recommended assessment by <strong>portfolio</strong>. The evaluator is
+                    reviewing what you uploaded. Nothing is needed from you.
+                </p>
+            @elseif ($assessmentPaper)
+                <p>The evaluator has set your assessment paper.</p>
+                <dl class="kv">
+                    <div><dt>Title</dt><dd>{{ $assessmentPaper->title }}</dd></div>
+                </dl>
+                <a href="{{ route('student.assessment.show', $application->_id) }}" class="btn btn-primary">
+                    Open the assessment
+                </a>
+            @else
+                <p class="muted">
+                    No assessment has been set yet. The evaluator will publish one once your payment
+                    is verified.
+                </p>
+            @endif
+        </section>
+
+        {{-- Payment. The form only where paying is actually the next step. --}}
+        <section class="panel" aria-labelledby="pay-head">
+            <h2 class="panel-head" id="pay-head">Payment</h2>
+
+            <dl class="kv">
+                <div>
+                    <dt>Fee</dt>
+                    <dd>{{ $application->payment_type ?? 'APEL C processing fee' }}</dd>
+                </div>
+                <div><dt>Status</dt><dd>{{ ucfirst($paymentStatus) }}</dd></div>
+                @if ($application->payment_receipt)
+                    <div>
+                        <dt>Your receipt</dt>
+                        <dd>
+                            <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $application->payment_receipt]) }}"
+                               target="_blank" rel="noopener">View receipt</a>
+                        </dd>
+                    </div>
+                @endif
+            </dl>
+
+            @if (filled($application->payment_remarks) && in_array($paymentStatus, ['submitted', 'verified'], true))
+                <div class="said">
+                    <h3>Remarks</h3>
+                    <p>{{ $application->payment_remarks }}</p>
+                </div>
+            @endif
+
+            @if ($paymentStatus === 'verified')
+                <p class="note note--good">Your payment has been verified by the faculty office.</p>
+            @elseif ($paymentStatus === 'submitted')
+                <p class="note">Your receipt is with the faculty office. Nothing further is needed from you.</p>
+            @elseif ($stage === ApelStage::PAYMENT_DUE || $stage === ApelStage::PAYMENT_REJECTED)
+                <form method="POST" action="{{ route('student.applications.payment', $application->_id) }}"
+                      enctype="multipart/form-data" class="stack-form">
+                    @csrf
+
+                    <div class="field">
+                        <label for="f-payment-receipt">Payment receipt</label>
+                        <input type="file" name="payment_receipt" id="f-payment-receipt"
+                               accept=".pdf,.jpg,.jpeg,.png" required>
+                        <p class="field-hint">PDF, JPG or PNG, up to 5MB.</p>
+                        <x-field-error name="payment_receipt" />
+                    </div>
+
+                    <div class="field">
+                        <label for="f-payment-remarks">Anything the office should know</label>
+                        <textarea name="payment_remarks" id="f-payment-remarks" rows="3"
+                                  placeholder="For example: paid by online transfer on 3 September.">{{ old('payment_remarks', $application->payment_remarks) }}</textarea>
+                        <x-field-error name="payment_remarks" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Send receipt</button>
+                </form>
+            @else
+                <p class="muted">No fee is payable at this stage.</p>
+            @endif
+        </section>
+
+        {{-- Appeal, only on a refusal. --}}
+        @if ($isRejected)
+            <section class="panel panel--edge" aria-labelledby="appeal-head">
+                <h2 class="panel-head" id="appeal-head">Appeal</h2>
+
+                @if (($application->appeal_status ?? null) === 'submitted')
+                    <p class="note note--good">Your appeal is with the faculty office and is being re-examined.</p>
+                    <dl class="kv">
+                        <div>
+                            <dt>Submitted</dt>
+                            <dd>
+                                {{ $application->appeal_submitted_at
+                                    ? \Carbon\Carbon::parse($application->appeal_submitted_at)->format('j M Y, H:i')
+                                    : 'Recorded' }}
+                            </dd>
+                        </div>
+                    </dl>
+                    @if (filled($application->appeal_remarks))
+                        <div class="said">
+                            <h3>What you said</h3>
+                            <p>{{ $application->appeal_remarks }}</p>
+                        </div>
+                    @endif
+                @else
+                    <p>
+                        Credit was not awarded. Under UTM APEL C regulations you may appeal by setting
+                        out how your prior learning meets the course outcomes.
+                    </p>
+
+                    <form method="POST" action="{{ route('student.applications.appeal', $application->_id) }}"
+                          class="stack-form">
+                        @csrf
+                        <div class="field">
+                            <label for="f-appeal-remarks">Your grounds for appeal</label>
+                            <textarea name="appeal_remarks" id="f-appeal-remarks" rows="6" required
+                                      placeholder="Set out which outcomes you believe your experience already meets, and what evidence supports that."></textarea>
+                            <x-field-error name="appeal_remarks" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit appeal</button>
                     </form>
                 @endif
-            </div>
+            </section>
+        @endif
 
-            {{-- APPEAL WORKFLOW --}}
-            @if (($application->status ?? '') === 'Final Rejected' || ($application->credit_decision ?? '') === 'rejected')
-                <div class="record-panel" style="margin-top: 20px; border-top: 2px solid var(--bad); padding-top: 20px;">
-                    @if (($application->appeal_status ?? null) !== 'submitted')
-                        <h4 style="color: #b91c1c; margin-bottom: 10px;">Submit Appeal Request</h4>
-                        <p class="feedback-text" style="margin-bottom: 15px;">
-                            Your APEL C credit application has been rejected. In accordance with UTM APEL C regulations, you may submit an appeal request detailing your learning outcome justifications.
-                        </p>
-
-                        <form method="POST" action="{{ route('student.applications.appeal', $application->_id) }}">
-                            @csrf
-
-                            <label for="f-appeal-remarks" style="font-weight:700; color:#b91c1c;">Reason for Appeal</label>
-                            <textarea name="appeal_remarks" rows="5" class="form-control" placeholder="Explain how your prior learning justifies the credit award..." required id="f-appeal-remarks"></textarea>
-
-                            <div class="form-submit-row">
-                                <button type="submit" class="btn" style="background: #b91c1c;">
-                                    Submit Appeal Form
-                                </button>
-                            </div>
-                        </form>
-                    @else
-                        <h4 style="color: #15803d; margin-bottom: 10px;">Appeal Request Submitted</h4>
-                        <p class="feedback-text" style="margin-bottom: 15px;">
-                            Your appeal has been successfully received by the Faculty Academic Office.
-                        </p>
-
-                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                            <p class="feedback-text" style="margin-bottom: 8px;">
-                                <strong>Date of Submission:</strong> {{ $application->appeal_submitted_at ? $application->appeal_submitted_at->format('d M Y, H:i') : now()->format('d M Y, H:i') }}
-                            </p>
-                            <p class="feedback-text" style="margin-bottom: 0;">
-                                <strong>Your Statement:</strong><br>
-                                <em>{{ $application->appeal_remarks }}</em>
-                            </p>
-                        </div>
-
-                        <p class="feedback-text" style="font-weight:700; color:#15803d;">
-                            Status: Re-evaluation Under Review. The Academic Office is checking your appeal.
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </section>
-
-        <!-- Dynamic Style Overrides -->
-        <style>
-            .cards-container {
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-                margin-bottom: 20px;
-            }
-            .row-card {
-                background: #ffffff;
-                border: 1px solid var(--line);
-                border-radius: 12px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                overflow: hidden;
-            }
-            .row-card-header {
-                background: #fafafb;
-                border-bottom: 1px solid var(--line);
-                padding: 10px 16px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-weight: 600;
-                color: var(--maroon);
-            }
-            .row-card-body {
-                padding: 16px;
-                display: grid;
-                gap: 12px;
-            }
-            .row-card-body .field-col {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-            .row-card-body label {
-                font-size: 11px;
-                font-weight: 600;
-                color: var(--ink-2);
-                margin-bottom: 0 !important;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-            .row-card-body strong {
-                font-size: 13.5px;
-                color: var(--ink);
-            }
-            .details-tab-content {
-                animation: fadeIn 0.2s ease-in-out;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(4px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        </style>
-
-        <!-- Submitted Pre-Application Details Card -->
-        <section class="record-card" style="margin-top: 24px;">
-            <div class="record-top">
-                <div>
-                    <p class="record-kicker">APEL C Pre-Application Details</p>
-                    <h3>Submitted Form Data</h3>
-                </div>
-            </div>
-
-            <div class="form-tabs" style="margin-top: 20px; display: flex; gap: 6px; border-bottom: 2px solid var(--line); padding-bottom: 6px;">
-                <button type="button" class="tab-link active" onclick="openDetailsTab(event, 'details-particulars')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Personal Particulars</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-education')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Formal Learning</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-experience')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Experience & Training</button>
-                <button type="button" class="tab-link" onclick="openDetailsTab(event, 'details-other-skills')" style="border: none; background: transparent; padding: 6px 12px; font-weight: 600; cursor: pointer; color: var(--ink-3); font-size: 13px;">Other Learning</button>
-            </div>
-
-            <!-- TAB 1: Personal Particulars -->
-            <div id="details-particulars" class="details-tab-content" style="display: block; margin-top: 20px;">
-                @php
-                    $personal = $application->pre_app_data['personal_particulars'] ?? [];
-                @endphp
-                <div class="record-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                    <div class="meta-box">
-                        <span class="meta-label">Full Name</span>
-                        <strong>{{ $personal['name'] ?? $student->name }}</strong>
-                    </div>
-                    <div class="meta-box">
-                        <span class="meta-label">Matric No.</span>
-                        <strong>{{ $personal['matric_no'] ?? 'N/A' }}</strong>
-                    </div>
-                    <div class="meta-box">
-                        <span class="meta-label">Identity Card No.</span>
-                        <strong>{{ $personal['ic_no'] ?? 'N/A' }}</strong>
-                    </div>
-                    <div class="meta-box">
-                        <span class="meta-label">Highest Academic Qualification</span>
-                        <strong>{{ $personal['highest_qualification'] ?? 'N/A' }}</strong>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: Formal Learning -->
-            <div id="details-education" class="details-tab-content" style="display: none; margin-top: 20px;">
-                @php
-                    $formal = $application->pre_app_data['formal_learning'] ?? [];
-                @endphp
-                @if(!empty($formal) && count($formal) > 0 && (!empty($formal[0]['title_of_certification']) || !empty($formal[0]['awarding_body'])))
-                    <div class="cards-container">
-                        @foreach ($formal as $idx => $item)
-                            @if(!empty($item['title_of_certification']) || !empty($item['awarding_body']))
-                                <div class="row-card">
-                                    <div class="row-card-header">
-                                        <span>Education Entry #{{ $idx + 1 }}</span>
-                                    </div>
-                                    <div class="row-card-body education-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                        <div class="field-col" style="grid-column: span 3;">
-                                            <label>Year Awarded</label>
-                                            <strong>{{ $item['year_awarded'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col" style="grid-column: span 9;">
-                                            <label>Title of Certification</label>
-                                            <strong>{{ $item['title_of_certification'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col" style="grid-column: span 6;">
-                                            <label>Level of Award</label>
-                                            <strong>{{ $item['level_of_award'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col" style="grid-column: span 6;">
-                                            <label>Awarding Body</label>
-                                            <strong>{{ $item['awarding_body'] ?? 'N/A' }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+        {{-- The paperwork, folded away: it is a reference, not something to read. --}}
+        @if (filled($application->evidence_file) || filled($application->portfolio_file))
+            <details class="fold">
+                <summary>Files you uploaded</summary>
+                <ul class="files">
+                    {{--
+                        An entry is either a bare path or ['path' =>, 'name' =>]
+                        depending on when it was uploaded, so both shapes are
+                        unwrapped rather than assuming the newer one.
+                    --}}
+                    @foreach (['evidence_file' => 'Evidence', 'portfolio_file' => 'Portfolio'] as $field => $label)
+                        @php $files = $application->{$field}; @endphp
+                        @continue(blank($files))
+                        @foreach ((array) $files as $file)
+                            @php
+                                $path = is_array($file) ? ($file['path'] ?? '') : (string) $file;
+                                $name = is_array($file) ? ($file['name'] ?? basename($path)) : basename($path);
+                            @endphp
+                            @continue($path === '')
+                            <li>
+                                <span class="files-kind">{{ $label }}</span>
+                                <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $path]) }}"
+                                   target="_blank" rel="noopener">{{ $name }}</a>
+                            </li>
                         @endforeach
-                    </div>
-                @else
-                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No formal learning recorded.</p>
-                @endif
-            </div>
+                    @endforeach
+                </ul>
+            </details>
+        @endif
 
-            <!-- TAB 3: Experience & Training -->
-            <div id="details-experience" class="details-tab-content" style="display: none; margin-top: 20px;">
-                @php
-                    $jobs = $application->pre_app_data['experiential_learning'] ?? [];
-                    $trainings = $application->pre_app_data['training_activities'] ?? [];
-                    $skillsList = [
-                        "Knowledge & Understanding", "Cognitive skills", "Practical Skills", "Interpersonal Skills",
-                        "Communication skills", "Digital skills", "Numeracy skills", "Leadership, Autonomy & Responsibility",
-                        "Personal Skills", "Entrepreneurial skills", "Ethics and Professionalism skills"
-                    ];
-                @endphp
-                
-                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Experiential Learning (Employment History)</h4>
-                @if(!empty($jobs) && count($jobs) > 0 && (!empty($jobs[0]['employer_name']) || !empty($jobs[0]['position_held'])))
-                    <div class="cards-container" style="margin-bottom: 30px;">
-                        @foreach ($jobs as $idx => $item)
-                            @if(!empty($item['employer_name']) || !empty($item['position_held']))
-                                <div class="row-card">
-                                    <div class="row-card-header">
-                                        <span>Employer Entry #{{ $idx + 1 }}</span>
-                                    </div>
-                                    <div class="row-card-body employment-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                        <div class="field-col employer-name" style="grid-column: span 6;">
-                                            <label>Employer Name</label>
-                                            <strong>{{ $item['employer_name'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col contact-address" style="grid-column: span 6;">
-                                            <label>Contact Address</label>
-                                            <strong>{{ $item['contact_address'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col time-from" style="grid-column: span 3;">
-                                            <label>From (Month/Year)</label>
-                                            <strong>{{ $item['time_from'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col time-to" style="grid-column: span 3;">
-                                            <label>To (Month/Year)</label>
-                                            <strong>{{ $item['time_to'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col position-held" style="grid-column: span 6;">
-                                            <label>Position Held</label>
-                                            <strong>{{ $item['position_held'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col job-roles" style="grid-column: span 12;">
-                                            <label>Job Roles / Performed</label>
-                                            <p style="margin: 4px 0 0 0; color: var(--ink-2); font-size: 13px; line-height: 1.5; white-space: pre-wrap;">{{ $item['job_roles'] ?? 'N/A' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                @else
-                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px; margin-bottom: 30px;">No employment history recorded.</p>
-                @endif
-
-                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Training Activities</h4>
-                @if(!empty($trainings) && count($trainings) > 0 && (!empty($trainings[0]['course_name']) || !empty($trainings[0]['location'])))
-                    <div class="cards-container">
-                        @foreach ($trainings as $idx => $item)
-                            @if(!empty($item['course_name']) || !empty($item['location']))
-                                <div class="row-card">
-                                    <div class="row-card-header">
-                                        <span>Training Entry #{{ $idx + 1 }}</span>
-                                    </div>
-                                    <div class="row-card-body training-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                        <div class="field-col course-name" style="grid-column: span 6;">
-                                            <label>Course/Training Name</label>
-                                            <strong>{{ $item['course_name'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col location" style="grid-column: span 6;">
-                                            <label>Location</label>
-                                            <strong>{{ $item['location'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col date-duration" style="grid-column: span 6;">
-                                            <label>Date & Duration</label>
-                                            <strong>{{ $item['date_duration'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col activity-type" style="grid-column: span 6;">
-                                            <label>Activity Type</label>
-                                            <strong>{{ $item['activity_type'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col skills-learnt" style="grid-column: span 12;">
-                                            <label>Skills Checklist / Learnt</label>
-                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
-                                                @php
-                                                    $checkedSkills = $item['skills_learnt'] ?? [];
-                                                @endphp
-                                                @foreach ($skillsList as $sIdx => $sName)
-                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
-                                                        <span style="font-size: 14px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
-                                                        <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                @else
-                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No training activities recorded.</p>
-                @endif
-            </div>
-
-            <!-- TAB 4: Other Learning -->
-            <div id="details-other-skills" class="details-tab-content" style="display: none; margin-top: 20px;">
-                @php
-                    $otherSkills = $application->pre_app_data['other_learning_skills'] ?? [];
-                    $langSkills = $application->pre_app_data['language_skills'] ?? [];
-                    $skillsList = [
-                        "Knowledge & Understanding", "Cognitive skills", "Practical Skills", "Interpersonal Skills",
-                        "Communication skills", "Digital skills", "Numeracy skills", "Leadership, Autonomy & Responsibility",
-                        "Personal Skills", "Entrepreneurial skills", "Ethics and Professionalism skills"
-                    ];
-                @endphp
-
-                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Other Learning Skills / Activities</h4>
-                @if(!empty($otherSkills) && count($otherSkills) > 0 && (!empty($otherSkills[0]['other_activities']) || !empty($otherSkills[0]['year'])))
-                    <div class="cards-container" style="margin-bottom: 30px;">
-                        @foreach ($otherSkills as $idx => $item)
-                            @if(!empty($item['other_activities']) || !empty($item['year']))
-                                <div class="row-card">
-                                    <div class="row-card-header">
-                                        <span>Other Activity Entry #{{ $idx + 1 }}</span>
-                                    </div>
-                                    <div class="row-card-body other-skills-grid" style="grid-template-columns: repeat(12, 1fr); gap: 12px;">
-                                        <div class="field-col other-activities" style="grid-column: span 9;">
-                                            <label>Description</label>
-                                            <strong>{{ $item['other_activities'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col year" style="grid-column: span 3;">
-                                            <label>Year</label>
-                                            <strong>{{ $item['year'] ?? 'N/A' }}</strong>
-                                        </div>
-                                        <div class="field-col skills-learnt" style="grid-column: span 12;">
-                                            <label>Skills Checklist / Learnt</label>
-                                            <div class="skills-grid-view" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--surface-sunk); padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px;">
-                                                @php
-                                                    $checkedSkills = $item['skills_learnt'] ?? [];
-                                                @endphp
-                                                @foreach ($skillsList as $sIdx => $sName)
-                                                    <div style="font-size: 12.5px; color: {{ in_array($sIdx + 1, $checkedSkills) ? 'var(--ink)' : 'var(--ink-4)' }}; display: flex; align-items: center; gap: 6px;">
-                                                        <span style="font-size: 14px;">{{ in_array($sIdx + 1, $checkedSkills) ? '☑' : '☐' }}</span>
-                                                        <span>{{ $sIdx + 1 }}. {{ $sName }}</span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                @else
-                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px; margin-bottom: 30px;">No other learning activities recorded.</p>
-                @endif
-
-                <h4 style="color: var(--maroon); margin-bottom: 12px; font-size: 15px; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 6px;">Language Skills</h4>
-                @if(!empty($langSkills))
-                    <table class="dynamic-table" style="width: 100%; border-collapse: collapse; margin-top: 8px; margin-bottom: 10px;">
-                        <thead>
-                            <tr style="background: #fafafb; border-bottom: 1px solid var(--line);">
-                                <th style="padding: 10px; text-align: left; font-size: 12px; color: var(--ink-2); font-weight: 600;">Language</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Listening</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Reading</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Speaking</th>
-                                <th style="padding: 10px; text-align: center; font-size: 12px; color: var(--ink-2); font-weight: 600;">Writing</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($langSkills as $item)
-                                <tr style="border-bottom: 1px solid var(--line);">
-                                    <td style="padding: 10px; font-size: 13.5px; font-weight: 600; color: var(--ink);">{{ $item['language'] ?? 'N/A' }}</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['listening'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['reading'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['speaking'] ?? '3' }} / 4</td>
-                                    <td style="padding: 10px; text-align: center; font-size: 13.5px; color: var(--ink-2);">{{ $item['writing'] ?? '3' }} / 4</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    <div style="font-size: 11px; color: var(--ink-3); margin-bottom: 20px;">
-                        Scale Competency - 1: Poor; 2: Average; 3: Good; 4: Excellent
-                    </div>
-                @else
-                    <p class="muted" style="font-style: italic; color: var(--ink-3); font-size: 13.5px;">No language skills recorded.</p>
-                @endif
-            </div>
-        </section>
+        @if (filled($application->pre_app_data))
+            <details class="fold">
+                <summary>Your submitted application</summary>
+                @include('student.apel_c._submitted', ['data' => $application->pre_app_data])
+            </details>
+        @endif
     </div>
-
-    <script>
-        function openPortfolioTab(evt, tabId) {
-            const contents = document.getElementsByClassName("portfolio-tab-content");
-            for (let i = 0; i < contents.length; i++) {
-                contents[i].style.display = "none";
-            }
-            
-            const links = document.querySelectorAll(".form-tabs .tab-link");
-            links.forEach(link => {
-                link.classList.remove("active");
-                link.style.color = "var(--ink-3)";
-                link.style.background = "transparent";
-            });
-            
-            document.getElementById(tabId).style.display = "block";
-            evt.currentTarget.classList.add("active");
-            evt.currentTarget.style.color = "#ffffff";
-            evt.currentTarget.style.background = "#6e1730";
-            evt.currentTarget.style.borderRadius = "6px";
-        }
-
-        function openDetailsTab(evt, tabId) {
-            const contents = document.getElementsByClassName("details-tab-content");
-            for (let i = 0; i < contents.length; i++) {
-                contents[i].style.display = "none";
-            }
-            
-            const links = evt.currentTarget.parentElement.querySelectorAll(".tab-link");
-            links.forEach(link => {
-                link.classList.remove("active");
-                link.style.color = "var(--ink-3)";
-                link.style.background = "transparent";
-            });
-            
-            document.getElementById(tabId).style.display = "block";
-            evt.currentTarget.classList.add("active");
-            evt.currentTarget.style.color = "#ffffff";
-            evt.currentTarget.style.background = "#6e1730";
-            evt.currentTarget.style.borderRadius = "6px";
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            // Initialize default style for active details tab link
-            const activeLink = document.querySelector(".form-tabs .tab-link.active");
-            if (activeLink) {
-                activeLink.style.color = "#ffffff";
-                activeLink.style.background = "#6e1730";
-                activeLink.style.borderRadius = "6px";
-            }
-
-            const essayTextareas = document.querySelectorAll(".essay-input");
-            essayTextareas.forEach(textarea => {
-                const countDiv = textarea.nextElementSibling;
-                textarea.addEventListener("input", function() {
-                    const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-                    if (words < 200) {
-                        countDiv.innerHTML = `<span style="color: var(--bad); font-weight:600;">Word count: ${words} words (Minimum 200 words required)</span>`;
-                    } else {
-                        countDiv.innerHTML = `<span style="color: var(--good); font-weight:600;">Word count: ${words} words (Valid)</span>`;
-                    }
-                });
-            });
-        });
-    </script>
 @endsection

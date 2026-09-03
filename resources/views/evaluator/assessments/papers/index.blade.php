@@ -79,7 +79,7 @@
                                     <span class="app-id-badge">{{ $paper->application_id }}</span>
                                 </td>
                                 <td>
-                                    <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank"
+                                    <a href="{{ route('files.paper', $paper->_id) }}" target="_blank"
                                         class="paper-file-link">
                                         View PDF
                                     </a>

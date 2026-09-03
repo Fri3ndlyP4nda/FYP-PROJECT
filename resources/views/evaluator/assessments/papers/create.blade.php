@@ -77,7 +77,7 @@
                         <select name="library_paper_id" id="library_paper_select" required style="width: 100%; max-width: 100%;">
                             <option value="">-- Select a Paper --</option>
                             @foreach ($libraryPapers as $paper)
-                                <option value="{{ $paper->_id }}" data-instructions="{{ $paper->instructions }}" data-file="{{ asset('storage/' . $paper->question_file) }}">
+                                <option value="{{ $paper->_id }}" data-instructions="{{ $paper->instructions }}" data-file="{{ route('files.paper', $paper->_id) }}">
                                     {{ $paper->title }}
                                 </option>
                             @endforeach

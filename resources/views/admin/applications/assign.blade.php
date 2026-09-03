@@ -325,7 +325,7 @@
                                             $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
                                             $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                         @endphp
-                                        <a href="{{ asset('storage/' . $filePath) }}" target="_blank">
+                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank">
                                             {{ $fileName }}
                                         </a><br>
                                     @endforeach
@@ -343,7 +343,7 @@
                                             $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
                                             $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                         @endphp
-                                        <a href="{{ asset('storage/' . $filePath) }}" target="_blank">
+                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank">
                                             {{ $fileName }}
                                         </a><br>
                                     @endforeach
@@ -907,7 +907,7 @@
 
                         @if ($application->payment_receipt)
                             <p class="feedback-text">
-                                <a href="{{ asset('storage/' . $application->payment_receipt) }}" target="_blank"
+                                <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $application->payment_receipt]) }}" target="_blank"
                                     class="link">
                                     View Uploaded Receipt
                                 </a>

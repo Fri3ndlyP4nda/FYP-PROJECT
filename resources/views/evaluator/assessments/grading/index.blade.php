@@ -78,7 +78,7 @@
 
                                 <td>
                                     @if ($submission->answer_file)
-                                        <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank"
+                                        <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
                                             class="paper-file-link">
                                             View Answer
                                         </a>

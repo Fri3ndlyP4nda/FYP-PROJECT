@@ -136,7 +136,7 @@
                                                 $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                             @endphp
                                             <li style="margin-bottom: 6px;">
-                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
+                                                <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
                                                     {{ $fileName }}
                                                 </a>
                                             </li>
@@ -155,7 +155,7 @@
                                                 $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                             @endphp
                                             <li style="margin-bottom: 6px;">
-                                                <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
+                                                <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank" style="color: var(--maroon); text-decoration: underline; font-weight: 600;">
                                                     {{ $fileName }}
                                                 </a>
                                             </li>
@@ -709,7 +709,7 @@
                                 </div>
                                 @if ($paper)
                                     <p style="margin: 0; font-size: 13px; color: var(--ink); font-weight: 500;">{{ $paper->title }}</p>
-                                    <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">View Paper PDF</a>
+                                    <a href="{{ route('files.paper', $paper->_id) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">View Paper PDF</a>
                                 @else
                                     <p style="margin: 0 0 8px 0; font-size: 12px; color: var(--ink-3);">No assessment paper has been uploaded yet.</p>
                                     <a href="{{ route('evaluator.assessment.papers.create', $application->_id) }}" class="btn btn-sm" style="width: 100%; text-align: center; display: block; font-size: 12px; padding: 8px;">Upload Paper</a>
@@ -728,7 +728,7 @@
                                 </div>
                                 @if ($submission)
                                     <p style="margin: 0; font-size: 12px; color: var(--ink-3);">Submitted on: <strong style="color: var(--ink);">{{ $submission->submitted_at ?? 'N/A' }}</strong></p>
-                                    <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">Open Submitted Answer</a>
+                                    <a href="{{ route('files.submission', $submission->_id) }}" target="_blank" style="display: inline-block; margin-top: 5px; font-size: 12px; color: var(--maroon); font-weight: 600; text-decoration: none;">Open Submitted Answer</a>
                                 @else
                                     <p style="margin: 0; font-size: 12px; color: var(--ink-3);">Awaiting student's answer upload.</p>
                                  @endif

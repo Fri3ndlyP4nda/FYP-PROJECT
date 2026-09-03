@@ -55,7 +55,7 @@
                         <h4>Uploaded Answer / Portfolio File(s)</h4>
 
                         @if ($submission->answer_file)
-                            <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank"
+                            <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
                                 class="paper-file-link">
                                 Open Submitted Answer
                             </a>
@@ -68,7 +68,7 @@
                                         $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
                                     @endphp
                                     <li style="margin-bottom: 6px;">
-                                        <a href="{{ asset('storage/' . $filePath) }}" target="_blank" style="color: var(--maroon); font-weight: 600; text-decoration: underline;">
+                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank" style="color: var(--maroon); font-weight: 600; text-decoration: underline;">
                                             {{ $fileName }}
                                         </a>
                                     </li>

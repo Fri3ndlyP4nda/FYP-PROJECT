@@ -127,7 +127,7 @@
                                     <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-3); display: block; margin-bottom: 2px;">Format</span>
                                     <strong style="font-size: 13px; color: var(--ink-2);">PDF Document</strong>
                                 </div>
-                                <a href="{{ asset('storage/' . $paper->question_file) }}" target="_blank" class="btn" style="padding: 10px 18px; font-size: 13.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                                <a href="{{ route('files.paper', $paper->_id) }}" target="_blank" class="btn" style="padding: 10px 18px; font-size: 13.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle;">
                                         <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                                         <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
@@ -185,7 +185,7 @@
                                 <span class="meta-label">Submitted File</span>
                                 <strong>
                                     @if (!empty($submission->answer_file))
-                                        <a href="{{ asset('storage/' . $submission->answer_file) }}" target="_blank"
+                                        <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
                                             class="link">
                                             View Uploaded Answer
                                         </a>

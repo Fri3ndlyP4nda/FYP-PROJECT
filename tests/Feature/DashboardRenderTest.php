@@ -175,4 +175,52 @@ class DashboardRenderTest extends FeatureTestCase
             ->assertSee('Assigned to you', false)
             ->assertSee('row-case', false);
     }
+
+    /**
+     * Both detail views built their own progress tracker in Blade, keyed on
+     * status strings the application stopped writing when the stage machine
+     * landed. All 19 stages hit `default => 0`, so every candidate saw step 1
+     * regardless of where they were. These render the real rail at every stage.
+     */
+    public function test_student_detail_views_render_the_real_rail_at_every_stage(): void
+    {
+        $student = $this->makeStudent();
+
+        foreach ([['APEL A', 'student.apel_a.show'], ['APEL C', 'student.apel_c.show']] as [$type, $route]) {
+            foreach (ApelStage::cases() as $stage) {
+                $application = $this->makeApplication($student, [
+                    'application_type' => $type,
+                    'stage' => $stage->value,
+                    'program_applied' => 'Bachelor of Engineering',
+                ]);
+
+                $response = $this->actingAs($student)->get(route($route, $application->_id));
+
+                $response->assertOk();
+                $response->assertSee('Where this sits', false);
+
+                // A terminal stage has no rail node left to be "current", but
+                // every stage must still draw the rail itself.
+                $response->assertSee('spine-node', false);
+            }
+        }
+    }
+
+    /** A refusal must never be presented in the tone of a success. */
+    public function test_a_refused_application_reads_as_refused_on_its_detail_page(): void
+    {
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::REJECTED->value,
+            'program_applied' => 'Bachelor of Engineering',
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('student.apel_a.show', $application->_id))
+            ->assertOk()
+            ->assertSee('outcome--bad', false)
+            ->assertDontSee('outcome--good', false);
+    }
 }

@@ -93,6 +93,17 @@
     --now-dim: var(--attention-tint);
     --appeal-dim: var(--appeal-tint);
 
+    /*
+       Views written before the token system was consolidated style inline with
+       var(--maroon) and var(--maroon-tint) - 90 declarations across nine
+       evaluator and admin screens. Neither name was ever defined here, so every
+       one of them was invalid: the colours fell back to inherited and the tints
+       to transparent. Defined as aliases rather than hunted down in markup,
+       because the name is honest and the screens keep working.
+    */
+    --maroon: var(--accent);
+    --maroon-tint: var(--accent-tint);
+
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     --font-display: 'Bricolage Grotesque', var(--font-sans);
@@ -3342,3 +3353,283 @@ td.num,
 
 /* Header actions on the list screens. */
 .deck-acts { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/*
+|==============================================================================
+| Detail screens
+|==============================================================================
+|
+| One application, read by the person it belongs to or the person assessing it.
+| The page leads with the current state rather than the record, because both
+| readers arrive knowing which application they opened and not knowing what has
+| happened to it.
+|
+*/
+
+.deck--narrow { width: min(100% - 2.5rem, 56rem); }
+
+/* The lede - what is happening now -------------------------------------- */
+
+.lede-card {
+    padding: var(--s-4);
+    margin-bottom: var(--s-4);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--progress);
+    border-radius: var(--r-2);
+    background: var(--surface);
+}
+
+/*
+   Tone comes from ApelStage, so a rejection is not dressed as progress and a
+   payment demand is not dressed as good news.
+*/
+.lede-card--good { border-left-color: var(--good); background: var(--good-tint); }
+.lede-card--bad { border-left-color: var(--bad); background: var(--bad-tint); }
+.lede-card--attention { border-left-color: var(--attention); background: var(--attention-tint); }
+.lede-card--appeal { border-left-color: var(--appeal); background: var(--appeal-tint); }
+.lede-card--neutral { border-left-color: var(--line-strong); background: var(--surface-sunk); }
+
+.lede-kicker {
+    margin: 0 0 .3rem;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.lede-head { margin: 0 0 .4rem; font-size: var(--t-xl); letter-spacing: -.026em; }
+.lede-body { margin: 0; max-width: 62ch; color: var(--ink-2); }
+
+.lede-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
+.lede-due { color: var(--attention); font-family: var(--font-mono); font-size: var(--t-sm); }
+
+/* Panels ----------------------------------------------------------------- */
+
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: var(--s-3); margin-bottom: var(--s-4); }
+
+.panel {
+    padding: var(--s-4);
+    border: 1px solid var(--line);
+    border-radius: var(--r-2);
+    background: var(--surface);
+}
+
+.panel-head {
+    margin: 0 0 var(--s-3);
+    padding-bottom: var(--s-2);
+    border-bottom: 1px solid var(--line);
+    font-size: var(--t-md);
+    letter-spacing: -.012em;
+}
+
+/* Facts - a record, so set the values in the data face. */
+/*
+   Named .kv, not .facts. A .facts already existed higher up the file as an
+   auto-fit grid of 150px columns, and redefining it here set display and gap
+   but never grid-template-columns - so these rows inherited the column track
+   list and sat three abreast in a 196px lane, each value colliding with the
+   next label. Two components, two names.
+*/
+.kv { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.kv > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--s-3);
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--line);
+}
+.kv > div:last-child { border-bottom: 0; }
+.kv dt { flex: none; color: var(--ink-3); font-size: var(--t-sm); }
+.kv dd { margin: 0; min-width: 0; text-align: right; font-size: var(--t-sm); font-weight: 500; }
+
+/* Outcome and quoted remarks --------------------------------------------- */
+
+.outcome {
+    display: inline-block;
+    margin: 0 0 var(--s-3);
+    padding: .4rem .9rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-full);
+    font-family: var(--font-display);
+    font-size: var(--t-lg);
+    font-weight: 600;
+    letter-spacing: -.018em;
+}
+.outcome--good { background: var(--good-tint); border-color: var(--good-line); color: var(--good); }
+.outcome--bad { background: var(--bad-tint); border-color: var(--bad-line); color: var(--bad); }
+.outcome--appeal { background: var(--appeal-tint); border-color: var(--appeal-line); color: var(--appeal); }
+
+/*
+   Someone's written judgement about the reader. Set apart rather than run in
+   with the interface's own voice, so it is clear a person wrote it.
+*/
+.said { padding-left: var(--s-3); border-left: 2px solid var(--line-strong); margin-bottom: var(--s-3); }
+.said:last-child { margin-bottom: 0; }
+.said h3 { margin: 0 0 .25rem; font-size: var(--t-sm); color: var(--ink-3); font-weight: 600; }
+.said p { margin: 0; color: var(--ink); white-space: pre-line; }
+
+.muted { color: var(--ink-3); font-size: var(--t-sm); }
+
+@media (max-width: 46rem) {
+    .kv > div { flex-direction: column; gap: .15rem; }
+    .kv dd { text-align: left; }
+}
+
+/*
+|==============================================================================
+| Assessment outcome, folded detail, and inline notes
+|==============================================================================
+*/
+
+/* CLO marks ---------------------------------------------------------------- */
+
+/*
+   Four marks out of ten, and a pass needs 5 on every one of them
+   (AssessmentGradingController:116). Each mark therefore has to read as its own
+   pass or fail - an average is not what is being applied, and a candidate who
+   scored 9/9/9/4 needs to see instantly which one sank it.
+*/
+.clo-rule { max-width: 62ch; margin: 0 0 var(--s-3); }
+
+.clo-set { margin-bottom: var(--s-3); }
+.clo-set:last-child { margin-bottom: 0; }
+.clo-set h3 {
+    margin: 0 0 .5rem;
+    color: var(--ink-3);
+    font-size: var(--t-xs);
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.clo-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: var(--s-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.clo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .55rem .7rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--surface-sunk);
+}
+
+.clo-name {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-3);
+    letter-spacing: .04em;
+}
+
+.clo-mark { font-family: var(--font-mono); font-size: var(--t-lg); font-weight: 500; }
+.clo-mark span { font-size: var(--t-xs); color: var(--ink-4); }
+
+.clo.is-pass { border-color: var(--good-line); background: var(--good-tint); }
+.clo.is-pass .clo-mark { color: var(--good); }
+.clo.is-fail { border-color: var(--bad-line); background: var(--bad-tint); }
+.clo.is-fail .clo-mark { color: var(--bad); }
+
+/* Inline notes ------------------------------------------------------------- */
+
+.note { margin: var(--s-3) 0 0; padding: .7rem .9rem; border-radius: var(--r); background: var(--surface-sunk); color: var(--ink-2); font-size: var(--t-sm); }
+.note--good { background: var(--good-tint); color: var(--good); }
+
+/* Forms inside a panel ----------------------------------------------------- */
+
+.stack-form { margin-top: var(--s-3); display: grid; gap: var(--s-3); justify-items: start; }
+.stack-form .field { width: 100%; }
+
+/* A panel that carries a consequence - an appeal, a refusal. */
+.panel--edge { border-left: 4px solid var(--bad); }
+
+/* Folded detail ------------------------------------------------------------ */
+
+/*
+   Reference material the reader almost never wants, but must be able to reach:
+   their own uploads and the form they submitted. Closed by default so it does
+   not bury the part of the page that answers their question.
+*/
+.fold {
+    margin-bottom: var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-2);
+    background: var(--surface);
+}
+
+.fold > summary {
+    padding: var(--s-3) var(--s-4);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--t-md);
+    font-weight: 600;
+    letter-spacing: -.012em;
+    list-style: none;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+
+.fold > summary::before {
+    content: '▸';
+    display: inline-block;
+    width: 1.1em;
+    color: var(--ink-3);
+    transition: transform .15s ease;
+}
+.fold[open] > summary::before { transform: rotate(90deg); }
+.fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-2); }
+
+.fold > *:not(summary) { padding: 0 var(--s-4) var(--s-4); }
+
+/* Uploaded files ----------------------------------------------------------- */
+
+.files { margin: 0; padding: 0; list-style: none; display: grid; gap: .1rem; }
+.files li {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-2);
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--line);
+}
+.files li:last-child { border-bottom: 0; }
+
+.files-kind {
+    flex: none;
+    min-width: 5.5rem;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* The submitted form, played back ------------------------------------------ */
+
+.submitted-part { margin-bottom: var(--s-4); }
+.submitted-part:last-child { margin-bottom: 0; }
+.submitted-part > h3 {
+    margin: 0 0 var(--s-2);
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--line-strong);
+    font-size: var(--t-sm);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+.submitted-rule { margin: var(--s-2) 0; border: 0; border-top: 1px dashed var(--line); }
+
+@media (max-width: 46rem) {
+    .files li { flex-direction: column; gap: .1rem; }
+}
+
+@media (pointer: coarse) {
+    .fold > summary { min-height: 44px; display: flex; align-items: center; }
+}
