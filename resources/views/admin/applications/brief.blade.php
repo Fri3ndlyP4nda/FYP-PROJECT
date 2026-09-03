@@ -1,396 +1,224 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APEL A Evaluator Brief - {{ $student->name ?? 'Student' }}</title>
-    <style>
-        body {
-            margin: 0;
-            background: var(--surface-sunk);
-            color: var(--ink);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 13px;
-            line-height: 1.5;
-        }
+@extends('layouts.app')
 
-        .toolbar {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 24px;
-            background: #ffffff;
-            border-bottom: 1px solid var(--line-strong);
-        }
+@section('content')
+    {{--
+        The pre-assignment brief for one APEL A application.
 
-        .toolbar-title {
-            font-weight: 700;
-            color: #7f1d1d;
-        }
+        This is decision support, not a decision. Everything on it is generated
+        by ApelDecisionSupportService from what the candidate submitted, and it
+        exists so the officer choosing an evaluator knows how much work the case
+        is and where the evidence is thin - before anyone's time is committed.
 
-        .btn {
-            display: inline-block;
-            padding: 7px 14px;
-            border: 1px solid var(--line-strong);
-            border-radius: 6px;
-            color: var(--ink-2);
-            background: #ffffff;
-            font-weight: 700;
-            font-size: 12px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: var(--maroon);
-            border-color: var(--maroon);
-            color: #ffffff;
-        }
-
-        .paper {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 28px auto;
-            padding: 18mm;
-            background: #ffffff;
-            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
-            box-sizing: border-box;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-            border-bottom: 3px solid var(--ink);
-            padding-bottom: 14px;
-            margin-bottom: 18px;
-        }
-
-        .header h1 {
-            margin: 0 0 6px 0;
-            font-size: 22px;
-            letter-spacing: 0;
-            text-transform: uppercase;
-        }
-
-        .header p {
-            margin: 0;
-            color: var(--ink-2);
-        }
-
-        .score-box {
-            min-width: 150px;
-            text-align: right;
-        }
-
-        .score {
-            display: block;
-            font-size: 38px;
-            line-height: 1;
-            font-weight: 800;
-            color: #065f46;
-        }
-
-        .badge {
-            display: inline-block;
-            margin-top: 8px;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        .badge-low {
-            color: #065f46;
-            background: #d1fae5;
-        }
-
-        .badge-medium {
-            color: var(--attention);
-            background: var(--attention-tint);
-        }
-
-        .badge-high {
-            color: #991b1b;
-            background: #fee2e2;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .card {
-            border: 1px solid var(--line-strong);
-            border-radius: 8px;
-            padding: 12px;
-            page-break-inside: avoid;
-        }
-
-        .card h2 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-            text-transform: uppercase;
-            color: var(--ink);
-        }
-
-        .meta-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
-        }
-
-        .meta-table td,
-        .meta-table th {
-            border: 1px solid var(--line-strong);
-            padding: 7px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .meta-table th {
-            width: 165px;
-            background: var(--surface-sunk);
-            color: var(--ink-2);
-        }
-
-        .section {
-            margin-top: 18px;
-            page-break-inside: avoid;
-        }
-
-        .section h2 {
-            margin: 0 0 8px 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid var(--ink);
-            font-size: 15px;
-            text-transform: uppercase;
-        }
-
-        .list {
-            margin: 0;
-            padding-left: 18px;
-        }
-
-        .list li {
-            margin-bottom: 6px;
-        }
-
-        .criteria-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .criteria-table th,
-        .criteria-table td {
-            border: 1px solid var(--line-strong);
-            padding: 7px;
-            vertical-align: top;
-            text-align: left;
-        }
-
-        .criteria-table th {
-            background: var(--surface-sunk);
-        }
-
-        .status-pass {
-            color: #047857;
-            font-weight: 800;
-        }
-
-        .status-warning {
-            color: var(--attention);
-            font-weight: 800;
-        }
-
-        .status-fail {
-            color: var(--bad);
-            font-weight: 800;
-        }
-
-        .footer {
-            margin-top: 28px;
-            padding-top: 10px;
-            border-top: 1px solid var(--line-strong);
-            color: var(--ink-3);
-            font-size: 11px;
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        @media print {
-            body {
-                background: #ffffff;
-            }
-
-            .toolbar {
-                display: none;
-            }
-
-            .paper {
-                width: 100%;
-                min-height: auto;
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="toolbar">
-        <div class="toolbar-title">APEL A Evaluator Brief</div>
-        <div>
-            <a href="{{ route('admin.applications.assign.form', $application->_id) }}" class="btn">Back</a>
-            <button onclick="window.print()" class="btn btn-primary">Print Brief</button>
-        </div>
-    </div>
-
+        It is labelled as generated throughout, because the one way a screen
+        like this does harm is by being mistaken for a ruling.
+    --}}
     @php
-        $eligibility = $brief['eligibility'];
-        $classification = $brief['classification'];
-        $classificationClass = match ($classification['level']) {
-            'low' => 'badge-low',
-            'medium' => 'badge-medium',
-            default => 'badge-high',
+        $class = $brief['classification'] ?? [];
+        $elig = $brief['eligibility'] ?? [];
+        $gaps = collect($brief['evidence_gaps'] ?? []);
+        $critical = collect($brief['critical_failures'] ?? []);
+        $focus = collect($brief['focus_areas'] ?? []);
+
+        // The service speaks in low/medium/high; the page speaks in tone.
+        $level = strtolower((string) ($class['level'] ?? 'medium'));
+        $tone = match ($level) {
+            'high' => 'bad',
+            'low' => 'good',
+            default => 'attention',
+        };
+
+        $severityTone = fn (string $s) => match (strtolower($s)) {
+            'critical', 'high' => 'bad',
+            'low' => 'progress',
+            default => 'attention',
         };
     @endphp
 
-    <main class="paper">
-        <section class="header">
+    <div class="deck deck--narrow">
+        <header class="deck-head">
             <div>
-                <h1>APEL A Evaluator Brief</h1>
-                <p>Generated decision-support summary for evaluator review.</p>
-                <p>Generated at: {{ $brief['generated_at']->format('Y-m-d H:i') }}</p>
+                <p class="deck-eyebrow">
+                    Evaluator brief &nbsp;·&nbsp; {{ strtoupper(substr((string) $application->_id, -6)) }}
+                </p>
+                <h1 class="deck-title">{{ $student?->name ?? 'Candidate no longer on file' }}</h1>
             </div>
-            <div class="score-box">
-                <span class="score">{{ $eligibility['score'] }}%</span>
-                <span class="badge {{ $classificationClass }}">{{ $classification['label'] }}</span>
+            <div class="deck-acts">
+                <a href="{{ route('admin.applications.assign.form', $application->_id) }}" class="btn btn-primary">
+                    Assign an evaluator
+                </a>
+                <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">The queue</a>
             </div>
-        </section>
+        </header>
 
-        <section class="grid">
-            <div class="card">
-                <h2>Applicant</h2>
-                <table class="meta-table">
-                    <tr>
-                        <th>Name</th>
-                        <td>{{ $student->name ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Programme</th>
-                        <td>{{ $application->program_applied }}</td>
-                    </tr>
-                    <tr>
-                        <th>Submission Date</th>
-                        <td>{{ $application->submission_date }}</td>
-                    </tr>
-                    <tr>
-                        <th>Status</th>
-                        <td>{{ $application->status }}</td>
-                    </tr>
-                </table>
-            </div>
+        <p class="notice" role="note">
+            Generated from the submitted application
+            @if (!empty($brief['generated_at']))
+                on {{ \Carbon\Carbon::parse($brief['generated_at'])->format('j M Y, H:i') }}
+            @endif
+            &mdash; a summary to plan the review, not an assessment of it.
+        </p>
 
-            <div class="card">
-                <h2>System Recommendation</h2>
-                <p><strong>{{ $eligibility['recommendation'] }}</strong></p>
-                <p>{{ $eligibility['summary'] }}</p>
-                <p><strong>Classification reason:</strong> {{ $classification['reason'] }}</p>
-            </div>
-        </section>
-
-        <section class="section">
-            <h2>Evidence Gap Analyzer</h2>
-            @if ($brief['evidence_gaps']->count() > 0)
-                <table class="criteria-table">
-                    <thead>
-                        <tr>
-                            <th>Area</th>
-                            <th>Severity</th>
-                            <th>Current Value</th>
-                            <th>Evaluator Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($brief['evidence_gaps'] as $gap)
-                            <tr>
-                                <td>{{ $gap['area'] }}</td>
-                                <td>{{ ucfirst($gap['severity']) }}</td>
-                                <td>{{ $gap['value'] }}</td>
-                                <td>{{ $gap['message'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <p>No evidence gaps detected by the current rule set.</p>
+        <section class="lede-card lede-card--{{ $tone }}" aria-labelledby="class-head">
+            <p class="lede-kicker">Expected effort</p>
+            <h2 class="lede-head" id="class-head">{{ $class['label'] ?? 'Not classified' }}</h2>
+            @if (!empty($class['reason']))
+                <p class="lede-body">{{ $class['reason'] }}</p>
             @endif
         </section>
 
-        <section class="section">
-            <h2>Evaluator Focus Points</h2>
-            <ul class="list">
-                @foreach ($brief['focus_areas'] as $focus)
-                    <li><strong>{{ $focus['title'] }}:</strong> {{ $focus['detail'] }}</li>
-                @endforeach
-            </ul>
-        </section>
+        <div class="split">
+            <section class="panel" aria-labelledby="score-head">
+                <h2 class="panel-head" id="score-head">Entry scorecard</h2>
 
-        <section class="section">
-            <h2>Eligibility Criteria Breakdown</h2>
-            <table class="criteria-table">
-                <thead>
-                    <tr>
-                        <th>Criteria</th>
-                        <th>Status</th>
-                        <th>Points</th>
-                        <th>Value</th>
-                        <th>Explanation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($eligibility['criteria'] as $criterion)
-                        <tr>
-                            <td>{{ $criterion['name'] }}</td>
-                            <td class="status-{{ $criterion['status'] }}">{{ ucfirst($criterion['status']) }}</td>
-                            <td>{{ $criterion['points'] }}/{{ $criterion['max_points'] }}</td>
-                            <td>{{ $criterion['value'] }}</td>
-                            <td>{{ $criterion['message'] }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </section>
+                @if (!empty($elig['summary']))
+                    <p class="lede-body">{{ $elig['summary'] }}</p>
+                @endif
 
-        <section class="section">
-            <h2>Suggested Next Actions</h2>
-            <ul class="list">
-                @foreach ($brief['next_actions'] as $action)
-                    <li>{{ $action }}</li>
-                @endforeach
-            </ul>
-        </section>
+                <dl class="kv">
+                    <div><dt>Score</dt><dd>{{ $elig['score'] ?? 0 }}</dd></div>
+                    <div><dt>Reads as</dt><dd>{{ $elig['recommendation'] ?? 'Not assessed' }}</dd></div>
+                </dl>
 
-        <section class="section">
-            <h2>Efficiency Contribution</h2>
-            <ul class="list">
-                @foreach ($brief['efficiency_notes'] as $note)
-                    <li>{{ $note }}</li>
-                @endforeach
-            </ul>
-        </section>
+                @if (!empty($elig['criteria']))
+                    {{--
+                        The scorecard reports status as 'pass' | 'warning' |
+                        'fail', and marks the rules that are absolute with
+                        `critical`. Reading anything else - a `met` or `passed`
+                        key - renders every row as a failure, which is exactly
+                        what an earlier version of this file did: a criterion
+                        whose own message read "Candidate meets the minimum age
+                        requirement" was drawn with a red cross beside it.
+                    --}}
+                    <ul class="checks">
+                        @foreach ($elig['criteria'] as $criterion)
+                            @php
+                                $status = strtolower((string) ($criterion['status'] ?? ''));
+                                [$mark, $state] = match ($status) {
+                                    'pass' => ['✓', 'is-met'],
+                                    'fail' => ['✕', 'is-unmet'],
+                                    default => ['!', 'is-warned'],
+                                };
+                            @endphp
+                            <li class="check {{ $state }}">
+                                <span class="check-mark" aria-hidden="true">{{ $mark }}</span>
+                                <span>
+                                    <strong>
+                                        {{ $criterion['name'] ?? 'Criterion' }}
+                                        @if (!empty($criterion['critical']))
+                                            <em class="check-must">must pass</em>
+                                        @endif
+                                    </strong>
+                                    @if (!empty($criterion['message']))
+                                        <span class="check-msg">{{ $criterion['message'] }}</span>
+                                    @endif
+                                    @if (!empty($criterion['value']))
+                                        <small>{{ $criterion['value'] }}</small>
+                                    @endif
+                                </span>
+                                @if (isset($criterion['points'], $criterion['max_points']))
+                                    <span class="check-pts">
+                                        {{ $criterion['points'] }}<span>/{{ $criterion['max_points'] }}</span>
+                                    </span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </section>
 
-        <div class="footer">
-            <span>UTM APEL Management System - Decision Support Brief</span>
-            <span>Application ID: {{ $application->_id }}</span>
+            <section class="panel" aria-labelledby="case-head">
+                <h2 class="panel-head" id="case-head">The case</h2>
+                <dl class="kv">
+                    <div>
+                        <dt>Programme</dt>
+                        <dd>{{ $application->program_applied ?: 'Not stated' }}</dd>
+                    </div>
+                    @if ($application->age)
+                        <div><dt>Age</dt><dd>{{ $application->age }}</dd></div>
+                    @endif
+                    @if ($application->highest_qualification)
+                        <div><dt>Qualification</dt><dd>{{ $application->highest_qualification }}</dd></div>
+                    @endif
+                    @if ($application->company_name)
+                        <div><dt>Employer</dt><dd>{{ $application->company_name }}</dd></div>
+                    @endif
+                    @if ($application->working_experience_years)
+                        <div>
+                            <dt>Experience</dt>
+                            <dd>{{ $application->working_experience_years }} years</dd>
+                        </div>
+                    @endif
+                </dl>
+            </section>
         </div>
-    </main>
-</body>
-</html>
+
+        @if ($critical->isNotEmpty())
+            <section class="panel panel--edge" aria-labelledby="crit-head">
+                <h2 class="panel-head" id="crit-head">Blocking problems</h2>
+                <ul class="flags">
+                    @foreach ($critical as $item)
+                        <li class="flag flag--bad">
+                            {{ is_array($item) ? ($item['message'] ?? $item['title'] ?? '') : $item }}
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        @if ($gaps->isNotEmpty())
+            <section class="panel" aria-labelledby="gap-head">
+                <h2 class="panel-head" id="gap-head">
+                    Where the evidence is thin
+                    <span class="stack-count">{{ $gaps->count() }}</span>
+                </h2>
+                <ul class="flags">
+                    @foreach ($gaps as $gap)
+                        <li class="flag flag--{{ $severityTone((string) ($gap['severity'] ?? '')) }}">
+                            <strong>{{ $gap['area'] ?? 'Unspecified' }}</strong>
+                            <span>{{ $gap['message'] ?? '' }}</span>
+                            @if (!empty($gap['value']))
+                                <small>Recorded: {{ is_scalar($gap['value']) ? $gap['value'] : json_encode($gap['value']) }}</small>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        @if ($focus->isNotEmpty())
+            <section class="panel" aria-labelledby="focus-head">
+                <h2 class="panel-head" id="focus-head">What the evaluator should look at</h2>
+                @foreach ($focus as $item)
+                    <div class="said">
+                        <h3>{{ $item['title'] ?? 'Focus area' }}</h3>
+                        <p>{{ $item['detail'] ?? '' }}</p>
+                    </div>
+                @endforeach
+            </section>
+        @endif
+
+        <div class="split">
+            @if (!empty($brief['next_actions']))
+                <section class="panel" aria-labelledby="next-head">
+                    <h2 class="panel-head" id="next-head">Suggested next steps</h2>
+                    <ol class="steps">
+                        @foreach ($brief['next_actions'] as $step)
+                            <li>{{ is_array($step) ? ($step['label'] ?? '') : $step }}</li>
+                        @endforeach
+                    </ol>
+                </section>
+            @endif
+
+            @if (!empty($brief['efficiency_notes']))
+                <section class="panel" aria-labelledby="eff-head">
+                    <h2 class="panel-head" id="eff-head">Notes on effort</h2>
+                    <ul class="flags">
+                        @foreach ($brief['efficiency_notes'] as $note)
+                            <li class="flag">{{ is_array($note) ? ($note['message'] ?? '') : $note }}</li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
+        </div>
+    </div>
+@endsection

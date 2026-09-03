@@ -1,69 +1,110 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container admin-shell">
-        <section class="page-hero">
+    {{--
+        The APEL A slice of the registry queue.
+
+        The table this replaces had six columns, three of which - Status, Stage
+        and Final Decision - are all derived from the single stage field and so
+        could only restate one another. Grouped by whose move it is, the top of
+        the page is the work.
+    --}}
+    <div class="deck">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">APEL A Management</span>
-                <h2>APEL A Applications</h2>
-                <p class="muted page-hero-text">
-                    Manage APEL A admission applications, evaluator assignments, and final decisions.
-                </p>
+                <p class="deck-eyebrow">APEL A &mdash; admission</p>
+                <h1 class="deck-title">
+                    {{ $cases->count() }} {{ Str::plural('application', $cases->count()) }}
+                </h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">All Applications</a>
+            <div class="deck-acts">
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Dashboard</a>
+                <a href="{{ route('admin.applications.index') }}" class="btn btn-secondary">Both tracks</a>
             </div>
-        </section>
+        </header>
 
-        <section class="table-card">
-            <div class="table-card-header">
-                <h3>APEL A Records</h3>
-            </div>
+        @if (session('success'))
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Program</th>
-                            <th>Student</th>
-                            <th>Status</th>
-                            <th>Stage</th>
-                            <th>Final Decision</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($applications as $application)
-                            <tr>
-                                <td>{{ $application->program_applied }}</td>
-                                <td>{{ \App\Models\User::where('_id', $application->user_id)->value('name') }}</td>
+        @if ($cases->isEmpty())
+            <section class="blank">
+                <h2>No APEL A applications yet.</h2>
+                <p>They appear here once a candidate submits one.</p>
+            </section>
+        @else
+            @php
+                $groups = [
+                    ['key' => 'you', 'title' => 'Needs the registry', 'note' => 'Nothing moves until the office acts.', 'set' => $needsYou],
+                    ['key' => 'else', 'title' => 'With someone else', 'note' => 'Waiting on the candidate or an evaluator.', 'set' => $elsewhere],
+                    ['key' => 'done', 'title' => 'Closed', 'note' => 'Decided.', 'set' => $closed],
+                ];
+            @endphp
 
-                                <td>
-                                    <span class="badge badge-{{ $application->status }}">
-                                        {{ ucfirst($application->status) }}
-                                    </span>
-                                </td>
+            @foreach ($groups as $group)
+                @continue($group['set']->isEmpty())
+                <section class="stack" aria-labelledby="aa-{{ $group['key'] }}">
+                    <div class="stack-head">
+                        <h2 id="aa-{{ $group['key'] }}">
+                            {{ $group['title'] }}
+                            <span class="stack-count">{{ $group['set']->count() }}</span>
+                        </h2>
+                        <p>{{ $group['note'] }}</p>
+                    </div>
 
-                                <td>
-                                    {{ ucfirst(str_replace('_', ' ', $application->review_stage ?? 'submitted')) }}
-                                </td>
+                    <div class="stack-body stack-body--rows">
+                        @foreach ($group['set'] as $case)
+                            @php
+                                $application = $case['application'];
+                                $stage = $case['stage'];
+                                $action = $case['action'];
+                                $who = $names[(string) $application->user_id] ?? null;
+                            @endphp
 
-                                <td>
-                                    {{ ucfirst(str_replace('_', ' ', $application->final_decision ?? 'pending')) }}
-                                </td>
+                            <article class="row-case">
+                                <div class="row-case-tell">
+                                    <div class="case-top">
+                                        <span class="badge badge--type">APEL A</span>
+                                        @if ($stage)
+                                            <span class="badge badge--{{ $stage->tone() }}">
+                                                {{ $stage->label('APEL A') }}
+                                            </span>
+                                        @endif
+                                        <span class="case-ref">
+                                            {{ strtoupper(substr((string) $application->_id, -6)) }}
+                                        </span>
+                                    </div>
 
-                                <td>
-                                    <a href="{{ route('admin.applications.assign.form', $application->_id) }}"
-                                        class="btn btn-sm">
-                                        Manage
+                                    <h3 class="row-case-title">{{ $who?->name ?? 'Candidate no longer on file' }}</h3>
+
+                                    <p class="row-case-meta">
+                                        {{ $application->program_applied ?: 'Programme not stated' }}
+                                        @if ($application->submission_date)
+                                            &nbsp;·&nbsp;
+                                            submitted {{ \Carbon\Carbon::parse($application->submission_date)->format('j M Y') }}
+                                        @endif
+                                    </p>
+
+                                    @if ($action)
+                                        <p class="row-case-act">{{ $action['title'] }}</p>
+                                    @elseif ($stage && ! $stage->isTerminal())
+                                        <p class="row-case-wait">
+                                            Waiting on {{ $stage->awaitsStudent() ? 'the candidate' : 'an evaluator' }}.
+                                        </p>
+                                    @endif
+                                </div>
+
+                                @if (Route::has('admin.applications.assign'))
+                                    <a class="btn {{ $action ? 'btn-primary' : 'btn-ghost' }} btn--sm"
+                                       href="{{ route('admin.applications.assign', $application->_id) }}">
+                                        Open
                                     </a>
-                                </td>
-                            </tr>
+                                @endif
+                            </article>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                    </div>
+                </section>
+            @endforeach
+        @endif
     </div>
 @endsection

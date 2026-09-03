@@ -3814,3 +3814,64 @@ td.num,
     .row-acts { width: 100%; }
     .row-acts .btn, .row-acts form { width: 100%; }
 }
+
+/* Brief: checks, flags, steps ---------------------------------------------- */
+
+.checks { margin: var(--s-3) 0 0; padding: 0; list-style: none; display: grid; gap: .1rem; }
+.check {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: var(--t-sm);
+}
+.check:last-child { border-bottom: 0; }
+.check span { display: grid; gap: .1rem; min-width: 0; }
+.check small { color: var(--ink-3); font-size: var(--t-xs); }
+.check-mark { flex: none; font-weight: 700; }
+.check.is-met .check-mark { color: var(--good); }
+.check.is-unmet .check-mark { color: var(--bad); }
+
+/*
+   A generated observation, not a verdict, so it is set as a note with a
+   severity edge rather than as a badge - a badge would read as a status the
+   application actually holds.
+*/
+.flags { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
+.flag {
+    display: grid;
+    gap: .15rem;
+    padding: .7rem .9rem;
+    border-left: 3px solid var(--line-strong);
+    border-radius: 0 var(--r) var(--r) 0;
+    background: var(--surface-sunk);
+    font-size: var(--t-sm);
+}
+.flag strong { font-size: var(--t-md); }
+.flag small { color: var(--ink-3); font-family: var(--font-mono); font-size: var(--t-xs); }
+.flag--bad { border-left-color: var(--bad); background: var(--bad-tint); }
+.flag--attention { border-left-color: var(--attention); background: var(--attention-tint); }
+.flag--progress { border-left-color: var(--progress); }
+
+.steps { margin: 0; padding-left: 1.2rem; display: grid; gap: .45rem; }
+.steps li { font-size: var(--t-sm); color: var(--ink-2); }
+.steps li::marker { color: var(--accent); font-family: var(--font-mono); font-size: var(--t-xs); }
+
+.check.is-warned .check-mark { color: var(--attention); }
+.check-msg { color: var(--ink-2); font-size: var(--t-xs); }
+.check-must {
+    margin-left: .4rem;
+    padding: .05rem .35rem;
+    border-radius: var(--r-sm);
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: .6rem;
+    font-style: normal;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+.check-pts { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: var(--t-sm); color: var(--ink-2); }
+.check-pts span { color: var(--ink-4); font-size: var(--t-xs); }

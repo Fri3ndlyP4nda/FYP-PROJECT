@@ -13,6 +13,7 @@ use App\Models\Application;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
 use App\Services\ApelDecisionSupportService;
+use App\Support\ApplicationCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -575,7 +576,25 @@ class ApplicationManagementController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        return view('admin.apel_a.index', compact('applications'));
+        /*
+         | Grouped by whose move it is, like every other queue in the product.
+         | The table this replaces printed status, review_stage and
+         | final_decision as three separate columns - all three are derived from
+         | the one stage and can only ever restate it.
+         */
+        $cases = ApplicationCase::collect($applications, Auth::user());
+
+        $names = User::whereIn('_id', $applications->pluck('user_id')->filter()->unique()->values()->all())
+            ->get()
+            ->keyBy(fn (User $u) => (string) $u->_id);
+
+        return view('admin.apel_a.index', [
+            'cases' => $cases,
+            'names' => $names,
+            'needsYou' => ApplicationCase::awaitingViewer($cases),
+            'elsewhere' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
+        ]);
     }
 
     public function finalizeApelC(Request $request, $id)
