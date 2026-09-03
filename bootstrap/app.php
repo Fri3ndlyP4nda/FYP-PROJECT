@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => RoleMiddleware::class,
+        ]);
+
+        /*
+         * Applied to every web response. These are instructions to the browser
+         * - a content security policy, no framing, no MIME sniffing - and the
+         * browser is the only thing that can enforce them, so nothing the
+         * server checks substitutes for them.
+         */
+        $middleware->web(append: [
+            SecurityHeaders::class,
         ]);
         /**
          * Previously trustProxies(at: '*'), which trusts every client as a proxy

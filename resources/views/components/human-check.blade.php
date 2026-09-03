@@ -87,6 +87,29 @@
 
                 const encoder = new TextEncoder();
 
+                /*
+                 * Yield through a MessageChannel, not setTimeout.
+                 *
+                 * A hidden tab throttles setTimeout to roughly half a second -
+                 * measured at 483ms here - so a solver that yielded every 2000
+                 * iterations took over half a minute in a background tab, and a
+                 * candidate who opened the sign-in page in one came back to a
+                 * form that would not submit. A MessageChannel message is a
+                 * macrotask that browsers do not throttle that way, so the page
+                 * stays responsive and the work finishes at the same speed
+                 * whether the tab is in front or not.
+                 */
+                function yieldToBrowser() {
+                    return new Promise(function (resolve) {
+                        const channel = new MessageChannel();
+                        channel.port1.onmessage = function () {
+                            channel.port1.close();
+                            resolve();
+                        };
+                        channel.port2.postMessage(null);
+                    });
+                }
+
                 async function sha256(text) {
                     const digest = await crypto.subtle.digest('SHA-256', encoder.encode(text));
                     return [...new Uint8Array(digest)]
@@ -102,6 +125,11 @@
                     const state = block.querySelector('[data-pow-state]');
                     const text = block.querySelector('[data-pow-text]');
 
+                    // Yield on elapsed time rather than a fixed iteration count,
+                    // so a fast machine barely pauses and a slow one still never
+                    // blocks the page for more than a frame or two.
+                    let lastYield = performance.now();
+
                     for (let n = 0; n <= max; n++) {
                         if (await sha256(salt + n) === target) {
                             answerField.value = String(n);
@@ -110,9 +138,9 @@
                             return;
                         }
 
-                        // Yield periodically so a long search cannot freeze the tab.
-                        if (n % 2000 === 0) {
-                            await new Promise(r => setTimeout(r, 0));
+                        if (performance.now() - lastYield > 40) {
+                            await yieldToBrowser();
+                            lastYield = performance.now();
                         }
                     }
 
@@ -120,11 +148,13 @@
                 }
 
                 blocks.forEach(function (block) {
-                    const start = () => solve(block);
+                    // Started on an idle callback where one exists, but with a
+                    // short timeout so a busy or hidden tab still begins
+                    // promptly - the person may be typing already.
                     if ('requestIdleCallback' in window) {
-                        requestIdleCallback(start, { timeout: 500 });
+                        requestIdleCallback(function () { solve(block); }, { timeout: 300 });
                     } else {
-                        setTimeout(start, 0);
+                        setTimeout(function () { solve(block); }, 0);
                     }
                 });
             })();
