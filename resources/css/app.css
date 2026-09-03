@@ -3633,3 +3633,49 @@ td.num,
 @media (pointer: coarse) {
     .fold > summary { min-height: 44px; display: flex; align-items: center; }
 }
+
+/* Marking form ------------------------------------------------------------- */
+
+/*
+   Each outcome is its own pass or fail, because that is literally the rule
+   being applied. Showing only a running total invites the marker to read a
+   healthy percentage as a pass while an outcome sits below 5.
+*/
+.marks { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--s-3); width: 100%; }
+
+.mark {
+    padding: var(--s-3);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line-strong);
+    border-radius: var(--r);
+    background: var(--surface-sunk);
+    transition: border-color .15s ease, background .15s ease;
+}
+.mark label { display: block; margin-bottom: .35rem; font-size: var(--t-sm); font-weight: 600; }
+
+.mark-row { display: flex; align-items: center; gap: .5rem; }
+.mark-row input {
+    width: 4.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--t-lg);
+    text-align: center;
+}
+.mark-of { color: var(--ink-4); font-family: var(--font-mono); font-size: var(--t-sm); }
+.mark-verdict { margin-left: auto; font-size: var(--t-xs); font-weight: 600; }
+
+.mark.is-pass { border-left-color: var(--good); background: var(--good-tint); }
+.mark.is-pass .mark-verdict { color: var(--good); }
+.mark.is-fail { border-left-color: var(--bad); background: var(--bad-tint); }
+.mark.is-fail .mark-verdict { color: var(--bad); }
+
+.verdict-line {
+    width: 100%;
+    margin: 0;
+    padding: .7rem .9rem;
+    border-radius: var(--r);
+    background: var(--surface-sunk);
+    color: var(--ink-2);
+    font-size: var(--t-sm);
+}
+.verdict-line.is-pass { background: var(--good-tint); color: var(--good); font-weight: 600; }
+.verdict-line.is-fail { background: var(--bad-tint); color: var(--bad); font-weight: 600; }

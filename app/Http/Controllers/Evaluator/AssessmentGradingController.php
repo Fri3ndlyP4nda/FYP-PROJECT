@@ -49,7 +49,25 @@ class AssessmentGradingController extends Controller
                 ->orderBy('submitted_at', 'desc')
                 ->get();
 
-        return view('evaluator.assessments.grading.index', compact('submissions'));
+        /*
+         | Resolved here so the view is not issuing a query per row to find out
+         | whose work it is looking at, and so "needs grading" is decided once.
+         */
+        $applications = empty($applicationIds)
+            ? collect()
+            : Application::whereIn('_id', $applicationIds)->get()->keyBy(fn ($a) => (string) $a->_id);
+
+        $students = User::whereIn('_id', $submissions->pluck('student_id')->filter()->unique()->values()->all())
+            ->get()
+            ->keyBy(fn ($u) => (string) $u->_id);
+
+        return view('evaluator.assessments.grading.index', [
+            'submissions' => $submissions,
+            'applications' => $applications,
+            'students' => $students,
+            'awaiting' => $submissions->filter(fn ($s) => $s->graded_at === null)->values(),
+            'graded' => $submissions->filter(fn ($s) => $s->graded_at !== null)->values(),
+        ]);
     }
 
     public function show($id)

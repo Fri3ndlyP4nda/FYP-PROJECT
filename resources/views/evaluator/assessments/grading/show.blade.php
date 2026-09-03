@@ -1,279 +1,252 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container grading-shell">
-        <section class="page-hero">
+    {{--
+        Marking one submission.
+
+        The rule this screen applies is unusual and easy to get wrong: a pass
+        needs at least 5 of 10 on EVERY outcome, so 10/10/10/4 fails while
+        6/6/6/6 passes (AssessmentGradingController:116). The old layout led
+        with a running total out of 40 and a percentage - the two numbers the
+        rule does not use - so an evaluator could watch "32/40, 80%" climb while
+        typing a mark that fails the candidate.
+
+        Each outcome now reports its own verdict as it is typed, and the overall
+        line states which outcome is holding it back rather than only the score.
+    --}}
+    @php
+        $isEvaluator1 = (string) ($application->evaluator_id ?? '') === (string) auth()->id();
+        $isEvaluator2 = (string) ($application->evaluator_2_id ?? '') === (string) auth()->id();
+
+        $seat = $isEvaluator1 ? 1 : ($isEvaluator2 ? 2 : null);
+        $alreadyMarked = $seat !== null && filled($submission->{"evaluator_{$seat}_graded_at"});
+
+        $existing = fn (string $field) => $seat ? $submission->{"evaluator_{$seat}_{$field}"} : null;
+
+        $student = $submission->student_id
+            ? \App\Models\User::where('_id', $submission->student_id)->first()
+            : null;
+
+        $isPortfolio = ($application->assessment_type ?? '') === 'portfolio';
+    @endphp
+
+    <div class="deck deck--narrow">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">APEL C Grading</span>
-                <h2>Grade Submission</h2>
-                <p class="muted page-hero-text">
-                    Review the uploaded answer file, assign an overall score, and provide grading feedback.
+                <p class="deck-eyebrow">
+                    Marking &nbsp;·&nbsp; {{ strtoupper(substr((string) $submission->_id, -6)) }}
                 </p>
+                <h1 class="deck-title">{{ $student?->name ?? 'Candidate no longer on file' }}</h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('evaluator.assessment.grading.index') }}" class="btn btn-secondary">Back to Grading List</a>
+            <div class="deck-acts">
+                <a href="{{ route('evaluator.assessment.grading.index') }}" class="btn btn-secondary">All submissions</a>
+                @if ($application && Route::has('evaluator.applications.show'))
+                    <a href="{{ route('evaluator.applications.show', $application->_id) }}" class="btn btn-secondary">
+                        The application
+                    </a>
+                @endif
             </div>
-        </section>
+        </header>
 
+        @if (session('success'))
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
         @if ($errors->any())
-            <div class="alert alert-error">
-                <ul style="padding-left: 18px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="notice notice--bad" role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
             </div>
         @endif
 
-        <div class="grading-layout">
-            <div class="grading-main">
-                <div class="question-card">
-                    <div class="question-header">
-                        <span class="question-number">Submission File</span>
-                        <span class="question-type">APEL C Answer Upload</span>
-                    </div>
+        {{-- What is being marked. Reading it comes before scoring it. --}}
+        <section class="panel" aria-labelledby="work-head">
+            <h2 class="panel-head" id="work-head">The work</h2>
 
-                    <div class="record-meta-grid">
-                        <div class="meta-box">
-                            <span class="meta-label">Application ID</span>
-                            <strong>{{ $submission->application_id }}</strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Student</span>
-                            <strong>{{ \App\Models\User::where('_id', $submission->student_id)->value('name') ?? 'Unknown' }}</strong>
-                        </div>
-
-                        <div class="meta-box">
-                            <span class="meta-label">Submitted At</span>
-                            <strong>{{ $submission->submitted_at ?? 'Not available' }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="record-panel">
-                        <h4>Uploaded Answer / Portfolio File(s)</h4>
-
-                        @if ($submission->answer_file)
-                            <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
-                                class="paper-file-link">
-                                Open Submitted Answer
-                            </a>
-                        @elseif (($application->assessment_type ?? '') === 'portfolio' && !empty($application->portfolio_file))
-                            <p class="feedback-text" style="font-weight:600; margin-bottom:8px;">Student Portfolio Files:</p>
-                            <ul style="margin: 0; padding-left: 20px;">
-                                @foreach ($application->portfolio_file as $file)
-                                    @php
-                                        $filePath = is_array($file) ? ($file['path'] ?? '') : $file;
-                                        $fileName = is_array($file) ? ($file['name'] ?? basename($filePath)) : basename($filePath);
-                                    @endphp
-                                    <li style="margin-bottom: 6px;">
-                                        <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $filePath]) }}" target="_blank" style="color: var(--maroon); font-weight: 600; text-decoration: underline;">
-                                            {{ $fileName }}
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <p class="feedback-text">No answer file or portfolio uploaded for this submission.</p>
-                        @endif
-                    </div>
-
-                    <div class="record-panel">
-                        <h4>Current Grading Status</h4>
-                        <p class="feedback-text">
-                            @if ($submission->graded_at)
-                                This submission has already been graded.
-                            @else
-                                This submission is waiting for evaluator grading.
-                            @endif
-                        </p>
-                    </div>
+            <dl class="kv">
+                <div>
+                    <dt>Course</dt>
+                    <dd>
+                        {{ $application?->credit_course_name
+                            ?: ($application?->credit_course_code ?: 'Not stated') }}
+                    </dd>
                 </div>
-            </div>
+                <div><dt>Assessed by</dt><dd>{{ $isPortfolio ? 'Portfolio' : 'Written paper' }}</dd></div>
+                <div>
+                    <dt>Submitted</dt>
+                    <dd>
+                        {{ $submission->submitted_at
+                            ? \Carbon\Carbon::parse($submission->submitted_at)->format('j M Y, H:i')
+                            : 'Not recorded' }}
+                    </dd>
+                </div>
+            </dl>
 
-        <aside class="grading-side">
-            @php
-                $isEvaluator1 = (string) ($application->evaluator_id ?? '') === (string) Auth::id();
-                $isEvaluator2 = (string) ($application->evaluator_2_id ?? '') === (string) Auth::id();
-                
-                $hasGradedThisUser = false;
-                $existingScore = null;
-                $existingFeedback = null;
-                $existingResult = null;
-                $existingClo1 = null;
-                $existingClo2 = null;
-                $existingClo3 = null;
-                $existingClo4 = null;
-                
-                if ($isEvaluator1 && !empty($submission->evaluator_1_graded_at)) {
-                    $hasGradedThisUser = true;
-                    $existingScore = $submission->evaluator_1_score;
-                    $existingFeedback = $submission->evaluator_1_feedback;
-                    $existingResult = $submission->evaluator_1_result;
-                    $existingClo1 = $submission->evaluator_1_clo1;
-                    $existingClo2 = $submission->evaluator_1_clo2;
-                    $existingClo3 = $submission->evaluator_1_clo3;
-                    $existingClo4 = $submission->evaluator_1_clo4;
-                } elseif ($isEvaluator2 && !empty($submission->evaluator_2_graded_at)) {
-                    $hasGradedThisUser = true;
-                    $existingScore = $submission->evaluator_2_score;
-                    $existingFeedback = $submission->evaluator_2_feedback;
-                    $existingResult = $submission->evaluator_2_result;
-                    $existingClo1 = $submission->evaluator_2_clo1;
-                    $existingClo2 = $submission->evaluator_2_clo2;
-                    $existingClo3 = $submission->evaluator_2_clo3;
-                    $existingClo4 = $submission->evaluator_2_clo4;
-                }
-            @endphp
+            @if ($submission->answer_file)
+                <p class="note">
+                    <a href="{{ route('files.submission', $submission->_id) }}" target="_blank" rel="noopener">
+                        Open the answer script
+                    </a>
+                </p>
+            @endif
 
-            <div class="card grading-summary" style="padding: 20px; border-radius: 12px; background: #ffffff; border: 1px solid var(--line);">
-                <h3 style="color: var(--maroon); margin-top: 0; margin-bottom: 15px; font-size: 17px;">APEL (C) Portfolio Scoring Rubrics</h3>
+            @if ($application && filled($application->portfolio_file))
+                <ul class="files">
+                    @foreach ((array) $application->portfolio_file as $file)
+                        @php
+                            $path = is_array($file) ? ($file['path'] ?? '') : (string) $file;
+                            $name = is_array($file) ? ($file['name'] ?? basename($path)) : basename($path);
+                        @endphp
+                        @continue($path === '')
+                        <li>
+                            <span class="files-kind">Portfolio</span>
+                            <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $path]) }}"
+                               target="_blank" rel="noopener">{{ $name }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
 
-                <form method="POST" action="{{ route('evaluator.assessment.grading.grade', $submission->_id) }}">
+        @if ($alreadyMarked)
+            <section class="panel" aria-labelledby="done-head">
+                <h2 class="panel-head" id="done-head">You have already marked this</h2>
+
+                <p class="outcome outcome--{{ $existing('result') === 'pass' ? 'good' : 'bad' }}">
+                    {{ $existing('result') === 'pass' ? 'Passed' : 'Not passed' }}
+                    @if (filled($existing('score')))
+                        &nbsp;·&nbsp; {{ $existing('score') }}%
+                    @endif
+                </p>
+
+                <ul class="clo-list">
+                    @foreach ([1, 2, 3, 4] as $i)
+                        @php $mark = (int) $existing("clo{$i}"); @endphp
+                        <li class="clo {{ $mark >= 5 ? 'is-pass' : 'is-fail' }}">
+                            <span class="clo-name">CLO{{ $i }}</span>
+                            <span class="clo-mark">{{ $mark }}<span>/10</span></span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                @if (filled($existing('feedback')))
+                    <div class="said">
+                        <h3>Your feedback</h3>
+                        <p>{{ $existing('feedback') }}</p>
+                    </div>
+                @endif
+
+                <p class="muted">
+                    A mark cannot be changed here. If it is wrong, the registry can reopen it.
+                </p>
+            </section>
+        @else
+            <section class="panel" aria-labelledby="mark-head">
+                <h2 class="panel-head" id="mark-head">Your marks</h2>
+
+                <p class="clo-rule">
+                    Each outcome is marked out of 10, and a pass needs at least 5 on
+                    <strong>every</strong> one of them. A high total does not carry a single
+                    outcome below 5.
+                </p>
+
+                <form method="POST" action="{{ route('evaluator.assessment.grading.grade', $submission->_id) }}"
+                      id="mark-form" class="stack-form">
                     @csrf
 
-                    <!-- CLO 1 -->
-                    <div style="margin-bottom: 18px; border-bottom: 1px solid var(--surface-sunk); padding-bottom: 12px;">
-                        <label for="f-clo1" style="font-weight: 700; font-size: 13px; display: block; color: var(--ink); margin-bottom: 4px;">CLO 1 Score (0 - 10)</label>
-                        <p style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px; line-height: 1.3;">
-                            Analyze IT security frameworks/standards: <strong>0-1</strong> (1 evidence / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
-                        </p>
-                        <input type="number" name="clo1" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo1', $hasGradedThisUser ? $existingClo1 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid var(--line-strong); border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo1">
-                        <x-field-error name="clo1" />
+                    <div class="marks">
+                        @foreach ([1, 2, 3, 4] as $i)
+                            <div class="mark" data-mark>
+                                <label for="f-clo{{ $i }}">Outcome {{ $i }}</label>
+                                <div class="mark-row">
+                                    <input type="number" id="f-clo{{ $i }}" name="clo{{ $i }}"
+                                           min="0" max="10" step="1" required inputmode="numeric"
+                                           value="{{ old('clo'.$i) }}" data-score>
+                                    <span class="mark-of">/ 10</span>
+                                    <span class="mark-verdict" data-verdict aria-live="polite"></span>
+                                </div>
+                                <x-field-error name="clo{{ $i }}" />
+                            </div>
+                        @endforeach
                     </div>
 
-                    <!-- CLO 2 -->
-                    <div style="margin-bottom: 18px; border-bottom: 1px solid var(--surface-sunk); padding-bottom: 12px;">
-                        <label for="f-clo2" style="font-weight: 700; font-size: 13px; display: block; color: var(--ink); margin-bottom: 4px;">CLO 2 Score (0 - 10)</label>
-                        <p style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px; line-height: 1.3;">
-                            Evaluate security & management applications: <strong>0-1</strong> (1 evidence of tools / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4 evidences).
-                        </p>
-                        <input type="number" name="clo2" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo2', $hasGradedThisUser ? $existingClo2 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid var(--line-strong); border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo2">
-                        <x-field-error name="clo2" />
+                    {{--
+                        The overall line names the outcome that is failing, which is
+                        the thing the marker needs to notice. Announced politely so
+                        it is not read out on every keystroke.
+                    --}}
+                    <p class="verdict-line" id="overall" role="status" aria-live="polite"></p>
+
+                    <div class="field">
+                        <label for="f-grader-feedback">Feedback for the candidate</label>
+                        <textarea id="f-grader-feedback" name="grader_feedback" rows="5"
+                                  maxlength="1000"
+                                  placeholder="What they demonstrated, and where the evidence fell short.">{{ old('grader_feedback') }}</textarea>
+                        <p class="field-hint">Shown to the candidate with their result. Up to 1000 characters.</p>
+                        <x-field-error name="grader_feedback" />
                     </div>
 
-                    <!-- CLO 3 -->
-                    <div style="margin-bottom: 18px; border-bottom: 1px solid var(--surface-sunk); padding-bottom: 12px;">
-                        <label for="f-clo3" style="font-weight: 700; font-size: 13px; display: block; color: var(--ink); margin-bottom: 4px;">CLO 3 Score (0 - 10)</label>
-                        <p style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px; line-height: 1.3;">
-                            Complete risk identification cycle: <strong>0-1</strong> (1 evidence of strategies / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
-                        </p>
-                        <input type="number" name="clo3" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo3', $hasGradedThisUser ? $existingClo3 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid var(--line-strong); border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo3">
-                        <x-field-error name="clo3" />
-                    </div>
-
-                    <!-- CLO 4 -->
-                    <div style="margin-bottom: 18px; border-bottom: 1px solid var(--surface-sunk); padding-bottom: 12px;">
-                        <label for="f-clo4" style="font-weight: 700; font-size: 13px; display: block; color: var(--ink); margin-bottom: 4px;">CLO 4 Score (0 - 10)</label>
-                        <p style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px; line-height: 1.3;">
-                            Construct organization-wide security plans: <strong>0-1</strong> (1 evidence of skills / Fail), <strong>2-4</strong> (2 evidences), <strong>5-7</strong> (3 evidences), <strong>8-10</strong> (4+ evidences).
-                        </p>
-                        <input type="number" name="clo4" class="clo-score-input" min="0" max="10" 
-                            value="{{ old('clo4', $hasGradedThisUser ? $existingClo4 : '') }}" required style="width: 100%; padding: 8px; border: 1px solid var(--line-strong); border-radius: 6px;" {{ $hasGradedThisUser ? 'disabled' : '' }} id="f-clo4">
-                        <x-field-error name="clo4" />
-                    </div>
-
-                    <!-- Calculator Output Panel -->
-                    <div style="background: var(--surface-sunk); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 15px;">
-                        <h4 style="margin-top:0; margin-bottom:8px; font-size:12.5px; color:var(--ink-2); text-transform:uppercase; letter-spacing:0.5px;">Live Scoring Summary</h4>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                            <span>Total CLO Score:</span>
-                            <strong id="total_score_text">0 / 40</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
-                            <span>Overall Percentage:</span>
-                            <strong id="percentage_text">0%</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-top: 1px dashed var(--line-strong); padding-top: 6px; font-size: 14px; font-weight: bold;">
-                            <span>Calculated Result:</span>
-                            <span id="result_badge" class="badge" style="padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; font-weight: bold;">Awaiting Scores</span>
-                        </div>
-                    </div>
-
-                    <label for="f-grader-feedback" style="font-weight: 700; font-size: 13px; display: block; color: var(--ink); margin-bottom: 4px;">Grader Feedback</label>
-                    <textarea name="grader_feedback" rows="4" placeholder="Write your grading comments here..." {{ $hasGradedThisUser ? 'readonly' : '' }} style="width: 100%; padding: 8px; border: 1px solid var(--line-strong); border-radius: 6px; font-size: 13px; margin-bottom: 15px;" id="f-grader-feedback">{{ old('grader_feedback', $hasGradedThisUser ? $existingFeedback : '') }}</textarea>
-                    <x-field-error name="grader_feedback" />
-
-                    <div class="tip-box tip-box-light" style="margin-top: 0; margin-bottom: 14px; background: #fefbeb; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11.5px; border-radius: 4px; line-height: 1.4; color: #856404;">
-                        <strong>UTM APEL C Rules:</strong>
-                        <p style="margin: 3px 0 0 0;">
-                            Student must score <strong>at least 5 / 10 (50%)</strong> on each of the 4 Course Learning Outcomes to obtain an overall **PASS** recommendation.
-                        </p>
-                    </div>
-
-                    @if ($hasGradedThisUser)
-                        <div class="alert alert-success" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb; padding: 10px; border-radius: 8px; font-weight: 600; text-align: center; margin-top: 10px; font-size: 13px;">
-                            ✓ Your Grading Completed ({{ strtoupper($existingResult) }})
-                        </div>
-                    @else
-                        <button type="submit" class="btn btn-full" style="width: 100%; padding: 10px; background: var(--maroon); color: #ffffff; font-weight: 600; border: none; border-radius: 6px; cursor: pointer;">
-                            Save Grade
-                        </button>
-                    @endif
+                    <button type="submit" class="btn btn-primary">Submit marks</button>
                 </form>
-            </div>
-        </aside>
+            </section>
+        @endif
     </div>
-</div>
+@endsection
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const inputs = document.querySelectorAll(".clo-score-input");
-        const totalText = document.getElementById("total_score_text");
-        const percentageText = document.getElementById("percentage_text");
-        const resultBadge = document.getElementById("result_badge");
+@push('scripts')
+    <script>
+        (function () {
+            const form = document.getElementById('mark-form');
+            if (!form) return;
 
-        function updateGrades() {
-            let total = 0;
-            let allFilled = true;
-            let passEach = true;
+            const overall = document.getElementById('overall');
+            const blocks = [...form.querySelectorAll('[data-mark]')];
 
-            inputs.forEach(input => {
-                const valStr = input.value;
-                if (valStr === "") {
-                    allFilled = false;
+            // Mirrors AssessmentGradingController:116 - every outcome must reach 5.
+            const PASS_MARK = 5;
+
+            function paint() {
+                const marks = blocks.map((block, i) => {
+                    const input = block.querySelector('[data-score]');
+                    const verdict = block.querySelector('[data-verdict]');
+                    const raw = input.value.trim();
+                    const n = raw === '' ? null : Number(raw);
+
+                    block.classList.remove('is-pass', 'is-fail');
+                    verdict.textContent = '';
+
+                    if (n === null || Number.isNaN(n)) return { i: i + 1, n: null };
+
+                    const ok = n >= PASS_MARK;
+                    block.classList.add(ok ? 'is-pass' : 'is-fail');
+                    verdict.textContent = ok ? 'meets it' : 'below 5';
+                    return { i: i + 1, n };
+                });
+
+                const given = marks.filter(m => m.n !== null);
+
+                if (given.length < marks.length) {
+                    overall.className = 'verdict-line';
+                    overall.textContent = `${given.length} of ${marks.length} outcomes marked.`;
                     return;
                 }
-                const val = parseInt(valStr, 10);
-                total += val;
-                if (val < 5) {
-                    passEach = false;
+
+                const failing = given.filter(m => m.n < PASS_MARK).map(m => 'outcome ' + m.i);
+                const total = given.reduce((sum, m) => sum + m.n, 0);
+
+                if (failing.length === 0) {
+                    overall.className = 'verdict-line is-pass';
+                    overall.textContent = `Pass — every outcome is at or above 5. Total ${total} of 40.`;
+                } else {
+                    overall.className = 'verdict-line is-fail';
+                    overall.textContent =
+                        `Fail — ${failing.join(' and ')} ${failing.length === 1 ? 'is' : 'are'} below 5. ` +
+                        `Total ${total} of 40 does not change that.`;
                 }
-            });
-
-            if (!allFilled) {
-                totalText.textContent = "-- / 40";
-                percentageText.textContent = "--%";
-                resultBadge.textContent = "Awaiting Scores";
-                resultBadge.style.background = "var(--line)";
-                resultBadge.style.color = "var(--ink-2)";
-                return;
             }
 
-            const pct = Math.round((total / 40) * 100);
-            totalText.textContent = total + " / 40";
-            percentageText.textContent = pct + "%";
-
-            if (passEach) {
-                resultBadge.textContent = "PASS";
-                resultBadge.style.background = "#d1fae5";
-                resultBadge.style.color = "#065f46";
-            } else {
-                resultBadge.textContent = "FAIL";
-                resultBadge.style.background = "#fee2e2";
-                resultBadge.style.color = "#991b1b";
-            }
-        }
-
-        inputs.forEach(input => {
-            input.addEventListener("input", updateGrades);
-        });
-
-        updateGrades();
-    });
-</script>
-@endsection
+            form.addEventListener('input', paint);
+            paint();
+        })();
+    </script>
+@endpush

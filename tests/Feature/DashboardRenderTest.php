@@ -223,4 +223,59 @@ class DashboardRenderTest extends FeatureTestCase
             ->assertSee('outcome--bad', false)
             ->assertDontSee('outcome--good', false);
     }
+
+    public function test_grading_queue_groups_by_what_still_needs_marking(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $toMark = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::SUBMITTED_FOR_GRADING->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+        $this->makeSubmission($toMark);
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.assessment.grading.index'))
+            ->assertOk()
+            ->assertSee('Waiting on you', false)
+            ->assertSee('To mark', false);
+    }
+
+    /**
+     * The marking form applies an unusual rule - 5 of 10 on EVERY outcome, so
+     * 10/10/10/4 fails - and the old layout led with a running total out of 40
+     * and a percentage, the two numbers the rule does not use. The form must
+     * state the rule it is actually applying.
+     */
+    public function test_the_marking_form_states_the_rule_it_applies(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::SUBMITTED_FOR_GRADING->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+        $submission = $this->makeSubmission($application);
+
+        $response = $this->actingAs($evaluator)
+            ->get(route('evaluator.assessment.grading.show', $submission->_id));
+
+        $response->assertOk();
+        $response->assertSee('at least 5 on', false);
+        $response->assertSee('every', false);
+
+        // All four outcomes must be markable.
+        foreach ([1, 2, 3, 4] as $i) {
+            $response->assertSee('name="clo'.$i.'"', false);
+        }
+
+        // The literal asterisks from a stray markdown emphasis are gone.
+        $response->assertDontSee('**PASS**', false);
+    }
 }

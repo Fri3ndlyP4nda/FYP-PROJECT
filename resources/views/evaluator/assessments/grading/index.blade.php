@@ -1,133 +1,122 @@
 @extends('layouts.app')
 
 @section('content')
-    @php
-        $totalSubmissions = $submissions->count();
-        $gradedSubmissions = $submissions->whereNotNull('graded_at')->count();
-        $pendingSubmissions = $totalSubmissions - $gradedSubmissions;
-    @endphp
+    {{--
+        The grading queue.
 
-    <div class="container grading-shell">
-        <section class="page-hero">
+        What stood here was three stat tiles above a six-column table -
+        submission id, application id, student id, answer file, score, result.
+        Half of it was identifiers, which is what a database shows you, not what
+        an evaluator needs: whose work this is, whether it is waiting on them,
+        and a way in.
+
+        Grouped the same way as everything else the evaluator sees, so the top
+        of the page is the work.
+    --}}
+    <div class="deck">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">APEL C Grading</span>
-                <h2>Assessment Submissions</h2>
-                <p class="muted page-hero-text">
-                    Review uploaded student answer files and complete the grading process for APEL C applications.
-                </p>
+                <p class="deck-eyebrow">APEL C grading</p>
+                <h1 class="deck-title">
+                    {{ $awaiting->count() }} {{ Str::plural('submission', $awaiting->count()) }} to mark
+                </h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('evaluator.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-                <a href="{{ route('evaluator.assessment.papers.index') }}" class="btn">Assessment Papers</a>
+            <div class="deck-acts">
+                <a href="{{ route('evaluator.dashboard') }}" class="btn btn-secondary">Dashboard</a>
+                <a href="{{ route('evaluator.assessment.papers.index') }}" class="btn btn-secondary">Papers</a>
             </div>
-        </section>
+        </header>
 
         @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
         @endif
 
-        <section class="papers-stats-grid">
-            <div class="papers-stat-card">
-                <span>Total Submissions</span>
-                <strong>{{ $totalSubmissions }}</strong>
-            </div>
-            <div class="papers-stat-card">
-                <span>Pending Grading</span>
-                <strong>{{ $pendingSubmissions }}</strong>
-            </div>
-            <div class="papers-stat-card">
-                <span>Graded</span>
-                <strong>{{ $gradedSubmissions }}</strong>
-            </div>
-        </section>
+        @if ($submissions->isEmpty())
+            <section class="blank">
+                <h2>No submissions yet.</h2>
+                <p>
+                    Answer scripts appear here once a candidate submits one against a paper you set
+                    or an application you are assigned to.
+                </p>
+                <a href="{{ route('evaluator.assessment.papers.index') }}" class="btn btn-secondary">Your papers</a>
+            </section>
+        @else
+            @php
+                $groups = [
+                    ['key' => 'todo', 'title' => 'Waiting on you', 'note' => 'Nothing is decided until these are marked.', 'set' => $awaiting],
+                    ['key' => 'done', 'title' => 'Marked', 'note' => 'Already graded.', 'set' => $graded],
+                ];
+            @endphp
 
-        <section class="table-card">
-            <div class="table-card-header">
-                <div>
-                    <h3>Submission Queue</h3>
-                    <p>All uploaded APEL C answer files waiting for evaluator review.</p>
-                </div>
-            </div>
+            @foreach ($groups as $group)
+                @continue($group['set']->isEmpty())
+                <section class="stack" aria-labelledby="gg-{{ $group['key'] }}">
+                    <div class="stack-head">
+                        <h2 id="gg-{{ $group['key'] }}">
+                            {{ $group['title'] }}
+                            <span class="stack-count">{{ $group['set']->count() }}</span>
+                        </h2>
+                        <p>{{ $group['note'] }}</p>
+                    </div>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Application ID</th>
-                            <th>Student</th>
-                            <th>Answer File</th>
-                            <th>Score</th>
-                            <th>Result</th>
-                            <th>Status</th>
-                            <th style="width: 180px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($submissions as $submission)
-                            <tr>
-                                <td>
-                                    <span class="app-id-badge">{{ $submission->application_id }}</span>
-                                </td>
+                    <div class="stack-body stack-body--rows">
+                        @foreach ($group['set'] as $submission)
+                            @php
+                                $application = $applications[(string) $submission->application_id] ?? null;
+                                $student = $students[(string) $submission->student_id] ?? null;
+                                $isGraded = $submission->graded_at !== null;
+                            @endphp
 
-                                <td>
-                                    {{ \App\Models\User::where('_id', $submission->student_id)->value('name') ?? 'Unknown' }}
-                                </td>
-
-                                <td>
-                                    @if ($submission->answer_file)
-                                        <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
-                                            class="paper-file-link">
-                                            View Answer
-                                        </a>
-                                    @else
-                                        <span class="stage-badge">No file</span>
-                                    @endif
-                                </td>
-
-                                <td>{{ $submission->score ?? '-' }}</td>
-
-                                <td>
-                                    @if ($submission->result === 'pass')
-                                        <span class="badge badge-approved">Pass</span>
-                                    @elseif ($submission->result === 'fail')
-                                        <span class="badge badge-rejected">Fail</span>
-                                    @else
-                                        <span class="badge badge-pending">Pending</span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    @if ($submission->graded_at)
-                                        <span class="stage-badge">Graded</span>
-                                    @else
-                                        <span class="stage-badge">Awaiting grading</span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    <a href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}"
-                                        class="btn btn-sm">
-                                        {{ $submission->graded_at ? 'View Grade' : 'Grade Now' }}
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7">
-                                    <div class="table-empty">
-                                        <div class="empty-mark small-empty-mark">01</div>
-                                        <h4>No submissions found</h4>
-                                        <p>There are currently no APEL C submissions available for grading.</p>
+                            <article class="row-case">
+                                <div class="row-case-tell">
+                                    <div class="case-top">
+                                        <span class="badge badge--type">APEL C</span>
+                                        @if ($isGraded)
+                                            <span class="badge badge--{{ $submission->result === 'pass' ? 'good' : 'bad' }}">
+                                                {{ $submission->result === 'pass' ? 'Passed' : 'Not passed' }}
+                                                @if (filled($submission->score))
+                                                    &nbsp;{{ $submission->score }}%
+                                                @endif
+                                            </span>
+                                        @else
+                                            <span class="badge badge--attention">To mark</span>
+                                        @endif
+                                        <span class="case-ref">
+                                            {{ strtoupper(substr((string) $submission->_id, -6)) }}
+                                        </span>
                                     </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
+
+                                    <h3 class="row-case-title">
+                                        {{ $student?->name ?? 'Candidate no longer on file' }}
+                                    </h3>
+
+                                    <p class="row-case-meta">
+                                        {{ $application?->credit_course_name
+                                            ?: ($application?->credit_course_code
+                                                ?: ($application?->program_applied ?: 'Course not stated')) }}
+                                        @if ($submission->submitted_at)
+                                            &nbsp;·&nbsp;
+                                            submitted {{ \Carbon\Carbon::parse($submission->submitted_at)->format('j M Y') }}
+                                        @endif
+                                    </p>
+
+                                    @if ($submission->answer_file)
+                                        <p class="row-case-meta">
+                                            <a href="{{ route('files.submission', $submission->_id) }}"
+                                               target="_blank" rel="noopener">Open the answer script</a>
+                                        </p>
+                                    @endif
+                                </div>
+
+                                <a class="btn {{ $isGraded ? 'btn-ghost' : 'btn-primary' }} btn--sm"
+                                   href="{{ route('evaluator.assessment.grading.show', $submission->_id) }}">
+                                    {{ $isGraded ? 'Review marking' : 'Mark this' }}
+                                </a>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endforeach
+        @endif
     </div>
 @endsection
