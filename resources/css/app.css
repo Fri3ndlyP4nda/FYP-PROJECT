@@ -3875,3 +3875,45 @@ td.num,
 }
 .check-pts { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: var(--t-sm); color: var(--ink-2); }
 .check-pts span { color: var(--ink-4); font-size: var(--t-xs); }
+
+/* Single-purpose auth screens ---------------------------------------------- */
+
+/*
+   Forgot password, reset, and the one-time code each ask for one thing, so
+   they get one centred panel rather than the two-column door the sign-in and
+   registration pages use. The shape tells the reader how much is being asked
+   before they read a word.
+*/
+.gate {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: var(--s-4);
+    width: min(100% - 2.5rem, 27rem);
+    min-height: 100vh;
+    margin-inline: auto;
+    padding: var(--s-5) 0;
+}
+
+.gate-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    color: inherit;
+    text-decoration: none;
+}
+.gate-mark:hover { text-decoration: none; }
+
+.gate .door-panel { width: 100%; }
+
+/* A one-time code is read digit by digit off another screen. */
+.code-input {
+    font-family: var(--font-mono);
+    font-size: var(--t-xl);
+    letter-spacing: .4em;
+    text-align: center;
+}
+
+@media (max-width: 40rem) {
+    .gate { min-height: auto; }
+}

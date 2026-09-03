@@ -1,106 +1,98 @@
 @extends('layouts.app')
 
-
 @section('content')
-    <div class="auth-main" style="min-height: 100vh; background: radial-gradient(circle at center, var(--surface-sunk) 0%, #f7eff2 100%);">
-        <div class="auth-form-card">
-            <!-- Header -->
-            <div class="auth-header">
-                <h2>Reset Password</h2>
-                <p class="muted">Enter your new password below to complete the password reset process.</p>
-            </div>
+    {{--
+        Setting a new password from an emailed link.
 
-            <!-- Errors Alert -->
+        The rules are stated before the reader types, not after the server
+        rejects them - AuthController and PasswordResetController both require
+        eight characters with mixed case and a number, and a person choosing a
+        password should not have to discover that by failing.
+    --}}
+    <div class="gate">
+        <a class="gate-mark" href="{{ route('login') }}">
+            <span class="door-mark-glyph" aria-hidden="true">AP</span>
+            <span class="door-mark-name">APEL</span>
+        </a>
+
+        <section class="door-panel" aria-labelledby="rp-head">
+            <h2 id="rp-head">Choose a new password</h2>
+            <p class="door-panel-sub">This link works once, and only for a short time.</p>
+
             @if ($errors->any())
-                <div class="auth-alert auth-alert-error">
-                    <div style="font-size: 16px;">⚠️</div>
-                    <div>
-                        <ul style="padding-left: 12px; margin: 0;">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
+                <div class="notice notice--bad" role="alert">
+                    @foreach ($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
                 </div>
             @endif
 
-            <!-- Form -->
             <form method="POST" action="{{ route('password.update') }}">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token ?? request()->route('token') }}">
 
-                <input type="hidden" name="token" value="{{ $token }}">
-
-                <!-- Email Input (Read-only) -->
-                <div class="form-input-group">
-                    <label for="email">Email Address</label>
-                    <div class="input-wrapper">
-                        <input id="email" type="email" name="email" class="input-field"
-                            value="{{ old('email', $email) }}" required readonly style="background-color: #f7f5f6; color: #718096; cursor: not-allowed;">
-                        <x-field-error name="email" />
-                    </div>
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" required
+                           autocomplete="username"
+                           value="{{ old('email', request()->query('email')) }}">
+                    <x-field-error name="email" />
                 </div>
 
-                <!-- Password Input -->
-                <div class="form-input-group">
-                    <label for="password">New Password</label>
-                    <div class="input-wrapper">
-                        <input id="password" type="password" name="password" class="input-field" 
-                            placeholder="••••••••" required style="padding-right: 45px;" autofocus>
-                        <x-field-error name="password" />
-                        
-                        <button type="button" onclick="togglePassword('password', this)" class="eye-toggle-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.39 18.39 0 0 1 2.18-3.03M8.9 8.9a3.5 3.5 0 0 1 4.9 4.9M1 1l22 22"></path><path d="M12 5c7 0 10 7 10 7a18.4 18.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path></svg>
+                <div class="field">
+                    <label for="password">New password</label>
+                    <div class="field-peek">
+                        <input id="password" name="password" type="password" required autofocus
+                               autocomplete="new-password">
+                        <button type="button" class="peek-btn" data-peek="password"
+                                aria-label="Show password" aria-pressed="false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round" aria-hidden="true">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
                         </button>
                     </div>
+                    <p class="field-hint">
+                        At least 8 characters, with an upper and a lower case letter and a number.
+                    </p>
+                    <x-field-error name="password" />
                 </div>
 
-                <!-- Confirm Password Input -->
-                <div class="form-input-group">
-                    <label for="password_confirmation">Confirm New Password</label>
-                    <div class="input-wrapper">
-                        <input id="password_confirmation" type="password" name="password_confirmation" class="input-field" 
-                            placeholder="••••••••" required style="padding-right: 45px;">
-                        <x-field-error name="password_confirmation" />
-                        
-                        <button type="button" onclick="togglePassword('password_confirmation', this)" class="eye-toggle-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.39 18.39 0 0 1 2.18-3.03M8.9 8.9a3.5 3.5 0 0 1 4.9 4.9M1 1l22 22"></path><path d="M12 5c7 0 10 7 10 7a18.4 18.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path></svg>
-                        </button>
-                    </div>
+                <div class="field">
+                    <label for="password_confirmation">Confirm new password</label>
+                    <input id="password_confirmation" name="password_confirmation"
+                           type="password" required autocomplete="new-password">
+                    <x-field-error name="password_confirmation" />
                 </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="auth-submit-btn">
-                    <span>Reset Password</span>
-                    <span style="font-size: 16px;">→</span>
+                <button type="submit" class="go">
+                    Save the new password
+                    <span class="go-arrow" aria-hidden="true">&rarr;</span>
                 </button>
             </form>
 
-            <!-- Footer links -->
-            <div class="auth-footer-links">
-                <p><a href="{{ route('login') }}">Back to Login</a></p>
+            <div class="door-foot">
+                <a href="{{ route('login') }}">Back to sign in</a>
             </div>
-        </div>
+        </section>
     </div>
 @endsection
 
 @push('scripts')
     <script>
-        function togglePassword(inputId, button) {
-            const input = document.getElementById(inputId);
-            const openIcon = button.querySelector('.eye-icon-open');
-            const closedIcon = button.querySelector('.eye-icon-closed');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                openIcon.style.display = 'none';
-                closedIcon.style.display = 'inline-block';
-            } else {
-                input.type = 'password';
-                openIcon.style.display = 'inline-block';
-                closedIcon.style.display = 'none';
-            }
-        }
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-peek]');
+            if (!btn) return;
+
+            const input = document.getElementById(btn.dataset.peek);
+            if (!input) return;
+
+            const shown = input.type === 'text';
+            input.type = shown ? 'password' : 'text';
+            btn.setAttribute('aria-pressed', String(!shown));
+            btn.setAttribute('aria-label', shown ? 'Show password' : 'Hide password');
+        });
     </script>
 @endpush

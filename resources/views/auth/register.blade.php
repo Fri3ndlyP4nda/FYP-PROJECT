@@ -1,185 +1,163 @@
 @extends('layouts.app')
 
-
 @section('content')
-    <div class="auth-grid">
-        <!-- Left Sidebar: System Info and Branding -->
-        <div class="auth-sidebar">
-            <div class="decor-orb orb-1"></div>
-            <div class="decor-orb orb-2"></div>
+    {{--
+        Creating a candidate account.
 
-            <!-- Brand Header -->
-            <div class="auth-brand">
-                <div class="auth-brand-logo">🎓</div>
-                <span class="auth-brand-title">APEL Portal</span>
-                <p class="auth-brand-subtitle">Management & Evaluation System</p>
-            </div>
+        The panel on the left used to be a promotional block - "Begin Your APEL
+        Journey" over three benefit lines. Someone on the registration form has
+        already decided; what they need now is to know what they are signing up
+        to do, so the space carries the same five stages the landing page shows,
+        and the password rules are stated before they are broken rather than
+        after.
 
-            <!-- Promotional Features Section -->
-            <div class="auth-promo-content">
-                <h1 class="auth-promo-heading">Begin Your APEL Journey</h1>
-                <p class="auth-promo-text">
-                    Create an account as a student to evaluate your prior experiential learning. Unlock new academic achievements and complete your degree pathways faster.
+        Only candidates register here. Staff accounts are created by the
+        registry, which is why nothing on this page offers a role.
+    --}}
+    <div class="wrap">
+        <div class="door">
+            <section class="door-tell">
+                <div class="door-mark">
+                    <span class="door-mark-glyph" aria-hidden="true">AP</span>
+                    <span>
+                        <span class="door-mark-name">APEL</span>
+                        <span class="door-mark-sub">Universiti Teknologi Malaysia</span>
+                    </span>
+                </div>
+
+                <h1 class="door-head">Start your <em>application</em>.</h1>
+
+                <p class="door-lede">
+                    An account lets you build your application over several sittings, upload your
+                    evidence, and follow where it has got to. Nothing is sent to the faculty until
+                    you submit it.
                 </p>
 
-                <!-- Feature Widgets Stack -->
-                <div class="auth-features-stack">
-                    <div class="feature-widget">
-                        <div class="feature-icon-wrapper">📝</div>
-                        <div class="feature-widget-content">
-                            <h4>Easy Registration</h4>
-                            <p>Sign up in seconds to access the student application dashboard.</p>
-                        </div>
-                    </div>
+                <h2 class="sr-only">What happens after you apply</h2>
 
-                    <div class="feature-widget">
-                        <div class="feature-icon-wrapper">📁</div>
-                        <div class="feature-widget-content">
-                            <h4>Portfolio Management</h4>
-                            <p>Build and update your digital portfolio with evidence of your work experience.</p>
-                        </div>
-                    </div>
+                <ol class="spine" style="--spine-done: 0%">
+                    <li class="spine-node" data-state="todo">
+                        <span class="spine-label">You submit your evidence</span>
+                        <span class="spine-note">Work history, certificates, and what you learned doing it.</span>
+                    </li>
+                    <li class="spine-node" data-state="todo">
+                        <span class="spine-label">An advisor reads it</span>
+                        <span class="spine-note">They recommend whether to proceed, and how you should be assessed.</span>
+                    </li>
+                    <li class="spine-node" data-state="todo">
+                        <span class="spine-label">You pay the processing fee</span>
+                        <span class="spine-note">Only once someone has said your case is worth assessing.</span>
+                    </li>
+                    <li class="spine-node" data-state="todo">
+                        <span class="spine-label">One or two evaluators assess you</span>
+                        <span class="spine-note">A written paper, or a portfolio of what you have actually built.</span>
+                    </li>
+                    <li class="spine-node" data-state="todo">
+                        <span class="spine-label">The faculty decides</span>
+                        <span class="spine-note">Admission, or credit hours awarded against the course.</span>
+                    </li>
+                </ol>
+            </section>
 
-                    <div class="feature-widget">
-                        <div class="feature-icon-wrapper">🔔</div>
-                        <div class="feature-widget-content">
-                            <h4>Real-Time Progress</h4>
-                            <p>Receive notifications at each stage of your application review and evaluation.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <section class="door-panel" aria-labelledby="reg-head">
+                <h2 id="reg-head">Create an account</h2>
+                <p class="door-panel-sub">For candidates. Staff accounts are set up by the registry.</p>
 
-            <!-- Footer Details -->
-            <div class="auth-sidebar-footer">
-                <span>© {{ date('Y') }} APEL Management System</span>
-                <span>Version 2.0.0</span>
-            </div>
-        </div>
-
-        <!-- Right Content Section: Form -->
-        <div class="auth-main">
-            <div class="auth-form-card">
-                <!-- Header -->
-                <div class="auth-header">
-                    <h2>Create Account</h2>
-                    <p class="muted">Register as a student to start your APEL application.</p>
-                </div>
-
-                <!-- Errors Alert -->
                 @if ($errors->any())
-                    <div class="auth-alert auth-alert-error">
-                        <div style="font-size: 16px;">⚠️</div>
-                        <div>
-                            <ul style="padding-left: 12px; margin: 0;">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                    <div class="notice notice--bad" role="alert">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
                     </div>
                 @endif
 
-                <!-- Register Form -->
                 <form method="POST" action="{{ route('register.submit') }}">
                     @csrf
 
-                    <!-- Name Input -->
-                    <div class="form-input-group">
-                        <label for="name">Full Name</label>
-                        <div class="input-wrapper">
-                            <input id="name" type="text" name="name" class="input-field" 
-                                value="{{ old('name') }}" placeholder="John Doe" required autofocus>
-                            <x-field-error name="name" />
-                        </div>
+                    <div class="field">
+                        <label for="name">Full name</label>
+                        <input id="name" name="name" type="text" required autofocus
+                               maxlength="255" autocomplete="name" value="{{ old('name') }}">
+                        <x-field-error name="name" />
                     </div>
 
-                    <!-- Email Input -->
-                    <div class="form-input-group">
-                        <label for="email">Email Address</label>
-                        <div class="input-wrapper">
-                            <input id="email" type="email" name="email" class="input-field" 
-                                value="{{ old('email') }}" placeholder="name@domain.com" required>
-                            <x-field-error name="email" />
-                        </div>
+                    <div class="field">
+                        <label for="email">Email address</label>
+                        <input id="email" name="email" type="email" required
+                               maxlength="255" autocomplete="username"
+                               placeholder="name@example.com" value="{{ old('email') }}">
+                        <p class="field-hint">You sign in with this, and we send your updates here.</p>
+                        <x-field-error name="email" />
                     </div>
 
-                    <!-- Password Input -->
-                    <div class="form-input-group">
-                        <label for="register-password">Password</label>
-                        <div class="input-wrapper">
-                            <input id="register-password" type="password" name="password" class="input-field" 
-                                placeholder="••••••••" required style="padding-right: 45px;">
-                            <x-field-error name="password" />
-                            
-                            <button type="button" onclick="togglePassword('register-password', this)" class="eye-toggle-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.39 18.39 0 0 1 2.18-3.03M8.9 8.9a3.5 3.5 0 0 1 4.9 4.9M1 1l22 22"></path><path d="M12 5c7 0 10 7 10 7a18.4 18.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path></svg>
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="field-peek">
+                            <input id="password" name="password" type="password" required
+                                   autocomplete="new-password">
+                            <button type="button" class="peek-btn" data-peek="password"
+                                    aria-label="Show password" aria-pressed="false">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                     stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
                             </button>
                         </div>
+                        {{-- The exact rule AuthController enforces, stated up front. --}}
+                        <p class="field-hint">
+                            At least 8 characters, with an upper and a lower case letter and a number.
+                        </p>
+                        <x-field-error name="password" />
                     </div>
 
-                    <!-- Confirm Password Input -->
-                    <div class="form-input-group">
-                        <label for="register-password-confirmation">Confirm Password</label>
-                        <div class="input-wrapper">
-                            <input id="register-password-confirmation" type="password" name="password_confirmation" class="input-field" 
-                                placeholder="••••••••" required style="padding-right: 45px;">
-                            <x-field-error name="password_confirmation" />
-                            
-                            <button type="button" onclick="togglePassword('register-password-confirmation', this)" class="eye-toggle-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-open"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon-closed" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.39 18.39 0 0 1 2.18-3.03M8.9 8.9a3.5 3.5 0 0 1 4.9 4.9M1 1l22 22"></path><path d="M12 5c7 0 10 7 10 7a18.4 18.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path></svg>
-                            </button>
+                    <div class="field">
+                        <label for="password_confirmation">Confirm password</label>
+                        <input id="password_confirmation" name="password_confirmation"
+                               type="password" required autocomplete="new-password">
+                        <x-field-error name="password_confirmation" />
+                    </div>
+
+                    <div class="field">
+                        <label for="captcha-answer">Security check</label>
+                        <div class="sum">
+                            <span class="sum-q" aria-hidden="true">{{ session('captcha_question') }}</span>
+                            <input id="captcha-answer" name="captcha_answer" type="text" required
+                                   inputmode="numeric" autocomplete="off"
+                                   aria-label="Answer: {{ session('captcha_question') }}"
+                                   placeholder="Answer">
                         </div>
+                        <x-field-error name="captcha_answer" />
                     </div>
 
-                    <!-- Security Verification Captcha -->
-                    <div class="form-input-group">
-                        <label for="f-captcha-answer">Security Check</label>
-                        <div class="captcha-box">
-                            <div class="captcha-question-tag">
-                                <span class="verify-label">Verify</span>
-                                <span>{{ session('captcha_question') }}</span>
-                            </div>
-                            <input type="text" name="captcha_answer" class="input-field captcha-input" 
-                                placeholder="Answer" required autocomplete="off" id="f-captcha-answer">
-                            <x-field-error name="captcha_answer" />
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="auth-submit-btn">
-                        <span>Register</span>
-                        <span style="font-size: 16px;">→</span>
+                    <button type="submit" class="go">
+                        Create account
+                        <span class="go-arrow" aria-hidden="true">&rarr;</span>
                     </button>
                 </form>
 
-                <!-- Login and recovery footer -->
-                <div class="auth-footer-links">
-                    <p>Already have an account? <a href="{{ route('login') }}">Login here</a></p>
+                <div class="door-foot">
+                    <span>Already registered? <a href="{{ route('login') }}">Sign in</a></span>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 @endsection
 
 @push('scripts')
     <script>
-        function togglePassword(inputId, button) {
-            const input = document.getElementById(inputId);
-            const openIcon = button.querySelector('.eye-icon-open');
-            const closedIcon = button.querySelector('.eye-icon-closed');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                openIcon.style.display = 'none';
-                closedIcon.style.display = 'inline-block';
-            } else {
-                input.type = 'password';
-                openIcon.style.display = 'inline-block';
-                closedIcon.style.display = 'none';
-            }
-        }
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-peek]');
+            if (!btn) return;
+
+            const input = document.getElementById(btn.dataset.peek);
+            if (!input) return;
+
+            const shown = input.type === 'text';
+            input.type = shown ? 'password' : 'text';
+            btn.setAttribute('aria-pressed', String(!shown));
+            btn.setAttribute('aria-label', shown ? 'Show password' : 'Hide password');
+        });
     </script>
 @endpush
