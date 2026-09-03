@@ -7,6 +7,7 @@ use App\Domain\Apel\StageMachine;
 use App\Http\Controllers\Controller;
 use App\Mail\GenericQueueMail;
 use App\Models\Application;
+use App\Models\AssessmentPaper;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
 use App\Support\ApplicationCase;
@@ -87,7 +88,15 @@ class ApplicationReviewController extends Controller
             );
         }
 
-        return view('evaluator.applications.show', compact('application'));
+        return view('evaluator.applications.show', [
+            'application' => $application,
+            'case' => ApplicationCase::for($application, Auth::user()),
+            'candidate' => User::where('_id', (string) $application->user_id)->first(),
+            'paper' => AssessmentPaper::where('application_id', (string) $application->_id)
+                ->where('status', 'active')
+                ->first(),
+            'submission' => AssessmentSubmission::where('application_id', (string) $application->_id)->first(),
+        ]);
     }
 
     public function update(Request $request, $id)

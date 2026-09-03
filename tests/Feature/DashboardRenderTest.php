@@ -278,4 +278,57 @@ class DashboardRenderTest extends FeatureTestCase
         // The literal asterisks from a stray markdown emphasis are gone.
         $response->assertDontSee('**PASS**', false);
     }
+
+    public function test_review_screen_renders_for_both_tracks_at_every_stage(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        foreach (['APEL A', 'APEL C'] as $type) {
+            foreach (ApelStage::cases() as $stage) {
+                if ($stage === ApelStage::DRAFT) {
+                    continue; // The queue excludes drafts.
+                }
+
+                $application = $this->makeApplication($student, [
+                    'application_type' => $type,
+                    'stage' => $stage->value,
+                    'status' => 'Submitted',
+                    'evaluator_id' => (string) $evaluator->_id,
+                    'program_applied' => 'Bachelor of Engineering',
+                ]);
+
+                $this->actingAs($evaluator)
+                    ->get(route('evaluator.applications.show', $application->_id))
+                    ->assertOk()
+                    ->assertSee('Your recommendation', false);
+            }
+        }
+    }
+
+    /**
+     * update() validates admission_decision as in:recommended,not_recommended.
+     * The old form offered "Pending" and preselected it, so the default
+     * submission could only come back as a validation error.
+     */
+    public function test_the_review_form_offers_only_decisions_the_controller_accepts(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::UNDER_REVIEW->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+
+        $response = $this->actingAs($evaluator)
+            ->get(route('evaluator.applications.show', $application->_id));
+
+        $response->assertOk();
+        $response->assertSee('value="recommended"', false);
+        $response->assertSee('value="not_recommended"', false);
+        $response->assertDontSee('value="pending"', false);
+    }
 }
