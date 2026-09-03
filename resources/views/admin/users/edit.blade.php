@@ -1,108 +1,126 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container app-shell">
-        <section class="page-hero">
+    {{--
+        Editing one account.
+
+        Two rules in update() can refuse a change, and both are surprising if
+        you meet them only after pressing save: an administrator cannot change
+        their own role, and an evaluator holding live applications cannot be
+        moved off the role. Both are stated here, on the control they govern,
+        before the change is attempted - the server still enforces them, this
+        just stops the reader walking into them.
+    --}}
+    @php
+        $id = (string) ($user->_id ?? $user->id);
+        $isSelf = $id === (string) auth()->id();
+        $isBusyEvaluator = $user->role === 'evaluator' && $activeAssignments > 0;
+    @endphp
+
+    <div class="deck deck--narrow">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">ADMIN MANAGEMENT</span>
-                <h2>Edit User Role</h2>
-                <p class="muted page-hero-text">
-                    Update the selected user's system role and control their access within the APEL platform.
-                </p>
+                <p class="deck-eyebrow">Account</p>
+                <h1 class="deck-title">{{ $user->name }}</h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Back to User Management</a>
+            <div class="deck-acts">
+                <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">All accounts</a>
             </div>
-        </section>
-
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="alert alert-error">
-                {{ session('error') }}
-            </div>
-        @endif
+        </header>
 
         @if ($errors->any())
-            <div class="alert alert-error">
-                <ul style="padding-left: 18px; margin: 0;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="notice notice--bad" role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
             </div>
         @endif
 
-        <div class="form-split-layout">
-            <div class="card form-main-card">
-                <div class="record-meta-grid">
-                    <div class="meta-box">
-                        <span class="meta-label">User Name</span>
-                        <strong>{{ $user->name }}</strong>
+        <section class="panel" aria-labelledby="who-head">
+            <h2 class="panel-head" id="who-head">On record</h2>
+            <dl class="kv">
+                <div><dt>Email</dt><dd>{{ $user->email }}</dd></div>
+                <div><dt>Role</dt><dd>{{ ucfirst($user->role) }}</dd></div>
+                @if ($user->role === 'evaluator')
+                    <div>
+                        <dt>Live assignments</dt>
+                        <dd>{{ $activeAssignments }}</dd>
                     </div>
+                @endif
+                @if ($user->created_at)
+                    <div>
+                        <dt>Added</dt>
+                        <dd>{{ \Carbon\Carbon::parse($user->created_at)->format('j M Y') }}</dd>
+                    </div>
+                @endif
+            </dl>
+        </section>
 
-                    <div class="meta-box">
-                        <span class="meta-label">Email Address</span>
-                        <strong>{{ $user->email }}</strong>
-                    </div>
+        <section class="panel" aria-labelledby="edit-head">
+            <h2 class="panel-head" id="edit-head">Change this account</h2>
 
-                    <div class="meta-box">
-                        <span class="meta-label">Current Role</span>
-                        <strong>{{ ucfirst($user->role) }}</strong>
-                    </div>
+            <form method="POST" action="{{ route('admin.users.update', $id) }}" class="stack-form">
+                @csrf
+                @method('PUT')
+
+                <div class="field">
+                    <label for="f-name">Full name</label>
+                    <input type="text" id="f-name" name="name" required maxlength="255"
+                           value="{{ old('name', $user->name) }}">
+                    <x-field-error name="name" />
                 </div>
 
-                <div class="record-panel" style="margin-top: 18px;">
-                    <h4>Update Role</h4>
-                    <p class="feedback-text" style="margin-bottom: 16px;">
-                        Choose a new role for this user. This will affect which dashboard and system features they can
-                        access.
-                    </p>
+                <div class="field">
+                    <label for="f-role">Role</label>
+                    <select id="f-role" name="role" required @disabled($isSelf)>
+                        @foreach (['student' => 'Candidate', 'evaluator' => 'Evaluator', 'admin' => 'Administrator'] as $value => $label)
+                            <option value="{{ $value }}" {{ old('role', $user->role) === $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                    <form action="{{ route('admin.users.update', $user->_id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
+                    @if ($isSelf)
+                        {{-- update() refuses this outright: with one admin account,
+                             a self-demotion locks the institution out for good. --}}
+                        <input type="hidden" name="role" value="{{ $user->role }}">
+                        <p class="field-hint">
+                            You cannot change your own role. Ask another administrator to do it.
+                        </p>
+                    @elseif ($isBusyEvaluator)
+                        <p class="field-hint">
+                            {{ $user->name }} is assigned to {{ $activeAssignments }}
+                            live {{ Str::plural('application', $activeAssignments) }}. Moving them off
+                            the evaluator role will be refused until those are reassigned &mdash;
+                            otherwise the applications would be left with an evaluator who can no
+                            longer open them.
+                        </p>
+                    @endif
 
-                        <div class="form-group" style="margin-bottom: 18px;">
-                            <label for="role">Select Role</label>
-                            <select name="role" id="role" class="form-control" required>
-                                <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Student</option>
-                                <option value="evaluator" {{ $user->role === 'evaluator' ? 'selected' : '' }}>Evaluator
-                                </option>
-                                <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
-                            </select>
-                        </div>
-
-                        <div class="form-submit-row">
-                            <button type="submit" class="btn">Update Role</button>
-                            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
+                    <x-field-error name="role" />
                 </div>
-            </div>
 
-            <aside class="info-side-card">
-                <span class="side-label">Role Guide</span>
-                <h3>Role Permissions</h3>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </form>
+        </section>
 
-                <ul class="check-list">
-                    <li><strong>Student</strong> can submit APEL applications and view their own progress.</li>
-                    <li><strong>Evaluator</strong> can review assigned applications and grade assessments.</li>
-                    <li><strong>Admin</strong> can manage users, assign evaluators, and finalize decisions.</li>
-                </ul>
-
-                <div class="tip-box">
-                    <strong>Reminder</strong>
-                    <p>
-                        Make sure the selected role matches the user's actual responsibility before saving changes.
-                    </p>
-                </div>
-            </aside>
-        </div>
+        @if (! $isSelf && Route::has('admin.users.destroy'))
+            <section class="panel panel--edge" aria-labelledby="danger-head">
+                <h2 class="panel-head" id="danger-head">Remove this account</h2>
+                <p>
+                    This cannot be undone.
+                    @if ($isBusyEvaluator)
+                        {{ $user->name }} is holding {{ $activeAssignments }} live
+                        {{ Str::plural('application', $activeAssignments) }} &mdash; reassign those first.
+                    @endif
+                </p>
+                <form method="POST" action="{{ route('admin.users.destroy', $id) }}"
+                      onsubmit="return confirm('Remove {{ addslashes($user->name) }}? This cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Remove {{ $user->name }}</button>
+                </form>
+            </section>
+        @endif
     </div>
 @endsection

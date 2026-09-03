@@ -390,4 +390,53 @@ class DashboardRenderTest extends FeatureTestCase
         $response->assertSee('PDF or Word, up to 10MB', false);
         $response->assertSee('name="answer_file"', false);
     }
+
+    /**
+     * The route, controller and validation for adding a staff account all
+     * existed, but resources/views/admin/users/create.blade.php did not - so
+     * GET /admin/users/create resolved and then died on a missing view, and an
+     * administrator could not add an evaluator through the interface at all.
+     */
+    public function test_an_admin_can_reach_the_add_account_screen(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('name="email"', false)
+            ->assertSee('value="evaluator"', false)
+            // store() rejects 'student'; the form must not offer it.
+            ->assertDontSee('value="student"', false);
+    }
+
+    public function test_the_account_list_shows_evaluator_workload(): void
+    {
+        $admin = $this->makeUser('admin');
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::UNDER_REVIEW->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index'))
+            ->assertOk()
+            ->assertSee('Evaluators', false)
+            ->assertSee('assigned right now', false);
+    }
+
+    public function test_the_registry_overview_leads_with_what_is_stalled(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('What needs the office', false);
+    }
 }

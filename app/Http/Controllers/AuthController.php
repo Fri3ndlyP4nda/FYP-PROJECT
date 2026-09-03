@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\NextAction;
 use App\Models\ActivityLog;
 use App\Models\Application;
@@ -308,32 +309,38 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * The registry's overview.
+     *
+     * What stood here was five totals and a chart: how many applications
+     * exist, how many of each type, how many were approved. None of that is
+     * work. The officer opening this wants to know what is stuck and what is
+     * waiting on them, so the counts that carry an action come first and the
+     * inventory is demoted to a footnote.
+     *
+     * Approval counts read from the stage rather than final_decision and
+     * credit_decision. The two agree today, but the stage is the field the
+     * workflow actually maintains and the other two are written by one
+     * controller each.
+     */
     public function adminDashboard()
     {
-        $totalApplications = Application::count();
-        $apelACount = Application::where('application_type', 'APEL A')->count();
-        $apelCCount = Application::where('application_type', 'APEL C')->count();
-        $apelAApproved = Application::where('application_type', 'APEL A')
-            ->where('final_decision', 'approved')
-            ->count();
-        $apelCApproved = Application::where('application_type', 'APEL C')
-            ->where('credit_decision', 'approved')
-            ->count();
+        $applications = Application::get();
 
-        $activityLogs = ActivityLog::orderBy('created_at', 'desc')
-            ->limit(8)
-            ->get();
-        $workflowMetrics = app(ApelDecisionSupportService::class)->workflowMetrics();
+        $approved = $applications->filter(
+            fn (Application $a) => ApplicationCase::stageOf($a) === ApelStage::APPROVED
+        );
 
-        return view('dashboard.admin', compact(
-            'totalApplications',
-            'apelACount',
-            'apelCCount',
-            'apelAApproved',
-            'apelCApproved',
-            'activityLogs',
-            'workflowMetrics'
-        ));
+        return view('dashboard.admin', [
+            'workflowMetrics' => app(ApelDecisionSupportService::class)->workflowMetrics(),
+            'activityLogs' => ActivityLog::orderBy('created_at', 'desc')->limit(8)->get(),
+
+            'totalApplications' => $applications->count(),
+            'apelACount' => $applications->where('application_type', 'APEL A')->count(),
+            'apelCCount' => $applications->where('application_type', 'APEL C')->count(),
+            'apelAApproved' => $approved->where('application_type', 'APEL A')->count(),
+            'apelCApproved' => $approved->where('application_type', 'APEL C')->count(),
+        ]);
     }
 
     private function generateCaptcha()

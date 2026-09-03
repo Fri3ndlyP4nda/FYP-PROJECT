@@ -1,295 +1,227 @@
 @extends('layouts.app')
 
-
 @section('content')
-    <div class="container dashboard-shell">
-        <!-- Banner Header -->
-        <section class="dashboard-banner">
-            <div class="banner-content">
-                <span class="dashboard-pill">⚙️ Admin Workspace</span>
-                <h2>Welcome back, {{ auth()->user()->name }}</h2>
-                <p>
-                    Oversee the entire APEL management system, monitor application queues,
-                    and assign evaluators to pending student claims.
-                </p>
+    {{--
+        The registry's overview.
 
-                <div class="banner-actions">
-                    <a href="{{ route('admin.applications.index') }}" class="btn">Manage Applications</a>
-                </div>
+        What stood here was an inventory: total applications, how many of each
+        type, how many approved, and a chart. None of that is work. A registry
+        officer opening this at nine in the morning is asking what is stuck and
+        what is waiting on them, and the old page could answer neither - the
+        headline number went up whether the office was on top of things or
+        drowning.
+
+        So the counts that carry an action lead, each one linking into the
+        queue filtered to exactly those cases, and the inventory is a footnote.
+    --}}
+    @php
+        $m = $workflowMetrics;
+
+        // Only the counts an officer can act on. A number with nothing behind
+        // it is a decoration.
+        $todo = [
+            [
+                'n' => $m['unassigned_ready_count'] ?? 0,
+                'label' => 'Paid, waiting for an evaluator',
+                'note' => 'Payment is verified and nobody is assigned.',
+                'tone' => 'attention',
+            ],
+            [
+                'n' => $m['pending_payment_count'] ?? 0,
+                'label' => 'Payment to check',
+                'note' => 'A receipt is in, or a fee is owed.',
+                'tone' => 'progress',
+            ],
+            [
+                'n' => $m['delayed_count'] ?? 0,
+                'label' => 'Sitting over a week',
+                'note' => 'No movement in seven days.',
+                'tone' => ($m['delayed_count'] ?? 0) > 0 ? 'bad' : 'neutral',
+            ],
+        ];
+
+        $active = $m['active_count'] ?? 0;
+        $delayed = $m['delayed_count'] ?? 0;
+    @endphp
+
+    <div class="deck">
+        <header class="deck-head">
+            <div>
+                <p class="deck-eyebrow">Registry</p>
+                <h1 class="deck-title">{{ auth()->user()->name }}</h1>
+            </div>
+            <div class="deck-acts">
+                <a href="{{ route('admin.applications.index') }}" class="btn btn-primary">Open the queue</a>
+                @if (Route::has('admin.reports.apel_a'))
+                    <a href="{{ route('admin.reports.apel_a') }}" class="btn btn-secondary">Reports</a>
+                @endif
+            </div>
+        </header>
+
+        @if (session('success'))
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
+
+        {{--
+            The one sentence worth reading. Stated as a proportion, because
+            "4 delayed" means nothing without knowing whether that is four out
+            of five or four out of four hundred.
+        --}}
+        <section class="lede-card lede-card--{{ $active === 0 ? 'neutral' : ($delayed > 0 ? 'attention' : 'good') }}"
+                 aria-labelledby="state-head">
+            <p class="lede-kicker">Right now</p>
+            <h2 class="lede-head" id="state-head">
+                @if ($active === 0)
+                    Nothing is in progress
+                @elseif ($delayed === 0)
+                    {{ $active }} {{ Str::plural('application', $active) }} moving, none stalled
+                @else
+                    {{ $delayed }} of {{ $active }} stalled over a week
+                @endif
+            </h2>
+            <p class="lede-body">
+                @if ($active === 0)
+                    No application is currently between submission and decision.
+                @elseif ($delayed === 0)
+                    Everything in progress has moved within the last seven days.
+                @else
+                    These have had no recorded movement in seven days. They are listed below.
+                @endif
+            </p>
+        </section>
+
+        <section class="stack" aria-labelledby="todo-head">
+            <div class="stack-head">
+                <h2 id="todo-head">What needs the office</h2>
+                <p>Each of these is a queue you can work down.</p>
             </div>
 
-            <div class="banner-side">
-                <div class="mini-profile-card">
-                    <span class="mini-label">Account Role</span>
-                    <strong>Admin</strong>
-                    <small>System Administrator Panel</small>
-                </div>
+            <div class="tiles">
+                @foreach ($todo as $item)
+                    <article class="tile tile--{{ $item['n'] > 0 ? $item['tone'] : 'neutral' }}">
+                        <p class="tile-n">{{ $item['n'] }}</p>
+                        <h3 class="tile-label">{{ $item['label'] }}</h3>
+                        <p class="tile-note">{{ $item['note'] }}</p>
+                    </article>
+                @endforeach
             </div>
         </section>
 
-        <!-- Informative Stats Grid -->
-        <section class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-title">📂 Application Control</span>
-                <strong>Monitor Flow</strong>
-                <p>Track student submissions, verify documentation uploads, and route them to evaluators.</p>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-title">💳 Fee Verification</span>
-                <strong>Verify Payments</strong>
-                <p>Verify students' processing and credit transfer payments submitted via Payhub.</p>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-title">🔄 Coordinate Flow</span>
-                <strong>Workflow Pipeline</strong>
-                <p>Keep the prior experiential evaluation and verification workflow structured and efficient.</p>
-            </div>
-
-        </section>
-
-        <!-- Administrative Counters Summary -->
-        <div class="admin-stats-grid">
-            <div class="admin-stat-card">
-                <span>📊 Total Applications</span>
-                <strong>{{ $totalApplications }}</strong>
-            </div>
-
-            <div class="admin-stat-card">
-                <span>📁 APEL A Type</span>
-                <strong>{{ $apelACount }}</strong>
-            </div>
-
-            <div class="admin-stat-card">
-                <span>✅ Approved APEL A</span>
-                <strong>{{ $apelAApproved }}</strong>
-            </div>
-        </div>
-
-
-        @php
-            $metrics = $workflowMetrics ?? [
-                'active_count' => 0,
-                'delayed_count' => 0,
-                'unassigned_ready_count' => 0,
-                'pending_payment_count' => 0,
-                'average_processing_days' => 0,
-                'bottlenecks' => collect(),
-            ];
-        @endphp
-
-        <section class="action-panel" style="margin-bottom: 28px;">
-            <div class="panel-heading">
-                <h3>Workflow Efficiency Monitor</h3>
-                <p>Decision-support indicators for delayed cases, assignment readiness, and processing bottlenecks.</p>
-            </div>
-
-            <div class="admin-stats-grid" style="margin-top: 14px;">
-                <div class="admin-stat-card">
-                    <span>Active Cases</span>
-                    <strong>{{ $metrics['active_count'] }}</strong>
+        @if (!empty($m['delayed_applications']) && count($m['delayed_applications']) > 0)
+            <section class="stack" aria-labelledby="stalled-head">
+                <div class="stack-head">
+                    <h2 id="stalled-head">
+                        Stalled longest
+                        <span class="stack-count">{{ count($m['delayed_applications']) }}</span>
+                    </h2>
+                    <p>Start here.</p>
                 </div>
 
-                <div class="admin-stat-card">
-                    <span>Delayed Over 7 Days</span>
-                    <strong>{{ $metrics['delayed_count'] }}</strong>
+                <div class="stack-body stack-body--rows">
+                    @foreach ($m['delayed_applications'] as $application)
+                        @php
+                            $stage = \App\Support\ApplicationCase::stageOf($application);
+                            $since = $application->status_updated_at ?? $application->submission_date;
+                        @endphp
+                        <article class="row-case">
+                            <div class="row-case-tell">
+                                <div class="case-top">
+                                    <span class="badge badge--type">{{ $application->application_type }}</span>
+                                    @if ($stage)
+                                        <span class="badge badge--{{ $stage->tone() }}">
+                                            {{ $stage->label((string) $application->application_type) }}
+                                        </span>
+                                    @endif
+                                    <span class="case-ref">
+                                        {{ strtoupper(substr((string) $application->_id, -6)) }}
+                                    </span>
+                                </div>
+
+                                <h3 class="row-case-title">
+                                    {{ $application->program_applied
+                                        ?: ($application->credit_course_name ?: 'Not stated') }}
+                                </h3>
+
+                                <p class="row-case-wait">
+                                    @if ($since)
+                                        No movement since
+                                        {{ \Carbon\Carbon::parse($since)->format('j M Y') }}
+                                        &mdash; {{ \Carbon\Carbon::parse($since)->diffForHumans() }}
+                                    @else
+                                        No movement recorded.
+                                    @endif
+                                </p>
+                            </div>
+
+                            <a class="btn btn-primary btn--sm"
+                               href="{{ route('admin.applications.index') }}#{{ $application->_id }}">
+                                Open
+                            </a>
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if (!empty($m['bottlenecks']) && count($m['bottlenecks']) > 0)
+            <section class="stack" aria-labelledby="block-head">
+                <div class="stack-head">
+                    <h2 id="block-head">Where they pile up</h2>
+                    <p>The stages holding the most work right now.</p>
                 </div>
 
-                <div class="admin-stat-card">
-                    <span>Ready for Assignment</span>
-                    <strong>{{ $metrics['unassigned_ready_count'] }}</strong>
-                </div>
+                <dl class="kv">
+                    @foreach ($m['bottlenecks'] as $row)
+                        <div>
+                            <dt>{{ $row['stage'] }}</dt>
+                            <dd>{{ $row['count'] }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            </section>
+        @endif
 
-                <div class="admin-stat-card">
-                    <span>Avg Processing Days</span>
-                    <strong>{{ $metrics['average_processing_days'] }}</strong>
-                </div>
-            </div>
+        <div class="split">
+            <section class="panel" aria-labelledby="log-head">
+                <h2 class="panel-head" id="log-head">Recent activity</h2>
 
-            <div class="table-card" style="margin-top: 14px;">
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Workflow Stage</th>
-                                <th style="width: 160px;">Active Count</th>
-                                <th>Operational Meaning</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($metrics['bottlenecks'] as $bottleneck)
-                                <tr>
-                                    <td style="font-weight: 600;">{{ $bottleneck['stage'] }}</td>
-                                    <td>{{ $bottleneck['count'] }}</td>
-                                    <td style="font-size: 13.5px; color: var(--ink-2);">
-                                        This stage currently has queue pressure and should be checked first.
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" style="text-align: center; color: var(--ink-4); padding: 20px;">
-                                        No active workflow bottlenecks detected.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+                @if ($activityLogs->isEmpty())
+                    <p class="muted">Nothing has been recorded yet.</p>
+                @else
+                    <ol class="log">
+                        @foreach ($activityLogs as $log)
+                            <li>
+                                <p class="log-what">{{ $log->action ?? $log->description ?? 'Activity' }}</p>
+                                <p class="log-when">
+                                    {{ $log->created_at
+                                        ? \Carbon\Carbon::parse($log->created_at)->diffForHumans()
+                                        : '' }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </section>
 
-        <!-- Visual Statistics Charts -->
-        <div class="dashboard-charts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 28px;">
-            <div class="card" style="padding: 24px; border-radius: 20px; border: 1px solid rgba(139, 30, 63, 0.05); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.02);">
-                <h4 style="margin-bottom: 16px; color: #30030f; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Application Distribution</h4>
-                <div id="type-chart"></div>
-            </div>
-            <div class="card" style="padding: 24px; border-radius: 20px; border: 1px solid rgba(139, 30, 63, 0.05); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.02);">
-                <h4 style="margin-bottom: 16px; color: #30030f; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Accreditation Success Rate</h4>
-                <div id="approval-chart"></div>
-            </div>
-        </div>
-
-        @push('scripts')
-            <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Type Distribution
-                    var typeOptions = {
-                        chart: {
-                            type: 'donut',
-                            height: 280
-                        },
-                        series: [{{ $apelACount }}, {{ $apelCCount }}],
-                        labels: ['APEL A', 'APEL C'],
-                        colors: ['#6e1730', '#cc5c7d'],
-                        legend: {
-                            position: 'bottom'
-                        },
-                        responsive: [{
-                            breakpoint: 480,
-                            options: {
-                                legend: {
-                                    position: 'bottom'
-                                }
-                            }
-                        }]
-                    };
-
-                    var typeChart = new ApexCharts(document.querySelector("#type-chart"), typeOptions);
-                    typeChart.render();
-
-                    // Approval Status
-                    var approvalOptions = {
-                        chart: {
-                            type: 'bar',
-                            height: 280,
-                            toolbar: {
-                                show: false
-                            }
-                        },
-                        series: [{
-                            name: 'Approved',
-                            data: [{{ $apelAApproved }}, {{ $apelCApproved }}]
-                        }, {
-                            name: 'Total',
-                            data: [{{ $apelACount }}, {{ $apelCCount }}]
-                        }],
-                        xaxis: {
-                            categories: ['APEL A', 'APEL C'],
-                        },
-                        colors: ['#146b45', '#6e1730'],
-                        plotOptions: {
-                            bar: {
-                                horizontal: false,
-                                columnWidth: '55%',
-                                borderRadius: 4
-                            },
-                        },
-                        dataLabels: {
-                            enabled: false
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    };
-
-                    var approvalChart = new ApexCharts(document.querySelector("#approval-chart"), approvalOptions);
-                    approvalChart.render();
-                });
-            </script>
-        @endpush
-
-        <!-- Actions Panel -->
-        <section class="action-panel">
-            <div class="panel-heading">
-                <h3>Quick Actions</h3>
-                <p>Access the main system administration screens to track APEL claims and verify submissions.</p>
-            </div>
-
-            <div class="action-grid" style="grid-template-columns: 1fr;">
-                <a href="{{ route('admin.applications.index') }}" class="action-card">
-                    <div class="action-icon">📂</div>
+            {{-- The inventory. Kept, but it is background, not the job. --}}
+            <section class="panel" aria-labelledby="totals-head">
+                <h2 class="panel-head" id="totals-head">On the books</h2>
+                <dl class="kv">
+                    <div><dt>Applications, all time</dt><dd>{{ $totalApplications }}</dd></div>
+                    <div><dt>APEL A</dt><dd>{{ $apelACount }}</dd></div>
+                    <div><dt>APEL C</dt><dd>{{ $apelCCount }}</dd></div>
+                    <div><dt>Admitted through APEL A</dt><dd>{{ $apelAApproved }}</dd></div>
+                    <div><dt>Credit awarded</dt><dd>{{ $apelCApproved }}</dd></div>
                     <div>
-                        <h4>Manage Applications</h4>
-                        <p>View the list of all applications, assign evaluators, and finalize grades.</p>
+                        <dt>Average time to decide</dt>
+                        <dd>
+                            {{ ($m['average_processing_days'] ?? 0) > 0
+                                ? $m['average_processing_days'].' days'
+                                : 'No decisions yet' }}
+                        </dd>
                     </div>
-                </a>
-            </div>
-        </section>
-
-        <!-- System Activity Audit Feed -->
-        <section class="action-panel" style="margin-top: 28px;">
-            <div class="panel-heading">
-                <h3>System Activity Feed</h3>
-                <p>Recent administrative actions and assessment grading logs recorded in the system.</p>
-            </div>
-
-            <div class="table-card" style="margin-top: 14px;">
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 150px;">Timestamp</th>
-                                <th style="width: 150px;">User</th>
-                                <th style="width: 120px;">Role</th>
-                                <th style="width: 180px;">Action</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($activityLogs as $log)
-                                <tr>
-                                    <td style="font-size: 13px; color: var(--ink-3); white-space: nowrap;">
-                                        {{ $log->created_at ? $log->created_at->format('Y-m-d H:i') : 'N/A' }}
-                                    </td>
-                                    <td style="font-weight: 600;">{{ $log->user_name }}</td>
-                                    <td>
-                                        @if($log->user_role === 'admin')
-                                            <span class="role-badge role-admin">Admin</span>
-                                        @elseif($log->user_role === 'evaluator')
-                                            <span class="role-badge role-evaluator">Evaluator</span>
-                                        @else
-                                            <span class="role-badge role-student">Student</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-submitted">{{ $log->action }}</span>
-                                    </td>
-                                    <td style="font-size: 13.5px; color: var(--ink-2);">{{ $log->description }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" style="text-align: center; color: var(--ink-4); padding: 24px;">
-                                        No recent system activities logged.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+                </dl>
+            </section>
+        </div>
     </div>
 @endsection

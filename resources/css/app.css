@@ -3739,3 +3739,78 @@ td.num,
     text-transform: uppercase;
 }
 .part:first-of-type { margin-top: var(--s-3); }
+
+/* Registry overview -------------------------------------------------------- */
+
+/*
+   Counts that carry an action. Each tile is a queue the officer can work down,
+   so a zero is deliberately quiet - nothing to do should not look like
+   something to do - and a non-zero takes the tone of what it is asking for.
+*/
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--s-3); }
+
+.tile {
+    padding: var(--s-4);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line-strong);
+    border-radius: var(--r-2);
+    background: var(--surface);
+}
+
+.tile-n {
+    margin: 0 0 .2rem;
+    font-family: var(--font-display);
+    font-size: var(--t-2xl);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -.04em;
+}
+.tile-label { margin: 0 0 .25rem; font-size: var(--t-md); letter-spacing: -.014em; }
+.tile-note { margin: 0; color: var(--ink-3); font-size: var(--t-sm); }
+
+.tile--neutral { background: var(--surface-sunk); }
+.tile--neutral .tile-n { color: var(--ink-4); }
+
+.tile--attention { border-left-color: var(--attention); }
+.tile--attention .tile-n { color: var(--attention); }
+
+.tile--progress { border-left-color: var(--progress); }
+.tile--progress .tile-n { color: var(--progress); }
+
+.tile--bad { border-left-color: var(--bad); background: var(--bad-tint); }
+.tile--bad .tile-n { color: var(--bad); }
+
+/* Activity log ------------------------------------------------------------- */
+
+.log { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.log li { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.log li:last-child { border-bottom: 0; }
+.log-what { margin: 0; font-size: var(--t-sm); }
+.log-when { margin: .1rem 0 0; color: var(--ink-4); font-family: var(--font-mono); font-size: var(--t-xs); }
+
+/* Search and filter bar ---------------------------------------------------- */
+
+.sift {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--s-2);
+    margin-bottom: var(--s-4);
+    padding: var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-2);
+    background: var(--surface);
+}
+.sift .field { margin: 0; flex: 1 1 12rem; min-width: 0; }
+.sift .field input, .sift .field select { width: 100%; }
+
+/* Two controls on one row - edit and remove. */
+.row-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.row-acts form { margin: 0; }
+
+@media (max-width: 46rem) {
+    .sift { flex-direction: column; align-items: stretch; }
+    .sift .btn { width: 100%; }
+    .row-acts { width: 100%; }
+    .row-acts .btn, .row-acts form { width: 100%; }
+}
