@@ -119,17 +119,7 @@
                         <x-field-error name="password_confirmation" />
                     </div>
 
-                    <div class="field">
-                        <label for="captcha-answer">Security check</label>
-                        <div class="sum">
-                            <span class="sum-q" aria-hidden="true">{{ session('captcha_question') }}</span>
-                            <input id="captcha-answer" name="captcha_answer" type="text" required
-                                   inputmode="numeric" autocomplete="off"
-                                   aria-label="Answer: {{ session('captcha_question') }}"
-                                   placeholder="Answer">
-                        </div>
-                        <x-field-error name="captcha_answer" />
-                    </div>
+                    <x-human-check />
 
                     <button type="submit" class="go">
                         Create account

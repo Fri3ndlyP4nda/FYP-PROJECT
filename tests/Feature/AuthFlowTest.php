@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Security\HumanSignals;
+use App\Domain\Security\ProofOfWork;
 use App\Mail\ResetPasswordMail;
 use App\Models\PasswordResetToken;
 use App\Models\User;
@@ -44,26 +46,52 @@ class AuthFlowTest extends FeatureTestCase
     }
 
     /**
-     * The captcha is an arithmetic question generated into the session by
-     * showLogin()/showRegister(). Fetching the form is how a real browser learns
-     * the expected answer, so the tests do exactly that rather than faking the
-     * session value — that way the test breaks if the question stops being
-     * issued at all.
+     * Solve the anti-automation challenge the way a browser does.
+     *
+     * The form is fetched first and the challenge read out of the rendered
+     * HTML, rather than minted here - so if the control ever stops being
+     * issued, or is issued unsigned, these tests fail instead of quietly
+     * passing against a form that no longer protects anything.
      */
-    private function captchaAnswerFrom(string $formRoute): int
+    private function humanCheckPayload(string $formRoute): array
     {
-        $this->get(route($formRoute))->assertOk();
+        $html = $this->get(route($formRoute))->assertOk()->getContent();
 
-        return (int) session('captcha_answer');
+        $field = function (string $name) use ($html) {
+            preg_match('/name="'.preg_quote($name, '/').'" value="([^"]*)"/', $html, $m);
+
+            return $m[1] ?? '';
+        };
+
+        $challenge = [
+            'salt' => $field('pow_salt'),
+            'target' => $field('pow_target'),
+            'difficulty' => (int) $field('pow_difficulty'),
+            'expires' => (int) $field('pow_expires'),
+            'signature' => $field('pow_signature'),
+        ];
+
+        return $challenge + [
+            'pow_salt' => $challenge['salt'],
+            'pow_target' => $challenge['target'],
+            'pow_difficulty' => $challenge['difficulty'],
+            'pow_expires' => $challenge['expires'],
+            'pow_signature' => $challenge['signature'],
+            'pow_answer' => ProofOfWork::solve($challenge),
+
+            // The form was rendered a moment ago; a real person takes longer
+            // than the floor HumanSignals enforces.
+            HumanSignals::RENDERED_AT => time() - 5,
+            HumanSignals::HONEYPOT => '',
+        ];
     }
 
     private function loginPayload(string $email, string $password): array
     {
-        return [
+        return array_merge($this->humanCheckPayload('login'), [
             'email' => $email,
             'password' => $password,
-            'captcha_answer' => $this->captchaAnswerFrom('login'),
-        ];
+        ]);
     }
 
     // ---------------------------------------------------------------- login
@@ -138,37 +166,105 @@ class AuthFlowTest extends FeatureTestCase
         );
     }
 
-    public function test_signing_in_without_answering_the_captcha_is_rejected(): void
+    public function test_signing_in_without_the_security_check_is_rejected(): void
     {
         $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
-
-        $this->captchaAnswerFrom('login');
 
         $response = $this->from(route('login'))->post(route('login.submit'), [
             'email' => $student->email,
             'password' => 'TestPassword123',
         ]);
 
-        $response->assertSessionHasErrors('captcha_answer');
+        $response->assertSessionHasErrors('pow_answer');
         $this->assertGuest();
     }
 
-    public function test_correct_credentials_with_a_wrong_captcha_answer_still_do_not_sign_anyone_in(): void
+    public function test_correct_credentials_with_a_wrong_proof_of_work_do_not_sign_anyone_in(): void
     {
         $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
 
-        $answer = $this->captchaAnswerFrom('login');
+        $payload = $this->loginPayload($student->email, 'TestPassword123');
+        $payload['pow_answer'] = ((int) $payload['pow_answer'] + 1) % 150000;
 
-        $response = $this->from(route('login'))->post(route('login.submit'), [
-            'email' => $student->email,
-            'password' => 'TestPassword123',
-            // The question is "a + b = ?" with a and b each between 1 and 9, so
-            // the sum can never be this.
-            'captcha_answer' => $answer + 100,
-        ]);
+        $response = $this->from(route('login'))->post(route('login.submit'), $payload);
 
         $response->assertRedirect(route('login'));
-        $response->assertSessionHasErrors(['captcha_answer' => 'Incorrect security check answer.']);
+        $response->assertSessionHasErrors('pow_answer');
+        $this->assertGuest();
+    }
+
+    /**
+     * The whole point of the replacement. The arithmetic captcha could be
+     * solved by reading the question off the page; this one cannot be reused,
+     * so a single solved challenge cannot be sprayed across many attempts.
+     */
+    public function test_a_solved_challenge_cannot_be_used_twice(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $payload = $this->loginPayload($student->email, 'TestPassword123');
+
+        $this->post(route('login.submit'), $payload)->assertRedirect(route('student.dashboard'));
+        $this->post(route('logout'));
+
+        // Same challenge, same answer, second time.
+        $this->from(route('login'))
+            ->post(route('login.submit'), $payload)
+            ->assertSessionHasErrors('pow_answer');
+
+        $this->assertGuest();
+    }
+
+    /** A challenge minted elsewhere is not ours, whatever it claims. */
+    public function test_a_forged_challenge_is_refused(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $salt = 'attacker-chosen-salt';
+        $answer = 3;
+
+        $this->from(route('login'))->post(route('login.submit'), [
+            'email' => $student->email,
+            'password' => 'TestPassword123',
+            'pow_salt' => $salt,
+            'pow_target' => hash('sha256', $salt.$answer),
+            'pow_difficulty' => 5,
+            'pow_expires' => time() + 600,
+            'pow_signature' => str_repeat('0', 64),
+            'pow_answer' => $answer,
+            HumanSignals::RENDERED_AT => time() - 5,
+        ])->assertSessionHasErrors('pow_answer');
+
+        $this->assertGuest();
+    }
+
+    /** Filling the hidden field is something only a form-filler does. */
+    public function test_a_submission_that_fills_the_honeypot_is_refused(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $payload = $this->loginPayload($student->email, 'TestPassword123');
+        $payload[HumanSignals::HONEYPOT] = 'https://example.com';
+
+        $this->from(route('login'))
+            ->post(route('login.submit'), $payload)
+            ->assertSessionHasErrors('pow_answer');
+
+        $this->assertGuest();
+    }
+
+    /** Nobody types an email and a password in under two seconds. */
+    public function test_a_submission_faster_than_a_person_could_type_is_refused(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $payload = $this->loginPayload($student->email, 'TestPassword123');
+        $payload[HumanSignals::RENDERED_AT] = time();
+
+        $this->from(route('login'))
+            ->post(route('login.submit'), $payload)
+            ->assertSessionHasErrors('pow_answer');
+
         $this->assertGuest();
     }
 
@@ -204,7 +300,7 @@ class AuthFlowTest extends FeatureTestCase
             'password' => 'TestPassword123',
             'password_confirmation' => 'TestPassword123',
             'role' => 'admin',
-            'captcha_answer' => $this->captchaAnswerFrom('register'),
+            ...$this->humanCheckPayload('register'),
         ]);
 
         $response->assertRedirect(route('login'));
@@ -230,7 +326,7 @@ class AuthFlowTest extends FeatureTestCase
             'email' => 'ARIF@apel.test',
             'password' => 'TestPassword123',
             'password_confirmation' => 'TestPassword123',
-            'captcha_answer' => $this->captchaAnswerFrom('register'),
+            ...$this->humanCheckPayload('register'),
         ]);
 
         $response->assertSessionHasErrors('email');
@@ -252,7 +348,7 @@ class AuthFlowTest extends FeatureTestCase
             'email' => 'MiXeD@apel.test',
             'password' => 'TestPassword123',
             'password_confirmation' => 'TestPassword123',
-            'captcha_answer' => $this->captchaAnswerFrom('register'),
+            ...$this->humanCheckPayload('register'),
         ])->assertRedirect(route('login'));
 
         $this->assertSame(1, User::where('email', 'mixed@apel.test')->count());

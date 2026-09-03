@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\NextAction;
+use App\Domain\Security\HumanSignals;
+use App\Domain\Security\ProofOfWork;
 use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
@@ -21,8 +23,6 @@ class AuthController extends Controller
 {
     public function showRegister()
     {
-        $this->generateCaptcha();
-
         return view('auth.register');
     }
 
@@ -41,15 +41,10 @@ class AuthController extends Controller
                     ->mixedCase()
                     ->numbers(),
             ],
-            'captcha_answer' => 'required',
         ]);
 
-        if ((int) $request->captcha_answer !== (int) session('captcha_answer')) {
-            $this->generateCaptcha();
-
-            return back()
-                ->withErrors(['captcha_answer' => 'Incorrect security check answer.'])
-                ->withInput();
+        if ($problem = $this->automationGuard($request)) {
+            return back()->withErrors(['pow_answer' => $problem])->withInput();
         }
 
         User::create([
@@ -64,8 +59,6 @@ class AuthController extends Controller
 
     public function showLogin()
     {
-        $this->generateCaptcha();
-
         return view('auth.login');
     }
 
@@ -76,15 +69,10 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'captcha_answer' => 'required',
         ]);
 
-        if ((int) $request->captcha_answer !== (int) session('captcha_answer')) {
-            $this->generateCaptcha();
-
-            return back()
-                ->withErrors(['captcha_answer' => 'Incorrect security check answer.'])
-                ->withInput();
+        if ($problem = $this->automationGuard($request)) {
+            return back()->withErrors(['pow_answer' => $problem])->withInput();
         }
 
         $credentials = [
@@ -93,8 +81,6 @@ class AuthController extends Controller
         ];
 
         if (! Auth::attempt($credentials)) {
-            $this->generateCaptcha();
-
             return back()->withErrors([
                 'email' => 'Invalid email or password.',
             ])->withInput();
@@ -343,14 +329,37 @@ class AuthController extends Controller
         ]);
     }
 
-    private function generateCaptcha()
+    /**
+     * The anti-automation guard, replacing the arithmetic captcha.
+     *
+     * That captcha printed "3 + 5 = ?" into the page and compared the answer
+     * against the session, so a script solved it with one regular expression
+     * and an addition - and a script that did not even parse it had a 1-in-17
+     * chance of guessing, the sum of two digits from 1 to 9 having only
+     * seventeen possible values.
+     *
+     * Returns null when the submission passes, or an error message when it
+     * does not. The message is deliberately the same for every kind of
+     * failure: telling a bot whether it tripped the honeypot, submitted too
+     * fast, or failed the proof of work tells it exactly what to change.
+     */
+    private function automationGuard(Request $request): ?string
     {
-        $num1 = rand(1, 9);
-        $num2 = rand(1, 9);
+        $generic = 'The security check did not pass. Please reload the page and try again.';
 
-        session([
-            'captcha_question' => "$num1 + $num2 = ?",
-            'captcha_answer' => $num1 + $num2,
+        if (HumanSignals::check($request) !== null) {
+            return $generic;
+        }
+
+        $failure = ProofOfWork::verify([
+            'salt' => $request->input('pow_salt'),
+            'target' => $request->input('pow_target'),
+            'difficulty' => $request->input('pow_difficulty'),
+            'expires' => $request->input('pow_expires'),
+            'signature' => $request->input('pow_signature'),
+            'answer' => $request->input('pow_answer'),
         ]);
+
+        return $failure === null ? null : $generic;
     }
 }
