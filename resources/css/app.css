@@ -3713,3 +3713,29 @@ td.num,
 @media (pointer: coarse) {
     .pick { min-height: 44px; }
 }
+
+/* Application form --------------------------------------------------------- */
+
+.deck--form { width: min(100% - 2.5rem, 64rem); }
+
+.form-lede { max-width: 60ch; margin: 0 0 var(--s-4); color: var(--ink-2); font-size: var(--t-lg); }
+
+/*
+   The candidate is filling in an official UTM form whose parts are lettered -
+   PART A, PART B(i), PART C. Those labels are the structure of the document
+   they are completing, not decoration, so they are set as real headings with a
+   rule above rather than as a repeated inline colour, and each one gives the
+   reader a place to stop in what is otherwise a very long scroll.
+*/
+.part {
+    margin: var(--s-5) 0 var(--s-3);
+    padding-top: var(--s-3);
+    border-top: 2px solid var(--accent);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--t-md);
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.part:first-of-type { margin-top: var(--s-3); }

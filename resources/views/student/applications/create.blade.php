@@ -280,30 +280,38 @@
         }
     </style>
 
-    <div class="container app-shell">
-        <section class="page-hero">
-            <div>
-                <span class="section-pill">New Submission</span>
-                <h2>Submit APEL Application</h2>
-                <p class="muted page-hero-text">
-                    Complete the official APEL application forms below.
-                </p>
-            </div>
+    {{--
+        The application form.
 
-            <div class="hero-actions">
-                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">View My Applications</a>
+        Every input id and class is left exactly as it was: 779 lines of script
+        drive the repeatable rows, the eligibility warnings and the draft save
+        off about twenty-five specific ids, and this is the one screen where a
+        broken selector costs a candidate their submission. The shell, the
+        section structure and the styling change; the form's contract does not.
+    --}}
+    <div class="deck deck--form">
+        <header class="deck-head">
+            <div>
+                <p class="deck-eyebrow">New application</p>
+                <h1 class="deck-title">Apply for APEL</h1>
             </div>
-        </section>
+            <div class="deck-acts">
+                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">My applications</a>
+            </div>
+        </header>
+
+        <p class="form-lede">
+            You can save this as a draft at any point and come back to it. Nothing is sent to the
+            faculty until you submit.
+        </p>
 
         <div class="form-split-layout">
             <div class="card form-main-card">
                 @if ($errors->any())
-                    <div class="alert alert-error">
-                        <ul style="padding-left: 18px;">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                    <div class="notice notice--bad" role="alert">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
                     </div>
                 @endif
 
@@ -431,7 +439,7 @@
                             <x-field-error name="target_semester" />
                             -->
 
-                            <h4 style="color: var(--maroon); margin-top: 15px; margin-bottom: 10px;">PART A: PERSONAL PARTICULARS</h4>
+                            <h4 class="part">PART A: PERSONAL PARTICULARS</h4>
                             <label for="f-pre-app-data-personal-particulars-name">Full Name (As per IC)</label>
                             <input type="text" name="pre_app_data[personal_particulars][name]" value="{{ old('pre_app_data.personal_particulars.name', auth()- id="f-pre-app-data-personal-particulars-name">
                             <x-field-error name="pre_app_data.personal_particulars.name" />user()->name) }}" required>
@@ -456,7 +464,7 @@
                             </select>
                             <x-field-error name="pre_app_data.personal_particulars.highest_qualification" />
 
-                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
+                            <h4 class="part">PART B (i): FORMAL LEARNING (CERTIFICATED EDUCATION)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEducationRow()">+ Add Education</button>
                             </div>
@@ -493,7 +501,7 @@
 
                         {{-- TAB 2: Experience & Training --}}
                         <div id="tab-experience" class="tab-content">
-                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
+                            <h4 class="part">PART B (ii): EXPERIENTIAL LEARNING (EMPLOYMENT HISTORY)</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addEmploymentRow()">+ Add Employer</button>
                             </div>
@@ -575,7 +583,7 @@
                                 </div>
                             </div>
 
-                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">TRAINING ACTIVITIES</h4>
+                            <h4 class="part">TRAINING ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addTrainingRow()">+ Add Training Activity</button>
                             </div>
@@ -620,7 +628,7 @@
 
                         {{-- TAB 3: Skills & Languages --}}
                         <div id="tab-skills" class="tab-content">
-                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
+                            <h4 class="part">PART B (iii): OTHER LEARNING SKILLS / ACTIVITIES</h4>
                             <div class="table-action-btn-row">
                                 <button type="button" class="btn btn-sm" onclick="addOtherSkillRow()">+ Add Activity</button>
                             </div>
@@ -648,7 +656,7 @@
                                 </div>
                             </div>
 
-                            <h4 style="color: var(--maroon); margin-top: 20px; margin-bottom: 10px;">PART B (iv): LANGUAGE SKILLS</h4>
+                            <h4 class="part">PART B (iv): LANGUAGE SKILLS</h4>
                             <table class="dynamic-table language-table">
                                 <thead>
                                     <tr>
@@ -690,7 +698,7 @@
 
                         {{-- TAB 4: Referees & Self-Assessment --}}
                         <div id="tab-referees" class="tab-content">
-                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
+                            <h4 class="part">PART C (ii): REFEREES (Relevant to Work Situation)</h4>
                             <div class="referee-card">
                                 <h4>Referee 1</h4>
                                 <div class="referee-grid">
@@ -773,7 +781,7 @@
                                 </div>
                             </div>
 
-                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
+                            <h4 class="part">APEL (C) SELF-ASSESSMENT FOR LEARNERS</h4>
                             <p style="font-size:12.5px; color:#5b626a; line-height:1.4; margin-bottom:15px;">
                                 For each Course Learning Outcome (CLO), describe how you have learned this outcome through your former studies or working career.
                             </p>
@@ -797,7 +805,7 @@
 
                         {{-- TAB 5: Uploads & Declaration --}}
                         <div id="tab-declaration" class="tab-content">
-                            <h4 style="color: var(--maroon); margin-bottom: 10px;">PART C: PORTFOLIO & DECLARATION</h4>
+                            <h4 class="part">PART C: PORTFOLIO & DECLARATION</h4>
                             
                             <div style="background: var(--surface-sunk); border: 1px solid var(--line); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
                                 <h5 style="color: var(--maroon); margin-top: 0; margin-bottom: 8px; font-weight: 700; font-size: 13.5px;">📌 PORTFOLIO SUBMISSION INSTRUCTIONS</h5>
@@ -818,7 +826,7 @@
                                 Allowed format: PDF, JPG, JPEG, PNG, DOC, DOCX. Maximum size: 5MB per file.
                             </small>
 
-                            <h4 style="color: var(--maroon); margin-top: 25px; margin-bottom: 10px;">PART D: SELF-DECLARATION</h4>
+                            <h4 class="part">PART D: SELF-DECLARATION</h4>
                             <div style="background: var(--surface-sunk); border: 1px solid #faebef; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
                                 <label style="font-weight: 400; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; color: var(--ink-2);">
                                     <input type="checkbox" name="pre_app_data[self_declaration][confirmed]" value="1" required style="width: auto; margin-top: 4px;">
