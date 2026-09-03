@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\NextAction;
+use App\Domain\Security\AuthLog;
 use App\Domain\Security\HumanSignals;
 use App\Domain\Security\ProofOfWork;
 use App\Models\ActivityLog;
@@ -47,12 +48,14 @@ class AuthController extends Controller
             return back()->withErrors(['pow_answer' => $problem])->withInput();
         }
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => strtolower($request->email),
             'password' => Hash::make($request->password),
             'role' => 'student',
         ]);
+
+        AuthLog::record($request, AuthLog::REGISTERED, $user->email, $user);
 
         return redirect()->route('login')->with('success', 'Account created successfully. Please log in.');
     }
@@ -72,6 +75,8 @@ class AuthController extends Controller
         ]);
 
         if ($problem = $this->automationGuard($request)) {
+            AuthLog::record($request, AuthLog::SECURITY_CHECK_FAILED, $request->input('email'));
+
             return back()->withErrors(['pow_answer' => $problem])->withInput();
         }
 
@@ -81,6 +86,9 @@ class AuthController extends Controller
         ];
 
         if (! Auth::attempt($credentials)) {
+            // The address is recorded, never the password that was tried.
+            AuthLog::record($request, AuthLog::SIGN_IN_FAILED, $request->input('email'));
+
             return back()->withErrors([
                 'email' => 'Invalid email or password.',
             ])->withInput();
@@ -93,6 +101,8 @@ class AuthController extends Controller
         if (! config('apel.two_factor.enabled')) {
             $request->session()->regenerate();
 
+            AuthLog::record($request, AuthLog::SIGNED_IN, $user->email, $user);
+
             return $this->redirectUserByRole($user->role);
         }
 
@@ -100,6 +110,8 @@ class AuthController extends Controller
         $rememberMinutes = (int) config('apel.two_factor.remember_minutes', 30);
         if ($user->last_2fa_verified_at && $user->last_2fa_verified_at->isAfter(now()->subMinutes($rememberMinutes))) {
             $request->session()->regenerate();
+
+            AuthLog::record($request, AuthLog::SIGNED_IN, $user->email, $user, 'Signed in on a remembered two-factor verification');
 
             return $this->redirectUserByRole($user->role);
         }
@@ -180,6 +192,8 @@ class AuthController extends Controller
         // Hash::check is constant-time; the previous loose != compared a secret
         // with PHP's numeric-string juggling rules.
         if (! $user->two_factor_code || ! Hash::check($request->two_factor_code, $user->two_factor_code)) {
+            AuthLog::record($request, AuthLog::TWO_FACTOR_FAILED, $user->email, $user);
+
             return back()->withErrors([
                 'two_factor_code' => 'Invalid verification code.',
             ]);
@@ -196,6 +210,8 @@ class AuthController extends Controller
         ]);
 
         session()->forget('2fa_user_id');
+
+        AuthLog::record($request, AuthLog::SIGNED_IN, $user->email, $user, 'Signed in after two-factor verification');
 
         return $this->redirectUserByRole($user->role);
     }
@@ -214,6 +230,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Read before the session goes, or there is nobody to attribute it to.
+        $user = Auth::user();
+
+        if ($user) {
+            AuthLog::record($request, AuthLog::SIGNED_OUT, $user->email, $user);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

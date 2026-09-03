@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Security\AuthLog;
 use App\Domain\Security\HumanSignals;
 use App\Domain\Security\ProofOfWork;
 use App\Mail\ResetPasswordMail;
+use App\Models\ActivityLog;
 use App\Models\PasswordResetToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -622,5 +624,91 @@ class AuthFlowTest extends FeatureTestCase
         $this->assertSame(1, preg_match('#/reset-password/([^/?]+)#', $link, $matches));
 
         return $matches[1];
+    }
+
+    // ------------------------------------------------------- audit trail
+
+    /**
+     * Nothing about signing in was recorded anywhere. Rate limiting refused a
+     * burst of attempts and left no trace, so nobody could tell afterwards
+     * whether an account had been attacked, from where, or how often.
+     */
+    public function test_a_failed_sign_in_is_recorded_against_the_targeted_account(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $this->post(route('login.submit'), $this->loginPayload($student->email, 'WrongPassword1'));
+
+        $entry = ActivityLog::where('action', AuthLog::SIGN_IN_FAILED)->first();
+
+        $this->assertNotNull($entry, 'A failed sign-in must leave an audit entry.');
+        $this->assertSame((string) $student->_id, (string) $entry->user_id);
+        $this->assertStringContainsString($student->email, (string) $entry->description);
+        $this->assertNotEmpty($entry->ip_address);
+    }
+
+    public function test_a_successful_sign_in_is_recorded(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $this->post(route('login.submit'), $this->loginPayload($student->email, 'TestPassword123'));
+
+        $this->assertSame(
+            1,
+            ActivityLog::where('action', AuthLog::SIGNED_IN)->count(),
+            'A successful sign-in must leave exactly one audit entry.',
+        );
+    }
+
+    /**
+     * People type their password into the email field. Writing whatever
+     * arrived straight into the trail would put cleartext passwords into a
+     * collection administrators can read - a worse leak than the one the log
+     * exists to detect.
+     */
+    public function test_a_password_typed_into_the_email_field_is_never_written_to_the_log(): void
+    {
+        $secret = 'MyActualPassword123';
+
+        $payload = $this->humanCheckPayload('login');
+        $payload['email'] = $secret;
+        $payload['password'] = $secret;
+
+        $this->post(route('login.submit'), $payload);
+
+        foreach (ActivityLog::get() as $entry) {
+            $this->assertStringNotContainsString(
+                $secret,
+                $entry->action.' '.$entry->description.' '.$entry->user_name,
+                'A value that is not a valid email address must never be logged verbatim.',
+            );
+        }
+    }
+
+    /**
+     * The response must stay identical whether or not the address exists -
+     * that is what stops the endpoint being a membership oracle - but the log
+     * is internal, and a sweep across addresses is exactly what it should show.
+     */
+    public function test_a_reset_request_for_an_unknown_address_is_still_recorded(): void
+    {
+        $this->post(route('password.email'), ['email' => 'nobody@apel.test']);
+
+        $this->assertSame(
+            1,
+            ActivityLog::where('action', AuthLog::RESET_REQUESTED)->count(),
+        );
+    }
+
+    public function test_signing_out_is_recorded_against_the_person_who_did_it(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+
+        $this->actingAs($student)->post(route('logout'));
+
+        $entry = ActivityLog::where('action', AuthLog::SIGNED_OUT)->first();
+
+        $this->assertNotNull($entry);
+        $this->assertSame((string) $student->_id, (string) $entry->user_id);
     }
 }

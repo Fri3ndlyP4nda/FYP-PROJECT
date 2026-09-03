@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Domain\Security\AuthLog;
 use App\Http\Controllers\Controller;
 use App\Mail\ResetPasswordMail;
 use App\Models\PasswordResetToken;
@@ -31,6 +32,14 @@ class PasswordResetController extends Controller
 
         $email = strtolower($request->email);
         $user = User::where('email', $email)->first();
+
+        /*
+         | Recorded whether or not the address is registered. The *response*
+         | must stay identical either way - that is what stops this endpoint
+         | being a membership oracle - but the log is internal, and an attacker
+         | sweeping addresses is precisely what it should be able to show.
+         */
+        AuthLog::record($request, AuthLog::RESET_REQUESTED, $request->email, $user);
 
         /**
          * The response is deliberately identical whether or not the address is
@@ -155,6 +164,8 @@ class PasswordResetController extends Controller
         $user->save();
 
         $record->delete();
+
+        AuthLog::record($request, AuthLog::RESET_COMPLETED, $user->email, $user);
 
         return redirect()->route('login')->with('success', 'Password reset successfully. Please log in.');
     }

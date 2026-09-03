@@ -47,7 +47,13 @@ return [
     |
     */
 
-    'encrypt' => env('SESSION_ENCRYPT', false),
+    /*
+    | Session payloads are written to disk by the file driver and hold the
+    | pending two-factor user id among other things. Encrypting them costs
+    | almost nothing and means a readable storage directory is not a set of
+    | usable sessions.
+    */
+    'encrypt' => env('SESSION_ENCRYPT', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +175,16 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    /*
+    | Defaults to on outside local development. Left unset, the session cookie
+    | travels over plain HTTP on any deployment that has not thought about it,
+    | and anyone on the same network can read it and become that user. Tied to
+    | the environment rather than hard-coded so `php artisan serve` over http
+    | still works locally.
+    */
+    // env(), not app()->environment(): a config file is read before the
+    // container is available, and app() there fails with "Class env does not exist".
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV', 'production') !== 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -199,7 +214,15 @@ return [
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    /*
+    | Strict, not lax. Under lax the session cookie is still sent on a
+    | top-level GET from another site, so a link an attacker gets an
+    | administrator to click arrives authenticated. Nothing here needs to be
+    | reachable mid-session from another origin: the password reset link lands
+    | on a page that establishes its own session and issues its own CSRF token,
+    | so it works under strict.
+    */
+    'same_site' => env('SESSION_SAME_SITE', 'strict'),
 
     /*
     |--------------------------------------------------------------------------
