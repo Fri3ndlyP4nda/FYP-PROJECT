@@ -1,120 +1,82 @@
 @extends('layouts.app')
 
 @section('content')
-    @php
-        $totalPapers = $papers->count();
-        $activePapers = $papers->where('status', 'active')->count();
-        $inactivePapers = $papers->where('status', '!=', 'active')->count();
-    @endphp
+    {{--
+        The papers this evaluator has written.
 
-    <div class="container papers-shell">
-        <section class="page-hero">
+        A library, not a queue: nothing here is waiting on anyone. So it is a
+        plain list rather than the grouped-by-whose-move layout used everywhere
+        an evaluator has work to do - the shape should tell them which kind of
+        screen they are on before they read a word.
+    --}}
+    <div class="deck">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">Evaluator Module</span>
-                <h2>Assessment Papers</h2>
-                <p class="muted page-hero-text">
-                    Manage uploaded assessment papers, review linked application records, and open PDF files for
-                    verification.
-                </p>
+                <p class="deck-eyebrow">Assessment papers</p>
+                <h1 class="deck-title">
+                    {{ $papers->count() }} {{ Str::plural('paper', $papers->count()) }}
+                </h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('evaluator.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-                <a href="{{ route('evaluator.applications.index') }}" class="btn">Assigned Applications</a>
+            <div class="deck-acts">
+                <a href="{{ route('evaluator.dashboard') }}" class="btn btn-secondary">Dashboard</a>
+                <a href="{{ route('evaluator.assessment.grading.index') }}" class="btn btn-secondary">Grading</a>
             </div>
-        </section>
+        </header>
 
         @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
         @endif
 
-        <section class="papers-stats-grid">
-            <div class="papers-stat-card">
-                <span>Total Papers</span>
-                <strong>{{ $totalPapers }}</strong>
-            </div>
-            <div class="papers-stat-card">
-                <span>Active Papers</span>
-                <strong>{{ $activePapers }}</strong>
-            </div>
-            <div class="papers-stat-card">
-                <span>Inactive Papers</span>
-                <strong>{{ $inactivePapers }}</strong>
-            </div>
-        </section>
+        @if ($papers->isEmpty())
+            <section class="blank">
+                <h2>You have not written a paper yet.</h2>
+                <p>
+                    A paper is set against one APEL C application. Open an application you are
+                    assigned to and set its assessment from there.
+                </p>
+                <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary">Your applications</a>
+            </section>
+        @else
+            <section class="stack">
+                <div class="stack-body stack-body--rows">
+                    @foreach ($papers as $paper)
+                        <article class="row-case">
+                            <div class="row-case-tell">
+                                <div class="case-top">
+                                    <span class="badge badge--{{ $paper->status === 'active' ? 'good' : 'neutral' }}">
+                                        {{ $paper->status === 'active' ? 'In use' : ucfirst((string) $paper->status) }}
+                                    </span>
+                                    <span class="case-ref">{{ strtoupper(substr((string) $paper->_id, -6)) }}</span>
+                                </div>
 
-        <section class="table-card">
-            <div class="table-card-header">
-                <div>
-                    <h3>Paper Library</h3>
-                    <p>All assessment papers uploaded by evaluators.</p>
-                </div>
-            </div>
+                                <h3 class="row-case-title">{{ $paper->title ?: 'Untitled paper' }}</h3>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Application ID</th>
-                            <th>File</th>
-                            <th>Status</th>
-                            <th style="width: 150px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($papers as $paper)
-                            <tr>
-                                <td>
-                                    <div class="paper-title-cell">
-                                        <div class="paper-icon">PDF</div>
-                                        <div>
-                                            <strong class="paper-title">{{ $paper->title }}</strong>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="app-id-badge">{{ $paper->application_id }}</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('files.paper', $paper->_id) }}" target="_blank"
-                                        class="paper-file-link">
-                                        View PDF
-                                    </a>
-                                </td>
-                                <td>
-                                    @if (($paper->status ?? '') === 'active')
-                                        <span class="badge badge-approved">Active</span>
+                                <p class="row-case-meta">
+                                    @if ($paper->created_at)
+                                        Written {{ \Carbon\Carbon::parse($paper->created_at)->format('j M Y') }}
                                     @else
-                                        <span class="badge badge-pending">{{ ucfirst($paper->status ?? 'Unknown') }}</span>
+                                        Date not recorded
                                     @endif
-                                </td>
-                                <td>
-                                    <form method="POST" action="{{ route('evaluator.assessment.papers.destroy', $paper->_id) }}" style="display: inline-block;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-secondary btn-sm" style="color: var(--bad); border-color: #fca5a5;" onclick="return confirm('Are you sure you want to delete this paper? This action cannot be undone.')">
-                                            Delete
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5">
-                                    <div class="table-empty">
-                                        <div class="empty-mark small-empty-mark">01</div>
-                                        <h4>No assessment papers found</h4>
-                                        <p>There are currently no uploaded assessment papers.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                                </p>
+
+                                @if ($paper->question_file)
+                                    <p class="row-case-meta">
+                                        <a href="{{ route('files.paper', $paper->_id) }}"
+                                           target="_blank" rel="noopener">Open the paper</a>
+                                    </p>
+                                @endif
+                            </div>
+
+                            @if ($paper->application_id && Route::has('evaluator.applications.show'))
+                                <a class="btn btn-ghost btn--sm"
+                                   href="{{ route('evaluator.applications.show', $paper->application_id) }}">
+                                    The application
+                                </a>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
     </div>
 @endsection

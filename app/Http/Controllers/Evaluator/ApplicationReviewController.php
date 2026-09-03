@@ -267,7 +267,14 @@ class ApplicationReviewController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        return view('evaluator.apel_a.index', compact('applications'));
+        $cases = ApplicationCase::collect($applications, Auth::user());
+
+        return view('evaluator.apel_a.index', [
+            'cases' => $cases,
+            'waitingOnMe' => ApplicationCase::awaitingViewer($cases),
+            'withOthers' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
+        ]);
     }
 
     private function sendMail($userId, $subject, $body)

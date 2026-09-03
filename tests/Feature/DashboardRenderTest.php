@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\Apel\ApelStage;
+use App\Models\AssessmentPaper;
 use Tests\FeatureTestCase;
 use Tests\MakesApelRecords;
 
@@ -330,5 +331,63 @@ class DashboardRenderTest extends FeatureTestCase
         $response->assertSee('value="recommended"', false);
         $response->assertSee('value="not_recommended"', false);
         $response->assertDontSee('value="pending"', false);
+    }
+
+    public function test_the_apel_a_slice_renders_grouped(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::UNDER_REVIEW->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.apel_a.index'))
+            ->assertOk()
+            ->assertSee('Waiting on you', false)
+            ->assertSee('row-case', false);
+    }
+
+    public function test_papers_library_renders(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.assessment.papers.index'))
+            ->assertOk()
+            ->assertSee('Assessment papers', false);
+    }
+
+    /** The upload must state the rules the server enforces, before the choice. */
+    public function test_the_assessment_upload_states_the_rules_it_enforces(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::ASSESSMENT_SET->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+        ]);
+
+        AssessmentPaper::create([
+            'application_id' => (string) $application->_id,
+            'evaluator_id' => (string) $evaluator->_id,
+            'title' => 'Written assessment',
+            'instructions' => 'Answer all four questions.',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($student)
+            ->get(route('student.assessment.show', $application->_id));
+
+        $response->assertOk();
+        $response->assertSee('PDF or Word, up to 10MB', false);
+        $response->assertSee('name="answer_file"', false);
     }
 }

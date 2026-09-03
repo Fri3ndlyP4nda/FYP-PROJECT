@@ -1,251 +1,159 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container app-shell">
-        <section class="page-hero">
-            <div>
-                <span class="section-pill">APEL C Assessment</span>
-                <h2>Assessment Submission</h2>
-                <p class="muted page-hero-text">
-                    Review the assessment paper, follow the instructions, and upload your answer file for evaluator grading.
-                </p>
-            </div>
+    {{--
+        Sitting the assessment.
 
-            <div class="hero-actions">
-                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">Back to Applications</a>
+        The candidate has one job here and a deadline attached to it, so the
+        deadline is stated in the open rather than buried in the paper's
+        metadata, and the upload states the rules the server actually enforces
+        (PDF or Word, 10MB, one submission only) before they choose a file
+        rather than after it is rejected.
+    --}}
+    @php
+        use Carbon\Carbon;
+
+        $deadline = $paper->submission_deadline ? Carbon::parse($paper->submission_deadline) : null;
+        $isPast = $deadline?->isPast() ?? false;
+        $hasSubmitted = $submission && filled($submission->answer_file);
+        $isGraded = $submission && filled($submission->result);
+    @endphp
+
+    <div class="deck deck--narrow">
+        <header class="deck-head">
+            <div>
+                <p class="deck-eyebrow">Your assessment</p>
+                <h1 class="deck-title">{{ $paper->title ?: 'Assessment' }}</h1>
             </div>
-        </section>
+            <div class="deck-acts">
+                <a href="{{ route('student.applications.index') }}" class="btn btn-secondary">All applications</a>
+            </div>
+        </header>
 
         @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
         @endif
-
         @if ($errors->any())
-            <div class="alert alert-error">
-                <ul style="padding-left: 18px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="notice notice--bad" role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
             </div>
         @endif
 
-        <div class="form-split-layout">
-            <div class="card form-main-card">
-                <div class="record-meta-grid">
-                    <div class="meta-box">
-                        <span class="meta-label">Application Type</span>
-                        <strong>{{ $application->application_type }}</strong>
-                    </div>
+        {{-- Where they stand, before the paper itself. --}}
+        @php
+            [$tone, $head, $body] = match (true) {
+                $isGraded => [
+                    $submission->result === 'pass' ? 'good' : 'bad',
+                    $submission->result === 'pass' ? 'You passed' : 'You did not pass',
+                    'Your evaluator has marked this. The full result is on your application.',
+                ],
+                $hasSubmitted => [
+                    'progress',
+                    'Submitted',
+                    'Your answer is with the evaluator. Nothing further is needed from you.',
+                ],
+                $isPast => [
+                    'bad',
+                    'The deadline has passed',
+                    'This assessment can no longer be submitted. Contact the faculty office if you believe this is wrong.',
+                ],
+                default => [
+                    'attention',
+                    'Waiting on you',
+                    'Read the paper, then upload your answer below.',
+                ],
+            };
+        @endphp
 
-                    <div class="meta-box">
-                        <span class="meta-label">Program Applied</span>
-                        <strong>{{ $application->program_applied }}</strong>
-                    </div>
-
-                    <div class="meta-box">
-                        <span class="meta-label">Assessment Status</span>
-                        <strong>{{ ucfirst(str_replace('_', ' ', $application->credit_status ?? 'awaiting_assessment')) }}</strong>
-                    </div>
+        <section class="lede-card lede-card--{{ $tone }}" aria-labelledby="state-head">
+            <p class="lede-kicker">Right now</p>
+            <h2 class="lede-head" id="state-head">{{ $head }}</h2>
+            <p class="lede-body">{{ $body }}</p>
+            @if ($deadline && ! $hasSubmitted && ! $isPast)
+                <div class="lede-foot">
+                    <span class="lede-due">
+                        Due {{ $deadline->format('j M Y, H:i') }} &mdash; {{ $deadline->diffForHumans() }}
+                    </span>
                 </div>
+            @endif
+        </section>
 
-                <div class="record-panel" style="margin-bottom: 18px;">
-                    <h4>Assessment Paper</h4>
+        <section class="panel" aria-labelledby="paper-head">
+            <h2 class="panel-head" id="paper-head">The paper</h2>
 
-                    @if (!empty($paper))
-                        @php
-                            $deadline = $paper->submission_deadline ? \Carbon\Carbon::parse($paper->submission_deadline) : null;
-                            $isExpired = $deadline ? $deadline->isPast() : false;
-                        @endphp
+            @if (filled($paper->instructions))
+                <div class="said">
+                    <h3>Instructions from your evaluator</h3>
+                    <p>{{ $paper->instructions }}</p>
+                </div>
+            @endif
 
-                        @if ($deadline)
-                            <div class="tip-box {{ $isExpired ? 'tip-box-danger' : 'tip-box-warning' }}" 
-                                 style="margin-top: 15px; margin-bottom: 15px; padding: 14px; border-left: 4px solid {{ $isExpired ? 'var(--bad)' : '#f59e0b' }}; background: {{ $isExpired ? '#fef2f2' : '#fffbeb' }}; color: {{ $isExpired ? '#991b1b' : 'var(--attention)' }}; border-radius: 8px;">
-                                <strong>Submission Deadline</strong>
-                                <p style="margin: 4px 0 0 0; font-size: 13.5px; font-weight: 500;">
-                                    {{ $deadline->format('d M Y, h:i A') }} ({{ $deadline->diffForHumans() }})
-                                </p>
-                                @if (!$isExpired && empty($submission))
-                                    <div id="countdown-timer" style="margin-top: 8px; font-weight: 700; font-size: 14px; color: var(--attention);" data-deadline="{{ $deadline->toIso8601String() }}">
-                                        Time Remaining: Loading...
-                                    </div>
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            const timerEl = document.getElementById('countdown-timer');
-                                            const deadline = new Date(timerEl.getAttribute('data-deadline')).getTime();
-                                            
-                                            const interval = setInterval(function() {
-                                                const now = new Date().getTime();
-                                                const diff = deadline - now;
-                                                
-                                                if (diff <= 0) {
-                                                    clearInterval(interval);
-                                                    timerEl.innerHTML = "Time Remaining: EXPIRED";
-                                                    window.location.reload();
-                                                    return;
-                                                }
-                                                
-                                                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                                                
-                                                let timerText = "Time Remaining: ";
-                                                if (days > 0) timerText += days + "d ";
-                                                timerText += hours + "h " + minutes + "m " + seconds + "s";
-                                                timerEl.innerHTML = timerText;
-                                            }, 1000);
-                                        });
-                                    </script>
-                                @endif
-                            </div>
-                        @endif
+            @if ($paper->question_file)
+                <p class="note">
+                    <a href="{{ route('files.paper', $paper->_id) }}" target="_blank" rel="noopener">
+                        Open the question paper
+                    </a>
+                </p>
+            @else
+                <p class="muted">Your evaluator has not attached a question file to this paper.</p>
+            @endif
+        </section>
 
-                        <!-- Assessment Paper Details & Download -->
-                        <div class="paper-details-card" style="background: rgba(139, 30, 63, 0.03); border: 1px solid rgba(139, 30, 63, 0.15); border-radius: 12px; padding: 20px; margin-top: 15px; margin-bottom: 20px;">
-                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-                                <div style="background: var(--maroon); color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
-                                    PDF
-                                </div>
-                                <div>
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--maroon); display: block;">Assessment Paper Title</span>
-                                    <h4 style="margin: 2px 0 0 0; font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.3;">{{ $paper->title }}</h4>
-                                </div>
-                            </div>
+        <section class="panel" aria-labelledby="answer-head">
+            <h2 class="panel-head" id="answer-head">Your answer</h2>
 
-                            @if (!empty($paper->instructions))
-                                <div style="margin-bottom: 16px;">
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-3); display: block; margin-bottom: 4px;">Instructions</span>
-                                    <div style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); background: white; padding: 12px; border-radius: 8px; border: 1px solid var(--line);">{{ $paper->instructions }}</div>
-                                </div>
-                            @endif
+            @if ($hasSubmitted)
+                <dl class="kv">
+                    <div>
+                        <dt>Submitted</dt>
+                        <dd>
+                            {{ $submission->submitted_at
+                                ? Carbon::parse($submission->submitted_at)->format('j M Y, H:i')
+                                : 'Recorded' }}
+                        </dd>
+                    </div>
+                </dl>
 
-                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 10px; border-top: 1px dashed rgba(139, 30, 63, 0.1);">
-                                <div>
-                                    <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-3); display: block; margin-bottom: 2px;">Format</span>
-                                    <strong style="font-size: 13px; color: var(--ink-2);">PDF Document</strong>
-                                </div>
-                                <a href="{{ route('files.paper', $paper->_id) }}" target="_blank" class="btn" style="padding: 10px 18px; font-size: 13.5px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="display: inline-block; vertical-align: middle;">
-                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                                    </svg>
-                                    Download Assessment Paper
-                                </a>
-                            </div>
-                        </div>
+                <p class="note">
+                    <a href="{{ route('files.submission', $submission->_id) }}" target="_blank" rel="noopener">
+                        Open what you submitted
+                    </a>
+                </p>
 
-                        @if (empty($submission) || empty($submission->answer_file))
-                            @if ($isExpired)
-                                <div style="background-color: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 13.5px;">
-                                    <strong>Submission Closed</strong>
-                                    <p style="margin: 5px 0 0 0;">The deadline to submit your answer file has passed. You can no longer upload answers for this assessment.</p>
-                                </div>
-                            @else
-                                <form method="POST" action="{{ route('student.assessment.submit', $application->_id) }}"
-                                    enctype="multipart/form-data" style="margin-top: 18px;">
-                                    @csrf
+                @if (filled($submission->grader_feedback))
+                    <div class="said">
+                        <h3>Evaluator feedback</h3>
+                        <p>{{ $submission->grader_feedback }}</p>
+                    </div>
+                @endif
 
-                                    <label for="f-answer-file">Upload Answer File</label>
-                                    <div class="upload-box">
-                                        <input type="file" name="answer_file" required id="f-answer-file">
-                                        <p>Upload your completed answer file here.</p>
-                                        <small>Use a clear filename before submitting.</small>
-                                    </div>
+                <p class="muted">
+                    An assessment can only be submitted once. If something is wrong with what you
+                    sent, contact the faculty office.
+                </p>
+            @elseif ($isPast)
+                <p class="muted">The deadline has passed, so no answer can be uploaded.</p>
+            @else
+                <form method="POST" action="{{ route('student.assessment.submit', $application->_id) }}"
+                      enctype="multipart/form-data" class="stack-form">
+                    @csrf
 
-                                    <div class="form-submit-row">
-                                        <button type="submit" class="btn">Submit Answer</button>
-                                    </div>
-                                </form>
-                            @endif
-                        @else
-                            <div class="tip-box tip-box-light" style="margin-top: 18px;">
-                                <strong>Submission Completed</strong>
-                                <p>
-                                    You have already submitted your answer file. You can review your uploaded submission above
-                                    while waiting for grading.
-                                </p>
-                            </div>
-                        @endif
-                    @else
-                        <p class="feedback-text" style="margin-top: 14px;">
-                            No assessment paper is available yet.
+                    <div class="field">
+                        <label for="f-answer">Your answer file</label>
+                        <input type="file" name="answer_file" id="f-answer"
+                               accept=".pdf,.doc,.docx" required>
+                        {{-- The rules the server enforces, stated before the choice. --}}
+                        <p class="field-hint">
+                            PDF or Word, up to 10MB. You can submit once, so check it before you send.
                         </p>
-                    @endif
-                </div>
+                        <x-field-error name="answer_file" />
+                    </div>
 
-                <div class="record-panel">
-                    <h4>Your Submission</h4>
-
-                    @if (!empty($submission) && !empty($submission->answer_file))
-                        <div class="record-meta-grid">
-                            <div class="meta-box">
-                                <span class="meta-label">Submitted File</span>
-                                <strong>
-                                    @if (!empty($submission->answer_file))
-                                        <a href="{{ route('files.submission', $submission->_id) }}" target="_blank"
-                                            class="link">
-                                            View Uploaded Answer
-                                        </a>
-                                    @else
-                                        No file
-                                    @endif
-                                </strong>
-                            </div>
-
-                            <div class="meta-box">
-                                <span class="meta-label">Submitted At</span>
-                                <strong>{{ $submission->submitted_at ?? 'Not available' }}</strong>
-                            </div>
-
-                            <div class="meta-box">
-                                <span class="meta-label">Grading Result</span>
-                                <strong>
-                                    @if ($submission->result === 'pass')
-                                        Pass
-                                    @elseif ($submission->result === 'fail')
-                                        Fail
-                                    @else
-                                        Pending
-                                    @endif
-                                </strong>
-                            </div>
-                        </div>
-
-                        @if (!empty($submission->grader_feedback))
-                            <div class="tip-box tip-box-light" style="margin-top: 14px;">
-                                <strong>Grader Feedback</strong>
-                                <p>{{ $submission->grader_feedback }}</p>
-                            </div>
-                        @endif
-                    @else
-                        <p class="feedback-text" style="margin-bottom: 14px;">
-                            You have not submitted your answer yet.
-                        </p>
-                    @endif
-                </div>
-            </div>
-
-            <aside class="info-side-card">
-                <span class="side-label">Submission Guide</span>
-                <h3>Before you submit</h3>
-
-                <ul class="check-list">
-                    <li>Read the assessment instructions carefully.</li>
-                    <li>Make sure you upload the correct final answer file.</li>
-                    <li>Check your file before submission.</li>
-                    <li>After grading, the admin will decide the final credit outcome.</li>
-                </ul>
-
-                <div class="tip-box">
-                    <strong>Tip</strong>
-                    <p>
-                        Keep a backup copy of your answer file before uploading it to the system.
-                    </p>
-                </div>
-            </aside>
-        </div>
+                    <button type="submit" class="btn btn-primary">Submit my answer</button>
+                </form>
+            @endif
+        </section>
     </div>
 @endsection

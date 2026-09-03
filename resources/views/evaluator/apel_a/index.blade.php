@@ -1,55 +1,66 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container eval-shell">
-        <section class="eval-hero">
+    {{--
+        The APEL A slice of the same queue.
+
+        Grouped and drawn exactly like evaluator/applications/index, using the
+        same row, because it is the same work filtered to one track. A five
+        column table sorted by date - programme, status, stage, decision,
+        action - made the evaluator read every row to find the ones they could
+        act on, and printed "status" and "stage" side by side when one is
+        derived from the other.
+    --}}
+    <div class="deck">
+        <header class="deck-head">
             <div>
-                <span class="section-pill">APEL A Review</span>
-                <h2>APEL A Applications</h2>
-                <p class="muted eval-hero-text">
-                    Review admission applications and provide recommendations.
-                </p>
+                <p class="deck-eyebrow">APEL A &mdash; admission</p>
+                <h1 class="deck-title">
+                    {{ $cases->count() }} {{ Str::plural('application', $cases->count()) }}
+                </h1>
             </div>
-
-            <div class="hero-actions">
-                <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary">All Applications</a>
+            <div class="deck-acts">
+                <a href="{{ route('evaluator.dashboard') }}" class="btn btn-secondary">Dashboard</a>
+                <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary">Both tracks</a>
             </div>
-        </section>
+        </header>
 
-        <section class="table-card">
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Program</th>
-                            <th>Status</th>
-                            <th>Stage</th>
-                            <th>Decision</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($applications as $application)
-                            <tr>
-                                <td>{{ $application->program_applied }}</td>
+        @if (session('success'))
+            <p class="notice notice--good" role="status">{{ session('success') }}</p>
+        @endif
 
-                                <td>{{ ucfirst($application->status) }}</td>
+        @if ($cases->isEmpty())
+            <section class="blank">
+                <h2>No APEL A applications are assigned to you.</h2>
+                <p>They appear here once the registry assigns you to one.</p>
+                <a href="{{ route('evaluator.applications.index') }}" class="btn btn-secondary">See both tracks</a>
+            </section>
+        @else
+            @php
+                $groups = [
+                    ['key' => 'mine', 'title' => 'Waiting on you', 'note' => 'These do not move until you report.', 'set' => $waitingOnMe],
+                    ['key' => 'others', 'title' => 'With someone else', 'note' => 'Assigned to you, but the next step is not yours.', 'set' => $withOthers],
+                    ['key' => 'closed', 'title' => 'Closed', 'note' => 'Decided.', 'set' => $closed],
+                ];
+            @endphp
 
-                                <td>{{ ucfirst(str_replace('_', ' ', $application->review_stage ?? 'submitted')) }}</td>
-
-                                <td>{{ ucfirst(str_replace('_', ' ', $application->admission_decision ?? 'pending')) }}</td>
-
-                                <td>
-                                    <a href="{{ route('evaluator.applications.show', $application->_id) }}"
-                                        class="btn btn-sm">
-                                        Review
-                                    </a>
-                                </td>
-                            </tr>
+            @foreach ($groups as $group)
+                @continue($group['set']->isEmpty())
+                <section class="stack" aria-labelledby="ag-{{ $group['key'] }}">
+                    <div class="stack-head">
+                        <h2 id="ag-{{ $group['key'] }}">
+                            {{ $group['title'] }}
+                            <span class="stack-count">{{ $group['set']->count() }}</span>
+                        </h2>
+                        <p>{{ $group['note'] }}</p>
+                    </div>
+                    <div class="stack-body stack-body--rows">
+                        @foreach ($group['set'] as $case)
+                            @include('evaluator.partials._row', ['case' => $case])
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                    </div>
+                </section>
+            @endforeach
+        @endif
     </div>
 @endsection
