@@ -14,9 +14,25 @@ use App\Http\Controllers\Student\ApplicationController;
 use App\Http\Controllers\Student\AssessmentSubmissionController;
 use Illuminate\Support\Facades\Route;
 
+/*
+ | The public landing page.
+ |
+ | This used to redirect straight to /login, which meant the only people the
+ | site could speak to were the ones who already had an account - and APEL's
+ | actual audience is a working adult who has never heard of it. Someone signed
+ | in has no use for that page, so they go on to their own dashboard.
+ */
 Route::get('/', function () {
-    return redirect()->route('login');
-});
+    if (! auth()->check()) {
+        return view('welcome');
+    }
+
+    return redirect()->route(match (auth()->user()->role) {
+        'admin' => 'admin.dashboard',
+        'evaluator' => 'evaluator.dashboard',
+        default => 'student.dashboard',
+    });
+})->name('home');
 
 /*
  | Throttles on every credential-accepting endpoint.

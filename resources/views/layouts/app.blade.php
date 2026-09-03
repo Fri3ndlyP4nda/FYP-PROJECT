@@ -31,7 +31,10 @@
 
 <body>
     @php
-        $onAuthScreen = request()->routeIs('login', 'register', '2fa.*', 'password.*');
+        // Screens that supply their own header. The landing page is one: it
+        // speaks to people who have no role yet, so the role-aware application
+        // navbar would render as a bare brand strip above its own header.
+        $onAuthScreen = request()->routeIs('home', 'login', 'register', '2fa.*', 'password.*');
         $role = auth()->check() ? auth()->user()->role : null;
         $navLinks = match ($role) {
             'student' => [
