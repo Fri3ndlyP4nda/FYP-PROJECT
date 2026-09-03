@@ -155,7 +155,7 @@ The flow is intact, not removed: set it to `true` to require an emailed one-time
 php artisan test
 ```
 
-**131 tests, 1387 assertions.** They run against a real MongoDB, not sqlite — every
+**154 tests, 1680 assertions.** They run against a real MongoDB, not sqlite — every
 model in this application pins `$connection = 'mongodb'`, and the `unique:users,email`
 rule resolves against the *default* connection, so an in-memory sqlite database gave
 them nothing to talk to.
@@ -173,10 +173,28 @@ real applicant data.
 | `ApelAWorkflowTest` / `ApelCWorkflowTest` | Both tracks end to end, plus each workflow guard |
 | `ApelStageTest` | The stage machine in isolation — legal moves, terminal states, the progress rail |
 | `EligibilityTest` | Entry rules and their boundaries |
+| `DashboardRenderTest` | Every screen rendered at every stage, for each role - plus the specific defects that hid behind stale status strings |
 
-Writing this suite surfaced three defects that were live in the application, including
-one that made every stage read throw — the whole workflow returned 500 and nothing
-had caught it.
+Writing this suite surfaced defects that were live in the application, including one
+that made every stage read throw — the whole workflow returned 500 and nothing had
+caught it.
+
+`DashboardRenderTest` was added while rebuilding the interface, and pins a family of
+bugs worth naming. `StageMachine` writes the legacy `status` field as
+`$stage->label($type)`, and six separate screens still compared it against the strings
+the application used *before* the stage machine existed. Each comparison silently
+failed:
+
+- Both student progress trackers reported step 1 of 5 for every application, an
+  approved one included — all 19 stages fell through to a `default` arm.
+- `str_contains('Not approved', 'approved')` is `true`, so a **rejected** APEL A
+  application was counted as **Approved** on the candidate's own list.
+- The APEL C advisor form was gated on `'Under Advisor Review'` while the stage writes
+  `"Advisor review"`, so it never rendered — leaving no way for the registry to record
+  an advisor decision, and no way for an APEL C application to pass its second step.
+
+None of these threw. Each test here renders a real screen at a real stage, which is
+the only thing that catches a comparison that is merely wrong.
 
 ---
 
@@ -195,7 +213,13 @@ authorization model is the part of this system that most needs to be right.
 - **One-time codes** use `random_int()`, are stored hashed, and are compared in
   constant time.
 - **Password reset** does not reveal whether an address has an account.
-- **Uploaded documents** are never served by URL alone (see above).
+- **Uploaded documents** are never served by URL alone (see above). Reaching that state
+  needed both halves: `SecureFileController` was written and tested, but no view had
+  ever linked to it — every document link in the interface was still a public
+  `storage/` URL, and 121 files including payment receipts and IC-bearing evidence
+  were fetchable with no session. `php artisan apel:secure-documents` moves any such
+  file onto the private disk (`--dry-run` first; it verifies each copy before removing
+  the original) and every link now goes through the authorised route.
 
 ---
 
