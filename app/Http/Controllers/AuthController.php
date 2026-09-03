@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Apel\ApelStage;
+use App\Domain\Apel\NextAction;
 use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
@@ -233,42 +235,121 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'Logged out successfully.');
     }
 
+    /**
+     * The candidate's own state, not a description of the product.
+     *
+     * This passed no data at all - the view was three cards reading "Manage
+     * Applications", "Track Review Status", "Stay Informed", which is a feature
+     * list, not an answer. Someone signing in wants to know where their
+     * application has got to and whether anything is waiting on them, and had
+     * to click through to find out.
+     */
     public function studentDashboard()
     {
-        return view('dashboard.student');
+        $viewer = Auth::user();
+
+        $applications = Application::where('user_id', (string) Auth::id())
+            ->orderBy('submission_date', 'desc')
+            ->get();
+
+        // Resolved once here rather than per-row in Blade, so the view stays a
+        // presentation of state instead of a place where workflow rules live.
+        $cases = $applications->map(function (Application $application) use ($viewer) {
+            $stage = self::stageOf($application);
+            $type = (string) $application->application_type;
+
+            return [
+                'application' => $application,
+                'stage' => $stage,
+                'type' => $type,
+                'action' => NextAction::for($application, $viewer),
+                'rail' => $stage?->rail($type) ?? [],
+                'progress' => $stage?->progress($type) ?? 0,
+                'explanation' => $stage?->studentExplanation($type) ?? '',
+            ];
+        });
+
+        return view('dashboard.student', [
+            'cases' => $cases,
+            'yourMove' => $cases->filter(fn ($c) => $c['stage']?->awaitsStudent())->values(),
+            'inProgress' => $cases->filter(fn ($c) => $c['stage'] && ! $c['stage']->awaitsStudent() && ! $c['stage']->isTerminal())->values(),
+            'closed' => $cases->filter(fn ($c) => $c['stage']?->isTerminal())->values(),
+        ]);
     }
 
+    /**
+     * Read the stage without going through the accessor.
+     *
+     * mongodb/laravel-mongodb resolves a method whose name matches a field as
+     * an embedded relation before it checks the attributes, so Application has
+     * no usable stage() accessor - reading it throws.
+     */
+    private static function stageOf(Application $application): ?ApelStage
+    {
+        $raw = $application->getAttributes()['stage'] ?? null;
+
+        return $raw ? ApelStage::tryFrom((string) $raw) : null;
+    }
+
+    /**
+     * What is actually waiting on this evaluator.
+     *
+     * Two scoping bugs were losing work here. Every query filtered to
+     * application_type 'APEL C', so an evaluator assigned an APEL A case saw a
+     * dashboard of zeroes; and every one matched evaluator_id alone, so the
+     * second of two assigned evaluators saw nothing of the applications they
+     * were on. The rest of the evaluator area scopes on
+     * `evaluator_id OR evaluator_2_id` with no type filter, and that is what
+     * this now does.
+     *
+     * The counts are kept but demoted. A number cannot be worked; the queue
+     * below it can.
+     */
     public function evaluatorDashboard()
     {
         $evaluatorId = (string) Auth::id();
+        $viewer = Auth::user();
 
-        $totalClaims = Application::where('application_type', 'APEL C')
-            ->where('evaluator_id', $evaluatorId)
-            ->count();
+        $mine = function ($query) use ($evaluatorId) {
+            $query->where('evaluator_id', $evaluatorId)
+                ->orWhere('evaluator_2_id', $evaluatorId);
+        };
 
-        $gradedCount = AssessmentSubmission::where('graded_by', $evaluatorId)->count();
+        $applications = Application::where('status', '!=', 'Draft')
+            ->where($mine)
+            ->orderBy('submission_date', 'desc')
+            ->get();
 
-        $assignedAppIds = Application::where('application_type', 'APEL C')
-            ->where('evaluator_id', $evaluatorId)
-            ->pluck('id')
-            ->map(fn ($id) => (string) $id)
-            ->toArray();
+        $cases = $applications->map(function (Application $application) use ($viewer) {
+            $stage = self::stageOf($application);
 
-        $pendingCount = empty($assignedAppIds)
-            ? 0
-            : AssessmentSubmission::whereIn('application_id', $assignedAppIds)
+            return [
+                'application' => $application,
+                'stage' => $stage,
+                'type' => (string) $application->application_type,
+                'action' => NextAction::for($application, $viewer),
+            ];
+        });
+
+        // Silence from NextAction means this stage is not the viewer's move.
+        $waitingOnMe = $cases->filter(
+            fn ($c) => $c['stage'] && ! $c['stage']->isTerminal() && $c['action'] !== null
+        )->values();
+
+        $assignedIds = $applications->map(fn (Application $a) => (string) $a->_id)->all();
+
+        return view('dashboard.evaluator', [
+            'waitingOnMe' => $waitingOnMe,
+            'withOthers' => $cases->filter(
+                fn ($c) => $c['stage'] && ! $c['stage']->isTerminal() && $c['action'] === null
+            )->values(),
+            'closed' => $cases->filter(fn ($c) => $c['stage']?->isTerminal())->values(),
+            'assignedCount' => $applications->count(),
+            'gradedCount' => AssessmentSubmission::where('graded_by', $evaluatorId)->count(),
+            'awaitingGrading' => empty($assignedIds) ? 0 : AssessmentSubmission::whereIn('application_id', $assignedIds)
                 ->where('status', 'submitted')
-                ->count();
-
-        $avgScore = AssessmentSubmission::where('graded_by', $evaluatorId)->avg('score');
-        $avgScore = $avgScore ? round($avgScore, 1) : 0;
-
-        return view('dashboard.evaluator', compact(
-            'totalClaims',
-            'gradedCount',
-            'pendingCount',
-            'avgScore'
-        ));
+                ->count(),
+        ]);
     }
 
     public function adminDashboard()

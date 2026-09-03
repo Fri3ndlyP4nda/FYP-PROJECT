@@ -61,7 +61,10 @@
     @unless ($onAuthScreen)
         <header class="navbar">
             <div class="nav-brand">
-                <span class="nav-mark" aria-hidden="true">APEL</span>
+                {{-- Two letters, not four: the mark is a 28px square and
+                     "APEL" at 13px bold overflowed it on every page. The
+                     landing header uses the same two. --}}
+                <span class="nav-mark" aria-hidden="true">AP</span>
                 <h1>Accreditation of Prior Experiential Learning</h1>
             </div>
 

@@ -1,78 +1,81 @@
 @extends('layouts.app')
 
-
 @section('content')
-    <div class="container dashboard-shell">
-        <!-- Banner Header -->
-        <section class="dashboard-banner">
-            <div class="banner-content">
-                <span class="dashboard-pill">🎓 Student Workspace</span>
-                <h2>Welcome back, {{ auth()->user()->name }}</h2>
+    {{--
+        The candidate's own state.
+
+        What stood here was three cards reading "Manage Applications", "Track
+        Review Status" and "Stay Informed" - a description of the product, on
+        the one screen where the reader already knows what the product is and
+        wants to know what has happened to their case. Nothing on it changed
+        when their application changed.
+
+        Someone signing in has one question: is anything waiting on me, and if
+        not, who is it with? So that is the order - what you owe, then what is
+        moving, then what is finished - and the rail inside each case is the
+        real ApelStage pipeline, so it cannot drift from the workflow.
+    --}}
+    <div class="deck">
+        <header class="deck-head">
+            <div>
+                <p class="deck-eyebrow">Your applications</p>
+                <h1 class="deck-title">{{ auth()->user()->name }}</h1>
+            </div>
+            <a href="{{ route('student.applications.create') }}" class="btn btn-primary">Start a new application</a>
+        </header>
+
+        @if ($cases->isEmpty())
+            <section class="blank">
+                <h2>You have not applied yet.</h2>
                 <p>
-                    Manage your APEL journey in one place. Start a new accreditation application, monitor evaluation progress,
-                    and review your submission history.
+                    APEL assesses work you have already done and turns it into university standing
+                    &mdash; entry to a programme, or credit against a course you would otherwise sit.
+                    You can save an application as a draft and finish it later.
                 </p>
+                <a href="{{ route('student.applications.create') }}" class="btn btn-primary">Start your first application</a>
+            </section>
+        @else
+            @php
+                $groups = [
+                    [
+                        'key' => 'you',
+                        'title' => $yourMove->count() === 1 ? 'Needs you' : 'Need you',
+                        'note' => 'Nothing moves until you do this.',
+                        'set' => $yourMove,
+                    ],
+                    [
+                        'key' => 'moving',
+                        'title' => 'Moving',
+                        'note' => 'With the faculty. Nothing for you to do.',
+                        'set' => $inProgress,
+                    ],
+                    [
+                        'key' => 'closed',
+                        'title' => 'Closed',
+                        'note' => 'Decided.',
+                        'set' => $closed,
+                    ],
+                ];
+            @endphp
 
-                <div class="banner-actions">
-                    <a href="{{ route('student.applications.create') }}" class="btn">New Application</a>
-                    <a href="{{ route('student.applications.index') }}" class="btn btn-light">My Applications</a>
-                </div>
-            </div>
-
-            <div class="banner-side">
-                <div class="mini-profile-card">
-                    <span class="mini-label">Account Role</span>
-                    <strong>Student</strong>
-                    <small>APEL Accreditation Portal</small>
-                </div>
-            </div>
-        </section>
-
-        <!-- Informative Stats Grid -->
-        <section class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-title">📂 Applications</span>
-                <strong>Manage Applications</strong>
-                <p>Submit and edit your portfolios, work logs, and experiential credit claims.</p>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-title">📈 Progress</span>
-                <strong>Track Review Status</strong>
-                <p>Monitor where your application is in the advisor or evaluator assessment pipeline.</p>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-title">🔔 Notification Updates</span>
-                <strong>Stay Informed</strong>
-                <p>Get real-time feedback from academic evaluators and advisory councils.</p>
-            </div>
-        </section>
-
-        <!-- Actions Panel -->
-        <section class="action-panel">
-            <div class="panel-heading">
-                <h3>Quick Actions</h3>
-                <p>Choose what you want to do next to accelerate your prior learning assessment.</p>
-            </div>
-
-            <div class="action-grid">
-                <a href="{{ route('student.applications.create') }}" class="action-card">
-                    <div class="action-icon">🚀</div>
-                    <div>
-                        <h4>Start New Application</h4>
-                        <p>Create a new APEL application and submit your professional experience details.</p>
+            @foreach ($groups as $group)
+                @continue($group['set']->isEmpty())
+                <section class="stack" aria-labelledby="grp-{{ $group['key'] }}">
+                    <div class="stack-head">
+                        <h2 id="grp-{{ $group['key'] }}">
+                            {{ $group['title'] }}
+                            <span class="stack-count">{{ $group['set']->count() }}</span>
+                        </h2>
+                        <p>{{ $group['note'] }}</p>
                     </div>
-                </a>
 
-                <a href="{{ route('student.applications.index') }}" class="action-card">
-                    <div class="action-icon">📂</div>
-                    <div>
-                        <h4>View Applications</h4>
-                        <p>Check the status, edit, or submit payments for your active applications.</p>
+                    <div class="stack-body">
+                        @foreach ($group['set'] as $case)
+                            @include('student.partials._case', ['case' => $case])
+                        @endforeach
                     </div>
-                </a>
-            </div>
-        </section>
+                </section>
+            @endforeach
+        @endif
     </div>
 @endsection

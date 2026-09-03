@@ -3099,3 +3099,243 @@ td.num,
         min-height: 44px;
     }
 }
+
+/*
+|==============================================================================
+| Deck - the working screens
+|==============================================================================
+|
+| Shared by the student and evaluator dashboards, because both answer the same
+| question from opposite sides: what is waiting on me, and if nothing is, who
+| is holding it. The grouping is the design. A queue sorted by date makes the
+| reader scan every row to find the one they can act on; grouped by whose move
+| it is, the top group is the work and the rest is context.
+|
+| Nothing here uses a stage colour to mean "good". Tone comes from ApelStage,
+| so a rejection is drawn as a rejection even in the group heading above it.
+|
+*/
+
+.deck {
+    width: min(100% - 2.5rem, 68rem);
+    margin-inline: auto;
+    padding: var(--s-5) 0 var(--s-6);
+}
+
+/* Head --------------------------------------------------------------------- */
+
+.deck-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-3);
+    padding-bottom: var(--s-3);
+    margin-bottom: var(--s-5);
+    border-bottom: 1px solid var(--line);
+}
+
+.deck-eyebrow {
+    margin: 0 0 .25rem;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.deck-title {
+    margin: 0;
+    font-size: var(--t-2xl);
+    letter-spacing: -.032em;
+}
+
+/* Counts. Deliberately small - context, not the point of the page. */
+.tally { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: 0; }
+.tally > div { display: grid; gap: .15rem; }
+.tally dt { color: var(--ink-3); font-size: var(--t-xs); }
+.tally dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-lg);
+    font-weight: 500;
+    color: var(--ink);
+}
+
+/* Groups ------------------------------------------------------------------- */
+
+.stack { margin-bottom: var(--s-5); }
+
+.stack-head { margin-bottom: var(--s-3); }
+.stack-head h2 {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: 0 0 .15rem;
+    font-size: var(--t-lg);
+    letter-spacing: -.02em;
+}
+.stack-head p { margin: 0; color: var(--ink-3); font-size: var(--t-sm); }
+
+.stack-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 .4rem;
+    border-radius: var(--r-full);
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    font-weight: 500;
+}
+
+.stack-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--s-3); }
+.stack-body--rows { grid-template-columns: minmax(0, 1fr); gap: var(--s-2); }
+
+/* Case card - the student's view of one application ------------------------ */
+
+.case-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-2);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.case-top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-bottom: var(--s-2); }
+
+.case-ref {
+    margin-left: auto;
+    color: var(--ink-4);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: .04em;
+}
+
+.case-title { margin: 0 0 .2rem; font-size: var(--t-lg); letter-spacing: -.022em; }
+.case-title a { color: var(--ink); text-decoration: none; }
+.case-title a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.case-meta { margin: 0 0 var(--s-3); color: var(--ink-3); font-size: var(--t-sm); }
+
+/* A compact rail inside a card: same spine, less air between nodes. */
+.spine--tight { padding-left: var(--s-4); }
+.spine--tight .spine-node { padding-bottom: .5rem; }
+.spine--tight .spine-label { font-size: var(--t-sm); }
+
+/* The next action, pinned to the bottom so every card ends on the same line. */
+.case-act {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-2);
+    margin-top: auto;
+    padding: var(--s-3) 0 0;
+    border-top: 1px solid var(--line);
+}
+
+.case-act-what { margin: 0 0 .15rem; font-weight: 600; font-size: var(--t-md); }
+.case-act-why { margin: 0; color: var(--ink-2); font-size: var(--t-sm); }
+.case-act-when { margin: .3rem 0 0; color: var(--attention); font-family: var(--font-mono); font-size: var(--t-xs); }
+
+/*
+   The action carries the tone of the stage rather than always reading as
+   urgent: a case sitting with the registry should not shout at the candidate.
+*/
+.case-act--attention { border-top-color: var(--attention-line); }
+.case-act--bad { border-top-color: var(--bad-line); }
+.case-act--good { border-top-color: var(--good-line); }
+
+.case-wait {
+    margin-top: auto;
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+    font-size: var(--t-sm);
+}
+
+/* Row case - the evaluator's queue ----------------------------------------- */
+
+.row-case {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    padding: var(--s-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--surface);
+    transition: border-color .15s ease;
+}
+.row-case:hover { border-color: var(--line-strong); }
+
+.row-case-tell { min-width: 0; flex: 1 1 22rem; }
+.row-case-title { margin: 0 0 .15rem; font-size: var(--t-md); letter-spacing: -.018em; }
+.row-case-title a { color: var(--ink); text-decoration: none; }
+.row-case-title a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+.row-case-meta { margin: 0; color: var(--ink-3); font-size: var(--t-sm); }
+.row-case-act { margin: .4rem 0 0; color: var(--ink); font-size: var(--t-sm); font-weight: 600; }
+.row-case-wait { margin: .4rem 0 0; color: var(--ink-3); font-size: var(--t-sm); }
+
+/* Empty states ------------------------------------------------------------- */
+
+/*
+   An empty screen is an invitation to act, so it says what this place is for
+   and offers the one thing worth doing - not "no records found".
+*/
+.blank {
+    padding: var(--s-5) var(--s-4);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r-2);
+    background: var(--surface);
+    text-align: center;
+}
+.blank h2 { margin: 0 0 .5rem; font-size: var(--t-xl); letter-spacing: -.026em; }
+.blank p { max-width: 52ch; margin: 0 auto var(--s-3); color: var(--ink-2); }
+
+/* Narrow ------------------------------------------------------------------- */
+
+@media (max-width: 46rem) {
+    .deck-head { align-items: flex-start; }
+    .tally { gap: var(--s-3); }
+
+    .row-case { flex-direction: column; align-items: stretch; }
+
+    /*
+       flex-basis resolves against the main axis, so the `flex: 1 1 22rem` that
+       sets a sensible minimum WIDTH in the row layout became a 352px minimum
+       HEIGHT the moment this query turned the container into a column - a
+       block of dead space above every button. Reset it on the axis change.
+    */
+    .row-case-tell { flex: 1 1 auto; }
+
+    .row-case .btn { width: 100%; }
+    .case-act { flex-direction: column; align-items: stretch; }
+    .case-act .btn { width: 100%; }
+}
+
+/* Touch: btn--sm is 28px, well under the 44px floor, and it is the control
+   that carries the primary action in every queue row. */
+@media (pointer: coarse) {
+    .btn, .btn--sm { min-height: 44px; }
+}
+
+/*
+   ApelStage::tone() can return 'neutral' - it is what DRAFT reports, which is
+   the state every application starts in and the one a new candidate sees
+   first. Without this the most common badge on the student's screen rendered
+   with no styling at all.
+*/
+.badge--neutral {
+    background: var(--surface-sunk);
+    border-color: var(--line);
+    color: var(--ink-2);
+}
