@@ -107,4 +107,72 @@ class DashboardRenderTest extends FeatureTestCase
             ->assertOk()
             ->assertDontSee('Nothing is assigned to you.', false);
     }
+
+    /**
+     * The index used to classify by substring-matching the legacy status
+     * string, and status is written as $stage->label($type). An APEL A
+     * rejection carries the label "Not approved", so
+     * str_contains('not approved', 'approved') put a turned-down application
+     * in the Approved bucket on the candidate's own list.
+     */
+    public function test_a_rejected_application_is_never_presented_as_approved(): void
+    {
+        $student = $this->makeStudent();
+
+        $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::REJECTED->value,
+            'program_applied' => 'Bachelor of Engineering',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.applications.index'));
+
+        $response->assertOk();
+        $response->assertSee('Closed', false);
+        $response->assertDontSee('Needs you', false);
+
+        // The badge must carry the rejection tone, not a success one.
+        $response->assertSee('badge--bad', false);
+        $response->assertDontSee('badge--good', false);
+    }
+
+    /** Both APEL C outcomes fell through the old test and were counted pending. */
+    public function test_apel_c_outcomes_are_grouped_as_closed(): void
+    {
+        $student = $this->makeStudent();
+
+        foreach ([ApelStage::APPROVED, ApelStage::REJECTED] as $stage) {
+            $this->makeApplication($student, [
+                'application_type' => 'APEL C',
+                'stage' => $stage->value,
+                'program_applied' => 'Bachelor of Engineering',
+            ]);
+        }
+
+        $this->actingAs($student)
+            ->get(route('student.applications.index'))
+            ->assertOk()
+            ->assertSee('Closed', false)
+            ->assertDontSee('Moving', false);
+    }
+
+    public function test_evaluator_queue_renders_grouped(): void
+    {
+        $evaluator = $this->makeUser('evaluator');
+        $student = $this->makeStudent();
+
+        $this->makeApplication($student, [
+            'application_type' => 'APEL A',
+            'stage' => ApelStage::UNDER_REVIEW->value,
+            'status' => 'Submitted',
+            'evaluator_id' => (string) $evaluator->_id,
+            'program_applied' => 'Bachelor of Engineering',
+        ]);
+
+        $this->actingAs($evaluator)
+            ->get(route('evaluator.applications.index'))
+            ->assertOk()
+            ->assertSee('Assigned to you', false)
+            ->assertSee('row-case', false);
+    }
 }

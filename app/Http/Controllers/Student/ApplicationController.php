@@ -12,6 +12,7 @@ use App\Models\AssessmentSubmission;
 use App\Models\Course;
 use App\Models\Programme;
 use App\Models\User;
+use App\Support\ApplicationCase;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,30 @@ class ApplicationController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        return view('student.applications.index', compact('applications'));
+        /*
+         | Grouped by stage rather than by substring-matching the legacy status
+         | string, which the view used to do and got wrong in three of the four
+         | outcomes.
+         |
+         | status is written as $stage->label($type) (StageMachine:176), so the
+         | test `str_contains(strtolower($status), 'approved')` was reading
+         | prose:
+         |
+         |   APEL A rejected  -> "Not approved"       -> counted as APPROVED
+         |   APEL C approved  -> "Credit awarded"     -> counted as pending
+         |   APEL C rejected  -> "Credit not awarded" -> counted as pending
+         |
+         | Only an approved APEL A landed in the right bucket, and a candidate
+         | whose APEL A had been turned down was shown it as approved.
+         */
+        $cases = ApplicationCase::collect($applications, Auth::user());
+
+        return view('student.applications.index', [
+            'cases' => $cases,
+            'yourMove' => ApplicationCase::awaitingViewer($cases),
+            'inProgress' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
+        ]);
     }
 
     public function create()

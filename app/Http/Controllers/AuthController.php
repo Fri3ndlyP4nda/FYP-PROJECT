@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Apel\ApelStage;
 use App\Domain\Apel\NextAction;
 use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
 use App\Services\ApelDecisionSupportService;
+use App\Support\ApplicationCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -252,43 +252,14 @@ class AuthController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        // Resolved once here rather than per-row in Blade, so the view stays a
-        // presentation of state instead of a place where workflow rules live.
-        $cases = $applications->map(function (Application $application) use ($viewer) {
-            $stage = self::stageOf($application);
-            $type = (string) $application->application_type;
-
-            return [
-                'application' => $application,
-                'stage' => $stage,
-                'type' => $type,
-                'action' => NextAction::for($application, $viewer),
-                'rail' => $stage?->rail($type) ?? [],
-                'progress' => $stage?->progress($type) ?? 0,
-                'explanation' => $stage?->studentExplanation($type) ?? '',
-            ];
-        });
+        $cases = ApplicationCase::collect($applications, $viewer);
 
         return view('dashboard.student', [
             'cases' => $cases,
-            'yourMove' => $cases->filter(fn ($c) => $c['stage']?->awaitsStudent())->values(),
-            'inProgress' => $cases->filter(fn ($c) => $c['stage'] && ! $c['stage']->awaitsStudent() && ! $c['stage']->isTerminal())->values(),
-            'closed' => $cases->filter(fn ($c) => $c['stage']?->isTerminal())->values(),
+            'yourMove' => ApplicationCase::awaitingViewer($cases),
+            'inProgress' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
         ]);
-    }
-
-    /**
-     * Read the stage without going through the accessor.
-     *
-     * mongodb/laravel-mongodb resolves a method whose name matches a field as
-     * an embedded relation before it checks the attributes, so Application has
-     * no usable stage() accessor - reading it throws.
-     */
-    private static function stageOf(Application $application): ?ApelStage
-    {
-        $raw = $application->getAttributes()['stage'] ?? null;
-
-        return $raw ? ApelStage::tryFrom((string) $raw) : null;
     }
 
     /**
@@ -320,30 +291,15 @@ class AuthController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        $cases = $applications->map(function (Application $application) use ($viewer) {
-            $stage = self::stageOf($application);
-
-            return [
-                'application' => $application,
-                'stage' => $stage,
-                'type' => (string) $application->application_type,
-                'action' => NextAction::for($application, $viewer),
-            ];
-        });
-
-        // Silence from NextAction means this stage is not the viewer's move.
-        $waitingOnMe = $cases->filter(
-            fn ($c) => $c['stage'] && ! $c['stage']->isTerminal() && $c['action'] !== null
-        )->values();
+        $cases = ApplicationCase::collect($applications, $viewer);
 
         $assignedIds = $applications->map(fn (Application $a) => (string) $a->_id)->all();
 
         return view('dashboard.evaluator', [
-            'waitingOnMe' => $waitingOnMe,
-            'withOthers' => $cases->filter(
-                fn ($c) => $c['stage'] && ! $c['stage']->isTerminal() && $c['action'] === null
-            )->values(),
-            'closed' => $cases->filter(fn ($c) => $c['stage']?->isTerminal())->values(),
+            // Silence from NextAction means the stage is not the viewer's move.
+            'waitingOnMe' => ApplicationCase::awaitingViewer($cases),
+            'withOthers' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
             'assignedCount' => $applications->count(),
             'gradedCount' => AssessmentSubmission::where('graded_by', $evaluatorId)->count(),
             'awaitingGrading' => empty($assignedIds) ? 0 : AssessmentSubmission::whereIn('application_id', $assignedIds)

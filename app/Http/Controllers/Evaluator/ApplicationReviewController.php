@@ -9,6 +9,7 @@ use App\Mail\GenericQueueMail;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
+use App\Support\ApplicationCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +27,15 @@ class ApplicationReviewController extends Controller
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        return view('evaluator.applications.index', compact('applications'));
+        // Grouped by whose move it is, so the top of the page is the work.
+        $cases = ApplicationCase::collect($applications, Auth::user());
+
+        return view('evaluator.applications.index', [
+            'cases' => $cases,
+            'waitingOnMe' => ApplicationCase::awaitingViewer($cases),
+            'withOthers' => ApplicationCase::elsewhere($cases),
+            'closed' => ApplicationCase::closed($cases),
+        ]);
     }
 
     public function show($id)

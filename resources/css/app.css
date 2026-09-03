@@ -3339,3 +3339,6 @@ td.num,
     border-color: var(--line);
     color: var(--ink-2);
 }
+
+/* Header actions on the list screens. */
+.deck-acts { display: flex; flex-wrap: wrap; gap: var(--s-2); }
