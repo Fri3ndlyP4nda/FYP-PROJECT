@@ -576,4 +576,53 @@ class ApelCWorkflowTest extends FeatureTestCase
             $message !== '' ? $message : "Expected the application to be at \"{$expected->label(ApelStage::APEL_C)}\".",
         );
     }
+
+    /**
+     * The portfolio track had no way in.
+     *
+     * uploadPortfolio() and submitPortfolio() exist, are validated and are
+     * routed - and no view in this project's history ever linked to either. A
+     * candidate whose advisor recommended portfolio assessment had nowhere to
+     * provide one, so that half of APEL C dead-ended at the recommendation.
+     */
+    public function test_a_candidate_on_the_portfolio_track_is_offered_a_way_to_submit_one(): void
+    {
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::ASSESSMENT_SET->value,
+            'status' => ApelStage::ASSESSMENT_SET->label('APEL C'),
+            'assessment_type' => 'portfolio',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('student.apel_c.show', $application->_id));
+
+        $response->assertOk();
+        $response->assertSee(route('student.applications.upload_portfolio', $application->_id), false);
+        $response->assertSee(route('student.applications.submit_portfolio', $application->_id), false);
+        $response->assertSee('portfolio_essays[essay1]', false);
+
+        // And it must not claim nothing is needed while it is still their move.
+        $response->assertDontSee('Nothing further is needed from you', false);
+    }
+
+    /** Once submitted, the forms go and the page says who holds it. */
+    public function test_a_submitted_portfolio_stops_offering_the_form(): void
+    {
+        $student = $this->makeStudent();
+
+        $application = $this->makeApplication($student, [
+            'application_type' => 'APEL C',
+            'stage' => ApelStage::SUBMITTED_FOR_GRADING->value,
+            'status' => ApelStage::SUBMITTED_FOR_GRADING->label('APEL C'),
+            'assessment_type' => 'portfolio',
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('student.apel_c.show', $application->_id))
+            ->assertOk()
+            ->assertSee('Nothing further is needed from you', false)
+            ->assertDontSee('portfolio_essays[essay1]', false);
+    }
 }

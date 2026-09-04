@@ -67,12 +67,30 @@
                                 @endif
                             </div>
 
-                            @if ($paper->application_id && Route::has('evaluator.applications.show'))
-                                <a class="btn btn-ghost btn--sm"
-                                   href="{{ route('evaluator.applications.show', $paper->application_id) }}">
-                                    The application
-                                </a>
-                            @endif
+                            <div class="row-acts">
+                                @if ($paper->application_id && Route::has('evaluator.applications.show'))
+                                    <a class="btn btn-ghost btn--sm"
+                                       href="{{ route('evaluator.applications.show', $paper->application_id) }}">
+                                        The application
+                                    </a>
+                                @endif
+
+                                {{--
+                                    Offered only for a paper nobody is sitting.
+                                    destroy() refuses an active one, and a
+                                    control that is going to be refused should
+                                    not be shown as though it will work.
+                                --}}
+                                @if (($paper->status ?? '') !== 'active' && Route::has('evaluator.assessment.papers.destroy'))
+                                    <form method="POST"
+                                          action="{{ route('evaluator.assessment.papers.destroy', $paper->_id) }}"
+                                          onsubmit="return confirm('Delete this paper? This cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn--sm">Delete</button>
+                                    </form>
+                                @endif
+                            </div>
                         </article>
                     @endforeach
                 </div>

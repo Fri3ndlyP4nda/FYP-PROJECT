@@ -219,10 +219,122 @@
                     @endforeach
                 @endif
             @elseif ($isPortfolio)
-                <p>
-                    Your advisor recommended assessment by <strong>portfolio</strong>. The evaluator is
-                    reviewing what you uploaded. Nothing is needed from you.
-                </p>
+                @php
+                    $portfolioSubmitted = $stage === ApelStage::SUBMITTED_FOR_GRADING
+                        || ($submission && $submission->status === 'submitted' && $stage?->isTerminal());
+                    $canSubmitPortfolio = \App\Domain\Apel\StageMachine::can($application, ApelStage::SUBMITTED_FOR_GRADING);
+                    $uploaded = collect((array) ($application->portfolio_file ?? []));
+                @endphp
+
+                @if ($portfolioSubmitted || ! $canSubmitPortfolio)
+                    <p>
+                        Your advisor recommended assessment by <strong>portfolio</strong>. The evaluator
+                        is reviewing what you submitted. Nothing further is needed from you.
+                    </p>
+                @else
+                    {{--
+                        The portfolio was unreachable.
+
+                        uploadPortfolio() and submitPortfolio() exist, are validated,
+                        and are routed - and no view in this project's history ever
+                        linked to either. A candidate told to be assessed by portfolio
+                        had no way to provide one, so the APEL C portfolio track
+                        dead-ended at the advisor's recommendation.
+                    --}}
+                    <p>
+                        Your advisor recommended assessment by <strong>portfolio</strong>. Build it
+                        below: attach your evidence, answer the four questions, then submit. You can
+                        add files across several sittings &mdash; nothing goes to the evaluator until
+                        you press submit.
+                    </p>
+
+                    @if ($uploaded->isNotEmpty())
+                        <ul class="files">
+                            @foreach ($uploaded as $file)
+                                @php
+                                    $path = is_array($file) ? ($file['path'] ?? '') : (string) $file;
+                                    $name = is_array($file) ? ($file['name'] ?? basename($path)) : basename($path);
+                                @endphp
+                                @continue($path === '')
+                                <li>
+                                    <span class="files-kind">Attached</span>
+                                    <a href="{{ route('files.application', ['application' => $application->_id, 'path' => $path]) }}"
+                                       target="_blank" rel="noopener">{{ $name }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    <form method="POST" action="{{ route('student.applications.upload_portfolio', $application->_id) }}"
+                          enctype="multipart/form-data" class="stack-form">
+                        @csrf
+                        <div class="field">
+                            <label for="f-portfolio">Add evidence files</label>
+                            <input type="file" name="portfolio_file[]" id="f-portfolio" multiple required
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                            <p class="field-hint">PDF, image or Word, up to 20MB each. You can add more later.</p>
+                            <x-field-error name="portfolio_file.*" />
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Attach these</button>
+                    </form>
+
+                    <details class="fold">
+                        <summary>Answer the four questions and submit</summary>
+
+                        <p class="muted">
+                            Submitting sends the portfolio to your evaluator and cannot be undone.
+                        </p>
+
+                        <form method="POST" action="{{ route('student.applications.submit_portfolio', $application->_id) }}"
+                              enctype="multipart/form-data" class="stack-form">
+                            @csrf
+
+                            <div class="field">
+                                <label for="f-school">School or faculty</label>
+                                <input type="text" id="f-school" name="portfolio_essays[school_name]" required
+                                       maxlength="255" value="{{ old('portfolio_essays.school_name') }}">
+                                <x-field-error name="portfolio_essays.school_name" />
+                            </div>
+
+                            <div class="field">
+                                <label for="f-cohort">Cohort</label>
+                                <input type="text" id="f-cohort" name="portfolio_essays[cohort]" required
+                                       maxlength="100" value="{{ old('portfolio_essays.cohort') }}">
+                                <x-field-error name="portfolio_essays.cohort" />
+                            </div>
+
+                            @php
+                                $prompts = [
+                                    1 => 'What have you done in this subject area, and where?',
+                                    2 => 'What did you learn from it that maps onto this course?',
+                                    3 => 'Give a specific example of applying that learning.',
+                                    4 => 'What evidence in your attachments supports this?',
+                                ];
+                            @endphp
+
+                            @foreach ($prompts as $i => $prompt)
+                                <div class="field">
+                                    <label for="f-essay{{ $i }}">Question {{ $i }}</label>
+                                    <p class="field-hint">{{ $prompt }}</p>
+                                    <textarea id="f-essay{{ $i }}" name="portfolio_essays[essay{{ $i }}]"
+                                              rows="5" required>{{ old('portfolio_essays.essay'.$i) }}</textarea>
+                                    <x-field-error name="portfolio_essays.essay{{ $i }}" />
+                                </div>
+                            @endforeach
+
+                            @foreach (['cv_file' => 'CV or resume', 'certs_file' => 'Certificates', 'samples_file' => 'Work samples'] as $field => $label)
+                                <div class="field">
+                                    <label for="f-{{ $field }}">{{ $label }} <span class="muted">(optional)</span></label>
+                                    <input type="file" id="f-{{ $field }}" name="{{ $field }}"
+                                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                    <x-field-error name="{{ $field }}" />
+                                </div>
+                            @endforeach
+
+                            <button type="submit" class="btn btn-primary">Submit my portfolio</button>
+                        </form>
+                    </details>
+                @endif
             @elseif ($assessmentPaper)
                 <p>The evaluator has set your assessment paper.</p>
                 <dl class="kv">

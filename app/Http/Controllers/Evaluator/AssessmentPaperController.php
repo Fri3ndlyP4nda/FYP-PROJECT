@@ -141,6 +141,19 @@ class AssessmentPaperController extends Controller
             ->where('evaluator_id', (string) Auth::id())
             ->firstOrFail();
 
+        /*
+         | An active paper is one a candidate is currently sitting. Deleting it
+         | takes the assessment out from under them mid-attempt, and the file
+         | with it - there was no guard here at all, only the absence of a
+         | button anywhere in the interface.
+         */
+        if (($paper->status ?? '') === 'active') {
+            return redirect()->route('evaluator.assessment.papers.index')->withErrors([
+                'paper' => 'That paper is set on a live application. A candidate may be sitting it, '
+                    .'so it cannot be deleted until the application is decided.',
+            ]);
+        }
+
         // Check if there are other templates/clones using this exact file
         $otherReferences = AssessmentPaper::where('question_file', $paper->question_file)
             ->where('_id', '!=', $paper->_id)
