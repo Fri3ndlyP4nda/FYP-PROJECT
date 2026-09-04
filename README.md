@@ -155,7 +155,7 @@ The flow is intact, not removed: set it to `true` to require an emailed one-time
 php artisan test
 ```
 
-**154 tests, 1680 assertions.** They run against a real MongoDB, not sqlite — every
+**183 tests, 1779 assertions.** They run against a real MongoDB, not sqlite — every
 model in this application pins `$connection = 'mongodb'`, and the `unique:users,email`
 rule resolves against the *default* connection, so an in-memory sqlite database gave
 them nothing to talk to.
@@ -174,6 +174,8 @@ real applicant data.
 | `ApelStageTest` | The stage machine in isolation — legal moves, terminal states, the progress rail |
 | `EligibilityTest` | Entry rules and their boundaries |
 | `DashboardRenderTest` | Every screen rendered at every stage, for each role - plus the specific defects that hid behind stale status strings |
+| `ScalePerformanceTest` | Renders each screen against two data sets an order of magnitude apart and asserts the query count barely moves - the absolute number does not matter, the slope does |
+| `ConcurrencyTest` | Two people acting on one application at once: the losing writer is refused, and the winner's audit entry survives |
 
 Writing this suite surfaced defects that were live in the application, including one
 that made every stage read throw — the whole workflow returned 500 and nothing had
@@ -198,6 +200,33 @@ the only thing that catches a comparison that is merely wrong.
 
 ---
 
+## Load and concurrency
+
+The two questions worth asking of any system that more than one person uses.
+
+**Does a screen's cost grow with the data behind it?** `ScalePerformanceTest`
+renders each one against two data sets an order of magnitude apart and compares
+the query counts. It found the account list issuing one query per evaluator - 4
+users cost 7 queries, 34 cost 37 - and both printed reports resolving a user
+inside the row loop. All flat now.
+
+**What is genuinely unbounded?** Most lists are not: one candidate's
+applications, one evaluator's assignments, the staff roll. Two were. The
+registry queue loaded every non-draft application ever submitted, and the
+account list every account. Live applications are bounded by how much work is
+actually in flight; closed ones and registered candidates only accumulate. Both
+screens now load a bounded slice and say so, with a true total beside it - a
+list that quietly omits rows is worse than one that admits a limit, because the
+reader cannot tell "not here" from "not shown".
+
+**Two people, one application.** `StageMachine::transition()` was a
+read-check-write: both officers read the same stage, both found their move
+legal, both wrote, and the second silently overwrote the first - taking the
+first one's audit entry with it, since each appended to the copy of
+`stage_history` it had read. The write is now conditional on the stage still
+being what was read, so exactly one of two racing writers can win and the loser
+is told rather than ignored.
+
 ## Security
 
 Applicant records contain Malaysian IC numbers and identity documents, so the
@@ -213,6 +242,25 @@ authorization model is the part of this system that most needs to be right.
 - **One-time codes** use `random_int()`, are stored hashed, and are compared in
   constant time.
 - **Password reset** does not reveal whether an address has an account.
+- **Security headers** on every response: a content security policy,
+  `frame-ancestors 'none'`, `nosniff`, a referrer policy that does not leak
+  internal paths carrying application ids, and HSTS over HTTPS only. Every other
+  control here runs on the server, which means none of them help once something
+  is executing inside the user's own page.
+- **Session cookies** are `SameSite=Strict`, secure outside local, and encrypted.
+  Under `lax` the session still travels on a top-level navigation from another
+  origin, so a link an attacker gets an administrator to click arrives
+  authenticated.
+- **Authentication events are recorded** - successes, failures, sign-out,
+  two-factor failures, both ends of a password reset - with the address
+  attempted and the source IP. Rate limiting that refuses an attack and leaves
+  no trace is the difference between a system that resisted one and a system
+  where nobody can tell there was one. A value that is not a valid email address
+  is logged as malformed rather than verbatim, because people type their
+  password into the email field.
+- **Credentials are never flashed back to a form.** `withInput()` with no
+  arguments flashes every submitted field, and Laravel only strips passwords
+  from the automatic flash a validation failure performs.
 - **Uploaded documents** are never served by URL alone (see above). Reaching that state
   needed both halves: `SecureFileController` was written and tested, but no view had
   ever linked to it — every document link in the interface was still a public
