@@ -3983,3 +3983,11 @@ td.num,
     font-size: var(--t-xs);
     letter-spacing: .06em;
 }
+
+/* When a list is deliberately not showing everything, it should say so. */
+.queue-more {
+    margin: var(--s-2) 0 0;
+    padding: .6rem var(--s-3);
+    color: var(--ink-3);
+    font-size: var(--t-xs);
+}

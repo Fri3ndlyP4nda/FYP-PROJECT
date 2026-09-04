@@ -147,6 +147,15 @@
                     </div>
                 </section>
             @endforeach
+
+            @if ($total > $users->count())
+                {{-- The list is capped, so it says so rather than quietly
+                     omitting people. --}}
+                <p class="queue-more">
+                    Showing {{ $users->count() }} of {{ $total }} accounts.
+                    Use the search box to find someone not listed.
+                </p>
+            @endif
         @endif
     </div>
 @endsection

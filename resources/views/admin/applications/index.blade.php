@@ -81,11 +81,23 @@
                         <section class="queue-group" data-group="closed">
                             <h2 class="queue-group-head">
                                 <span>Closed</span>
-                                <span class="queue-count">{{ $closed->count() }}</span>
+                                {{-- The true total, not the number on screen. Closed
+                                     applications accumulate forever, so the queue loads a
+                                     recent slice - the count must still be honest about
+                                     how many there are. --}}
+                                <span class="queue-count">{{ $closedTotal }}</span>
                             </h2>
                             @foreach ($closed as $row)
                                 @include('admin.applications._queue-row', ['row' => $row, 'selected' => $selected])
                             @endforeach
+
+                            @if ($closedTotal > $closed->count())
+                                <p class="queue-more">
+                                    Showing the {{ $closed->count() }} most recently decided
+                                    of {{ $closedTotal }}.
+                                    <a href="{{ route('admin.reports.apel_a') }}">See the full report</a>.
+                                </p>
+                            @endif
                         </section>
                     @endif
                 </div>

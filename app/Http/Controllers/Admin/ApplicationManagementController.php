@@ -22,6 +22,18 @@ use Illuminate\Validation\Rule;
 
 class ApplicationManagementController extends Controller
 {
+    /** Stages an application never leaves. These accumulate forever. */
+    private const ARCHIVED_STAGES = ['approved', 'rejected', 'advisor_rejected'];
+
+    /**
+     * How many closed applications the queue shows.
+     *
+     * Enough to answer "what did we just decide", not so many that the screen
+     * carries the institution's whole history. The true total is shown beside
+     * them, so the number is never misleading.
+     */
+    private const CLOSED_SHOWN = 25;
+
     public function __construct(private ApelDecisionSupportService $decisionSupport) {}
 
     /**
@@ -41,7 +53,34 @@ class ApplicationManagementController extends Controller
     {
         $viewer = Auth::user();
 
-        $applications = Application::where('stage', '!=', ApelStage::DRAFT->value)->get();
+        /*
+         | Two queries, because the two halves of this screen scale differently.
+         |
+         | Live applications are bounded by how much work is genuinely in
+         | flight - an institution has hundreds open at once, not hundreds of
+         | thousands, however long it has been running. Closed ones only ever
+         | accumulate, and after a few intakes they are the overwhelming
+         | majority of the collection while being the part nobody is here to
+         | work on.
+         |
+         | Loading every non-draft application meant the cost of this screen
+         | grew with the institution's entire history. The live half is still
+         | loaded in full - an administrator must see everything blocked on
+         | them, so capping that would hide work - and the closed half is a
+         | recent slice with a true total beside it.
+         */
+        $liveApplications = Application::whereNotIn('stage', self::ARCHIVED_STAGES)
+            ->where('stage', '!=', ApelStage::DRAFT->value)
+            ->get();
+
+        $closedTotal = Application::whereIn('stage', self::ARCHIVED_STAGES)->count();
+
+        $closedApplications = Application::whereIn('stage', self::ARCHIVED_STAGES)
+            ->orderBy('status_updated_at', 'desc')
+            ->limit(self::CLOSED_SHOWN)
+            ->get();
+
+        $applications = $liveApplications->concat($closedApplications);
 
         // Resolve every applicant name in one query rather than one per row.
         $names = User::whereIn('_id', $applications->pluck('user_id')->filter()->unique()->values()->all())
@@ -86,7 +125,7 @@ class ApplicationManagementController extends Controller
         $metrics = $this->decisionSupport->workflowMetrics();
 
         return view('admin.applications.index', compact(
-            'needsYou', 'elsewhere', 'closed', 'selected', 'metrics'
+            'needsYou', 'elsewhere', 'closed', 'selected', 'metrics', 'closedTotal'
         ));
     }
 

@@ -234,4 +234,61 @@ class ScalePerformanceTest extends FeatureTestCase
             $response->assertSee('(Pass)', false);
         }
     }
+
+    /**
+     * Closed applications accumulate forever while live ones are bounded by
+     * how much work is actually in flight. Loading every non-draft application
+     * meant this screen's cost grew with the institution's entire history.
+     */
+    public function test_the_registry_queue_does_not_load_the_whole_archive(): void
+    {
+        $admin = $this->makeUser('admin');
+        $student = $this->makeStudent();
+
+        // One live case, and far more decided ones than the queue should render.
+        $this->seedApplications($student, 1);
+        for ($i = 0; $i < 60; $i++) {
+            $this->makeApplication($student, [
+                'application_type' => 'APEL A',
+                'stage' => ApelStage::APPROVED->value,
+                'status' => ApelStage::APPROVED->label('APEL A'),
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('admin.applications.index'));
+        $response->assertOk();
+
+        $closed = $response->viewData('closed');
+        $total = $response->viewData('closedTotal');
+
+        $this->assertSame(60, $total, 'The count must tell the truth about the archive.');
+        $this->assertLessThanOrEqual(
+            25,
+            $closed->count(),
+            'The queue must render a slice of the archive, not all of it.',
+        );
+
+        // And it must say so rather than quietly omitting them.
+        $response->assertSee('most recently decided', false);
+    }
+
+    /**
+     * Candidates register themselves and never leave, so an unfiltered account
+     * list would eventually render the whole institution.
+     */
+    public function test_the_account_list_is_capped_and_says_so(): void
+    {
+        $admin = $this->makeUser('admin');
+
+        for ($i = 0; $i < 120; $i++) {
+            $this->makeStudent();
+        }
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index'));
+        $response->assertOk();
+
+        $this->assertLessThanOrEqual(100, $response->viewData('users')->count());
+        $this->assertGreaterThan(100, $response->viewData('total'));
+        $response->assertSee('Use the search box', false);
+    }
 }

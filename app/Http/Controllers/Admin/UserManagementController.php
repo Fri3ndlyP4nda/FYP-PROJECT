@@ -35,6 +35,16 @@ class UserManagementController extends Controller
      */
     private const CLOSED_STAGES = ['approved', 'rejected', 'advisor_rejected', 'draft'];
 
+    /**
+     * How many accounts the list renders at once.
+     *
+     * High enough that a real staff list is never truncated, low enough that
+     * the candidate roll cannot turn this screen into a several-thousand-row
+     * page. Anyone past it is found with the search box, which is what the
+     * search box is for.
+     */
+    private const MAX_LISTED = 100;
+
     public function index(Request $request)
     {
         $query = User::query();
@@ -50,7 +60,18 @@ class UserManagementController extends Controller
             $query->where('role', $role);
         }
 
-        $users = $query->orderBy('name', 'asc')->get();
+        /*
+         | Bounded. Candidates register themselves and never leave, so this
+         | collection grows with every intake forever - and an administrator
+         | opening this screen is looking for one person, not reading a roll.
+         | The search and role filter above narrow it; this stops the unfiltered
+         | view from rendering the entire institution.
+         */
+        $total = (clone $query)->count();
+
+        $users = $query->orderBy('name', 'asc')
+            ->limit(self::MAX_LISTED)
+            ->get();
 
         /*
          | Live workload, so an administrator can see what a demotion would
@@ -67,6 +88,7 @@ class UserManagementController extends Controller
             'workload' => $workload,
             'search' => $search,
             'role' => $role,
+            'total' => $total,
             'counts' => [
                 'student' => User::where('role', 'student')->count(),
                 'evaluator' => User::where('role', 'evaluator')->count(),
