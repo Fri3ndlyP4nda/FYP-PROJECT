@@ -15,6 +15,7 @@ use App\Services\ApelDecisionSupportService;
 use App\Support\ApplicationCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -343,6 +344,31 @@ class AuthController extends Controller
      * workflow actually maintains and the other two are written by one
      * controller each.
      */
+    /**
+     * Pending and failed queued jobs.
+     *
+     * Counted defensively: a missing collection or an unreachable queue store
+     * must not be the reason the dashboard 500s, so a failure here reports as
+     * unknown rather than throwing.
+     *
+     * @return array{pending:?int,failed:?int}
+     */
+    private static function queueHealth(): array
+    {
+        $count = function (string $collection): ?int {
+            try {
+                return DB::connection('mongodb')->getCollection($collection)->countDocuments();
+            } catch (\Throwable) {
+                return null;
+            }
+        };
+
+        return [
+            'pending' => $count('jobs'),
+            'failed' => $count('failed_jobs'),
+        ];
+    }
+
     public function adminDashboard()
     {
         $applications = Application::get();
@@ -351,7 +377,17 @@ class AuthController extends Controller
             fn (Application $a) => ApplicationCase::stageOf($a) === ApelStage::APPROVED
         );
 
+        /*
+         | Notifications are queued, so they only send while a worker is
+         | running. If one dies, mail stops leaving and nothing anywhere says
+         | so - candidates simply never hear back, and the first anyone knows
+         | is a complaint. Surfacing the backlog turns a silent failure into a
+         | number on the screen the registry already opens every morning.
+         */
+        $queue = self::queueHealth();
+
         return view('dashboard.admin', [
+            'queue' => $queue,
             'workflowMetrics' => app(ApelDecisionSupportService::class)->workflowMetrics(),
             'activityLogs' => ActivityLog::orderBy('created_at', 'desc')->limit(8)->get(),
 

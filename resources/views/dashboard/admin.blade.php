@@ -90,6 +90,38 @@
             </p>
         </section>
 
+        {{--
+            Only shown when something is wrong. A healthy queue needs no
+            reporting, and a permanent green tick trains people to stop reading.
+        --}}
+        @if (($queue['failed'] ?? 0) > 0 || ($queue['pending'] ?? 0) > 0)
+            <section class="panel panel--edge" aria-labelledby="queue-head">
+                <h2 class="panel-head" id="queue-head">Notifications are not going out</h2>
+
+                <dl class="kv">
+                    @if (($queue['pending'] ?? 0) > 0)
+                        <div>
+                            <dt>Waiting to send</dt>
+                            <dd>{{ $queue['pending'] }}</dd>
+                        </div>
+                    @endif
+                    @if (($queue['failed'] ?? 0) > 0)
+                        <div>
+                            <dt>Failed</dt>
+                            <dd>{{ $queue['failed'] }}</dd>
+                        </div>
+                    @endif
+                </dl>
+
+                <p class="note">
+                    Email is queued, so it only sends while a worker is running. Until one is,
+                    candidates are not being told when their application moves. Start it with
+                    <code>php artisan queue:work</code>, and
+                    <code>php artisan queue:retry all</code> for anything that already failed.
+                </p>
+            </section>
+        @endif
+
         <section class="stack" aria-labelledby="todo-head">
             <div class="stack-head">
                 <h2 id="todo-head">What needs the office</h2>

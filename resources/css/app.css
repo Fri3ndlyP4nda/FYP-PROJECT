@@ -3991,3 +3991,13 @@ td.num,
     color: var(--ink-3);
     font-size: var(--t-xs);
 }
+
+/* Inline code in an operational instruction. */
+code {
+    padding: .1rem .35rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--surface-sunk);
+    font-family: var(--font-mono);
+    font-size: .85em;
+}
