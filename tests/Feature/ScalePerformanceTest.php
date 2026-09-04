@@ -205,4 +205,33 @@ class ScalePerformanceTest extends FeatureTestCase
         $response->assertViewHas('approved', 1);
         $response->assertViewHas('pending', 0);
     }
+
+    /**
+     * The per-row outcome column, and on APEL C the credit-hours total, both
+     * keyed off status === 'Final Approved'. An approved application decided
+     * through the current workflow fell to the else branch and printed in the
+     * amber "pending" colour on the official report, and its credit hours were
+     * never added to the total.
+     */
+    public function test_a_decided_application_reads_as_decided_on_the_printed_report(): void
+    {
+        $admin = $this->makeUser('admin');
+        $student = $this->makeStudent();
+
+        foreach ([['APEL A', 'admin.reports.apel_a'], ['APEL C', 'admin.reports.apel_c']] as [$type, $report]) {
+            $this->makeApplication($student, [
+                'application_type' => $type,
+                'stage' => ApelStage::APPROVED->value,
+                'status' => ApelStage::APPROVED->label($type),
+            ]);
+
+            $response = $this->actingAs($admin)->get(route($report));
+
+            $response->assertOk();
+            $response->assertViewHas('approved', 1);
+
+            // The row must render as a pass, not fall through to pending.
+            $response->assertSee('(Pass)', false);
+        }
+    }
 }

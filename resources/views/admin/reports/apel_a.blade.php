@@ -218,9 +218,10 @@
                                 @endif
                             </td>
                             <td>
-                                @if($app->status === 'Final Approved')
+                                @php $outcome = $outcomes[(string) $app->_id] ?? 'pending'; @endphp
+                                @if($outcome === 'approved')
                                     <span style="color: #146b45; font-weight: 700;">Approved (Pass)</span>
-                                @elseif($app->status === 'Final Rejected')
+                                @elseif($outcome === 'rejected')
                                     <span style="color: #a32a20; font-weight: 700;">Rejected (Fail)</span>
                                 @else
                                     <span style="color: #f59e0b; font-weight: 700;">{{ $app->status }}</span>

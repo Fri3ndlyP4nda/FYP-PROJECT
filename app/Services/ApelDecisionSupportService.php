@@ -7,6 +7,7 @@ use App\Domain\Apel\Eligibility;
 use App\Models\Application;
 use App\Models\AssessmentSubmission;
 use App\Models\User;
+use App\Support\ApplicationCase;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -216,9 +217,7 @@ class ApelDecisionSupportService
                     ->get();
 
                 $activeApplications = $assignedApplications->filter(function ($application) {
-                    return ! in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
-                        && ! in_array($application->final_decision ?? '', ['approved', 'rejected'])
-                        && ! in_array($application->credit_decision ?? '', ['approved', 'rejected']);
+                    return ! self::isFinished($application);
                 });
 
                 $applicationIds = $assignedApplications
@@ -267,14 +266,39 @@ class ApelDecisionSupportService
             ->values();
     }
 
+    /**
+     * Has this application reached an end?
+     *
+     * The three call sites each tested status against 'Final Approved' and
+     * 'Final Rejected' before falling back to final_decision and
+     * credit_decision. StageMachine writes status as $stage->label($type), so
+     * that first test has not matched anything decided through the current code
+     * for some time - the results stayed correct only because the two decision
+     * fields happened to carry it.
+     *
+     * The stage is the field the workflow maintains, so it is read first. The
+     * legacy fields remain as a fallback for rows written before the stage
+     * machine, which have a stage backfilled but were decided under the old
+     * rules.
+     */
+    private static function isFinished(Application $application): bool
+    {
+        $stage = ApplicationCase::stageOf($application);
+
+        if ($stage !== null) {
+            return $stage->isTerminal();
+        }
+
+        return in_array($application->final_decision ?? '', ['approved', 'rejected'], true)
+            || in_array($application->credit_decision ?? '', ['approved', 'rejected'], true);
+    }
+
     public function workflowMetrics(): array
     {
         $applications = Application::where('status', '!=', 'Draft')->get();
 
         $activeApplications = $applications->filter(function ($application) {
-            return ! in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
-                && ! in_array($application->final_decision ?? '', ['approved', 'rejected'])
-                && ! in_array($application->credit_decision ?? '', ['approved', 'rejected']);
+            return ! self::isFinished($application);
         });
 
         $delayedApplications = $activeApplications->filter(function ($application) {
@@ -298,9 +322,7 @@ class ApelDecisionSupportService
 
         $completedDurations = $applications
             ->filter(function ($application) {
-                return in_array($application->status ?? '', ['Final Approved', 'Final Rejected'])
-                    || in_array($application->final_decision ?? '', ['approved', 'rejected'])
-                    || in_array($application->credit_decision ?? '', ['approved', 'rejected']);
+                return self::isFinished($application);
             })
             ->map(function ($application) {
                 $start = $this->dateValue($application->submission_date);

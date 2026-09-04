@@ -126,7 +126,10 @@
     @php
         $totalCreditHours = 0;
         foreach($applications as $app) {
-            if ($app->status === 'Final Approved') {
+            // Keyed off the resolved outcome, not a status string: APEL C
+            // records "Credit awarded", never "Final Approved", so this used to
+            // total zero for anything decided through the current workflow.
+            if (($outcomes[(string) $app->_id] ?? null) === 'approved') {
                 $totalCreditHours += \App\Http\Controllers\Admin\ApplicationManagementController::getCreditHoursFromCourseCode($app->credit_course_code);
             }
         }
@@ -212,9 +215,10 @@
                                 @endif
                             </td>
                             <td>
-                                @if($app->status === 'Final Approved')
+                                @php $outcome = $outcomes[(string) $app->_id] ?? 'pending'; @endphp
+                                @if($outcome === 'approved')
                                     <span style="color: #146b45; font-weight: 700;">Approved (Pass)</span>
-                                @elseif($app->status === 'Final Rejected')
+                                @elseif($outcome === 'rejected')
                                     <span style="color: #a32a20; font-weight: 700;">Rejected (Fail)</span>
                                 @else
                                     <span style="color: #f59e0b; font-weight: 700;">{{ $app->status }}</span>

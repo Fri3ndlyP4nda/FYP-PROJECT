@@ -831,6 +831,24 @@ class ApplicationManagementController extends Controller
             $applications->map(fn (Application $a) => (string) $a->_id)->all()
         )->get()->keyBy(fn ($s) => (string) $s->application_id);
 
+        /*
+         | One resolved outcome per application, so the view never compares a
+         | status string itself. Three places in these two reports did - the
+         | outcome column in each, and the credit-hours total in the APEL C one,
+         | which only added hours for status 'Final Approved' and would
+         | therefore have reported zero credit awarded for anything decided
+         | through the current code.
+         */
+        $outcomes = $applications->mapWithKeys(function (Application $a) use ($stageOf) {
+            $stage = $stageOf($a);
+
+            return [(string) $a->_id => match (true) {
+                $stage === ApelStage::APPROVED => 'approved',
+                in_array($stage, [ApelStage::REJECTED, ApelStage::ADVISOR_REJECTED], true) => 'rejected',
+                default => 'pending',
+            }];
+        });
+
         return view($view, [
             'applications' => $applications,
             'total' => $total,
@@ -839,6 +857,7 @@ class ApplicationManagementController extends Controller
             'pending' => $total - $approved - $rejected,
             'names' => $names,
             'submissions' => $submissions,
+            'outcomes' => $outcomes,
         ]);
     }
 

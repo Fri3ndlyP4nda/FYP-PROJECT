@@ -34,7 +34,9 @@ trait RefreshesMongoDatabase
             );
         }
 
-        $database = DB::connection('mongodb')->getMongoDB();
+        // getMongoDB() is deprecated from mongodb/laravel-mongodb 5.2 and
+        // emits a warning on every test that truncates - which is every one.
+        $database = DB::connection('mongodb')->getDatabase();
 
         foreach ($database->listCollections() as $collection) {
             $database->selectCollection($collection->getName())->deleteMany([]);
