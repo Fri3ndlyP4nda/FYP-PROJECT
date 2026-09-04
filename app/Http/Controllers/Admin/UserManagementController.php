@@ -144,7 +144,7 @@ class UserManagementController extends Controller
         if ((string) $user->_id === (string) Auth::id() && $request->role !== $user->role) {
             return redirect()->back()->withErrors([
                 'role' => 'You cannot change your own role. Ask another administrator to do it.',
-            ]);
+            ])->withInput();
         }
 
         /*
@@ -158,7 +158,7 @@ class UserManagementController extends Controller
             if ($active > 0) {
                 return redirect()->back()->withErrors([
                     'role' => "{$user->name} is currently assigned to {$active} live application(s). Reassign those first, or they will be left with no evaluator.",
-                ]);
+                ])->withInput();
             }
         }
 

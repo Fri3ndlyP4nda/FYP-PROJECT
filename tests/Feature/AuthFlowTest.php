@@ -711,4 +711,47 @@ class AuthFlowTest extends FeatureTestCase
         $this->assertNotNull($entry);
         $this->assertSame((string) $student->_id, (string) $entry->user_id);
     }
+
+    /**
+     * withInput() with no arguments flashes every submitted field, including
+     * the password - writing it in cleartext into the session store, which the
+     * file driver keeps on disk. Laravel strips credentials from the automatic
+     * flash a validation failure performs, but a manual withInput() gets no
+     * such treatment, and login, registration and password reset all used one.
+     */
+    public function test_a_failed_sign_in_never_flashes_the_password(): void
+    {
+        $student = $this->makeStudent(['password' => Hash::make('TestPassword123')]);
+        $secret = 'WrongButStillASecret1';
+
+        $this->from(route('login'))
+            ->post(route('login.submit'), $this->loginPayload($student->email, $secret));
+
+        $flashed = session('_old_input', []);
+
+        $this->assertArrayNotHasKey('password', $flashed, 'The password must never reach the session.');
+        $this->assertNotContains($secret, array_values($flashed));
+
+        // The address should survive, so the person does not retype it.
+        $this->assertSame($student->email, $flashed['email'] ?? null);
+    }
+
+    public function test_a_failed_password_reset_never_flashes_the_new_password(): void
+    {
+        $secret = 'BrandNewSecret123';
+
+        $this->from(route('password.request'))
+            ->post(route('password.update'), [
+                'token' => 'not-a-real-token',
+                'email' => 'someone@apel.test',
+                'password' => $secret,
+                'password_confirmation' => $secret,
+            ]);
+
+        $flashed = session('_old_input', []);
+
+        $this->assertArrayNotHasKey('password', $flashed);
+        $this->assertArrayNotHasKey('password_confirmation', $flashed);
+        $this->assertNotContains($secret, array_values($flashed));
+    }
 }

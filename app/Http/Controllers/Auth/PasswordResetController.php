@@ -17,6 +17,17 @@ use Illuminate\Validation\Rules\Password;
 
 class PasswordResetController extends Controller
 {
+    /**
+     * Never flashed back to the form.
+     *
+     * This controller is where a new password is chosen, so a bare
+     * withInput() would write the password the person just picked into the
+     * session store in cleartext - on the one screen where that is least
+     * acceptable. Laravel strips these from the automatic flash a validation
+     * failure performs; a manual withInput() gets no such treatment.
+     */
+    private const NEVER_FLASH = ['password', 'password_confirmation', 'token'];
+
     public function showForgotForm()
     {
         return view('auth.passwords.email');
@@ -120,7 +131,7 @@ class PasswordResetController extends Controller
         if (! $record) {
             return back()->withErrors([
                 'email' => 'Invalid or expired password reset request.',
-            ])->withInput();
+            ])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $isExpired = Carbon::parse($record->created_at)->addMinutes(60)->isPast();
@@ -130,13 +141,13 @@ class PasswordResetController extends Controller
 
             return back()->withErrors([
                 'email' => 'This reset link has expired.',
-            ])->withInput();
+            ])->withInput($request->except(self::NEVER_FLASH));
         }
 
         if (! Hash::check($request->token, $record->token)) {
             return back()->withErrors([
                 'email' => 'Invalid reset token.',
-            ])->withInput();
+            ])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $user = User::where('email', $email)->first();
@@ -144,7 +155,7 @@ class PasswordResetController extends Controller
         if (! $user) {
             return back()->withErrors([
                 'email' => 'User account not found.',
-            ])->withInput();
+            ])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $user->password = Hash::make($request->password);

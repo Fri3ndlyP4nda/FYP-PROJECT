@@ -22,6 +22,17 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    /**
+     * Never flashed back to the form.
+     *
+     * withInput() with no arguments flashes every field, including the
+     * password - writing it in cleartext into the session store, which the
+     * file driver keeps on disk. Laravel strips these from the *automatic*
+     * flash a validation failure performs, but a manual withInput() gets no
+     * such treatment.
+     */
+    private const NEVER_FLASH = ['password', 'password_confirmation', 'current_password'];
+
     public function showRegister()
     {
         return view('auth.register');
@@ -45,7 +56,7 @@ class AuthController extends Controller
         ]);
 
         if ($problem = $this->automationGuard($request)) {
-            return back()->withErrors(['pow_answer' => $problem])->withInput();
+            return back()->withErrors(['pow_answer' => $problem])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $user = User::create([
@@ -77,7 +88,7 @@ class AuthController extends Controller
         if ($problem = $this->automationGuard($request)) {
             AuthLog::record($request, AuthLog::SECURITY_CHECK_FAILED, $request->input('email'));
 
-            return back()->withErrors(['pow_answer' => $problem])->withInput();
+            return back()->withErrors(['pow_answer' => $problem])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $credentials = [
@@ -91,7 +102,7 @@ class AuthController extends Controller
 
             return back()->withErrors([
                 'email' => 'Invalid email or password.',
-            ])->withInput();
+            ])->withInput($request->except(self::NEVER_FLASH));
         }
 
         $user = Auth::user();

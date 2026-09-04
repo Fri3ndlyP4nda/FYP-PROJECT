@@ -3966,3 +3966,20 @@ td.num,
 @media (prefers-reduced-motion: reduce) {
     .human-check-dot { animation: none; }
 }
+
+/* Error pages -------------------------------------------------------------- */
+
+/*
+   The status code, kept small and last. It is useful to whoever the reader
+   eventually reports the problem to, and useless to the reader - so it should
+   not be the largest thing on a page they met by accident.
+*/
+.err-code {
+    margin: var(--s-3) 0 0;
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--line);
+    color: var(--ink-4);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: .06em;
+}

@@ -185,7 +185,7 @@ class ApplicationManagementController extends Controller
                 'evaluator_id' => $application->stage() === ApelStage::PAYMENT_VERIFIED
                     ? 'This application cannot be assigned at its current stage.'
                     : 'Payment must be verified before an evaluator can be assigned. This application is at "'.$application->stageLabel().'".',
-            ]);
+            ])->withInput();
         }
 
         $evaluator = User::where('_id', $request->evaluator_id)
@@ -195,7 +195,7 @@ class ApplicationManagementController extends Controller
         if (! $evaluator) {
             return back()->withErrors([
                 'evaluator_id' => 'Selected evaluator is invalid.',
-            ]);
+            ])->withInput();
         }
 
         $evaluator2 = null;
@@ -207,7 +207,7 @@ class ApplicationManagementController extends Controller
             if (! $evaluator2) {
                 return back()->withErrors([
                     'evaluator_2_id' => 'Selected second evaluator is invalid.',
-                ]);
+                ])->withInput();
             }
         }
 
@@ -333,7 +333,7 @@ class ApplicationManagementController extends Controller
         if (! StageMachine::can($application, $target)) {
             return redirect()->back()->withErrors([
                 'advisor_name' => 'This pre-application is at "'.$application->stageLabel().'" and is no longer awaiting an advisor recommendation.',
-            ]);
+            ])->withInput();
         }
 
         $application = StageMachine::transition($application, $target, [
@@ -443,7 +443,7 @@ class ApplicationManagementController extends Controller
         try {
             $application = StageMachine::transition($application, $target, $attributes, $request->reason);
         } catch (IllegalStageTransition $e) {
-            return redirect()->back()->withErrors(['stage' => $e->forHumans()]);
+            return redirect()->back()->withErrors(['stage' => $e->forHumans()])->withInput();
         }
 
         $studentName = User::where('_id', $application->user_id)->value('name') ?? 'Student';
@@ -511,7 +511,7 @@ class ApplicationManagementController extends Controller
         if (in_array($application->final_decision ?? '', ['approved', 'rejected'])) {
             return redirect()->back()->withErrors([
                 'final_decision' => 'The final decision has already been saved and cannot be updated.',
-            ]);
+            ])->withInput();
         }
 
         $isSingleEvaluator = empty($application->evaluator_2_id);
@@ -523,7 +523,7 @@ class ApplicationManagementController extends Controller
                 'final_decision' => $isSingleEvaluator
                     ? 'Final decision cannot be made before the evaluator has submitted their review.'
                     : 'Final decision cannot be made before both evaluators have submitted their reviews.',
-            ]);
+            ])->withInput();
         }
 
         $request->validate([
@@ -611,7 +611,7 @@ class ApplicationManagementController extends Controller
         if (in_array($application->credit_decision ?? '', ['approved', 'rejected'])) {
             return redirect()->back()->withErrors([
                 'credit_decision' => 'The final credit decision has already been saved and cannot be updated.',
-            ]);
+            ])->withInput();
         }
 
         $gradedSubmission = AssessmentSubmission::where('application_id', (string) $application->_id)
@@ -734,7 +734,7 @@ class ApplicationManagementController extends Controller
                 'payment_status' => $application->stage() === ApelStage::PAYMENT_VERIFIED
                     ? 'This payment has already been verified.'
                     : 'This application is at "'.$application->stageLabel().'", so there is no payment awaiting verification.',
-            ]);
+            ])->withInput();
         }
 
         $application = StageMachine::transition($application, $target, [
