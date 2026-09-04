@@ -1,10 +1,13 @@
 <?php
 
+use App\Domain\Apel\ConcurrentStageChange;
+use App\Domain\Apel\IllegalStageTransition;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,5 +51,29 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        /*
+         * Workflow refusals become a message on the page the person is already
+         * looking at, not a 500.
+         *
+         * StageMachine::transition() is called from twenty-one places and only
+         * two of them caught anything. Handling it here rather than at each
+         * call site means a new one cannot forget: the default is a sentence
+         * the reader can act on, and a controller that wants something more
+         * specific can still catch it itself.
+         */
+        $exceptions->render(function (ConcurrentStageChange $e, Request $request) {
+            $message = $e->forHumans();
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message], 409)
+                : back()->withErrors(['stage' => $message])->withInput();
+        });
+
+        $exceptions->render(function (IllegalStageTransition $e, Request $request) {
+            $message = $e->forHumans();
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $message], 422)
+                : back()->withErrors(['stage' => $message])->withInput();
+        });
     })->create();

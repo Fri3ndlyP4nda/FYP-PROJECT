@@ -165,7 +165,7 @@ class StageMachine
             'note' => $note,
         ];
 
-        $application->update(array_merge($attributes, [
+        $changes = array_merge($attributes, [
             'stage' => $to->value,
             'stage_entered_at' => now(),
             'stage_history' => $history,
@@ -178,7 +178,33 @@ class StageMachine
             'review_stage' => $to->value,
             'credit_status' => $type === ApelStage::APEL_C ? $to->value : null,
             'status_updated_at' => now(),
-        ]));
+        ]);
+
+        /*
+         | Write only if the stage is still what was read.
+         |
+         | This was an unguarded update, which made the whole method a
+         | read-check-write race. Two officers opening the same case and both
+         | pressing the button each read payment_verified, each found their move
+         | legal, and both wrote - the second silently overwriting the first.
+         | The audit trail lost the first entry outright, because each appended
+         | to the copy of stage_history it had read.
+         |
+         | The condition makes it a compare-and-swap: the database matches the
+         | document only while it still holds the stage this decision was based
+         | on, so exactly one of two racing writers can win and the loser is told
+         | rather than ignored. It costs nothing in the ordinary single-actor
+         | case, where the stage is of course unchanged.
+         */
+        $matched = Application::where('_id', $application->_id)
+            ->where('stage', $from->value)
+            ->update($changes);
+
+        if ($matched === 0) {
+            $current = self::current($application->fresh() ?? $application);
+
+            throw new ConcurrentStageChange($from, $current, $to, $type);
+        }
 
         return $application->refresh();
     }
