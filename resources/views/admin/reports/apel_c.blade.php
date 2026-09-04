@@ -195,11 +195,11 @@
                     @forelse($applications as $app)
                         @php
                             $subjectCredits = \App\Http\Controllers\Admin\ApplicationManagementController::getCreditHoursFromCourseCode($app->credit_course_code);
-                            $submission = \App\Models\AssessmentSubmission::where('application_id', (string) $app->_id)->first();
+                            $submission = $submissions[(string) $app->_id] ?? null;
                         @endphp
                         <tr>
                             <td style="font-weight: 600;">
-                                {{ \App\Models\User::where('_id', $app->user_id)->value('name') ?? 'Unknown' }}
+                                {{ $names[(string) $app->user_id] ?? 'Unknown' }}
                             </td>
                             <td>{{ $app->credit_course_code }}</td>
                             <td>{{ $app->credit_course_name }}</td>

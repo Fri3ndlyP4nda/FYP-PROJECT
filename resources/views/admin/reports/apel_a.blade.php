@@ -181,7 +181,7 @@
                     @forelse($applications as $app)
                         <tr>
                             <td style="font-weight: 600;">
-                                {{ \App\Models\User::where('_id', $app->user_id)->value('name') ?? 'Unknown' }}
+                                {{ $names[(string) $app->user_id] ?? 'Unknown' }}
                             </td>
                             <td>{{ $app->program_applied }}</td>
                             <td>
@@ -189,8 +189,8 @@
                             </td>
                             <td>
                                 @php
-                                    $eval1 = $app->evaluator_id ? \App\Models\User::where('_id', $app->evaluator_id)->value('name') : null;
-                                    $eval2 = $app->evaluator_2_id ? \App\Models\User::where('_id', $app->evaluator_2_id)->value('name') : null;
+                                    $eval1 = $app->evaluator_id ? ($names[(string) $app->evaluator_id] ?? 'Unknown') : null;
+                                    $eval2 = $app->evaluator_2_id ? ($names[(string) $app->evaluator_2_id] ?? 'Unknown') : null;
                                 @endphp
                                 @if($eval1)
                                     <div style="margin-bottom: 4px;">

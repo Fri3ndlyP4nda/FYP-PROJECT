@@ -776,30 +776,70 @@ class ApplicationManagementController extends Controller
 
     public function printApelAReport()
     {
-        $applications = Application::where('application_type', 'APEL A')
-            ->orderBy('submission_date', 'desc')
-            ->get();
-
-        $total = $applications->count();
-        $approved = $applications->where('status', 'Final Approved')->count();
-        $rejected = $applications->where('status', 'Final Rejected')->count();
-        $pending = $total - $approved - $rejected;
-
-        return view('admin.reports.apel_a', compact('applications', 'total', 'approved', 'rejected', 'pending'));
+        return $this->buildReport('APEL A', 'admin.reports.apel_a');
     }
 
     public function printApelCReport()
     {
-        $applications = Application::where('application_type', 'APEL C')
+        return $this->buildReport('APEL C', 'admin.reports.apel_c');
+    }
+
+    /**
+     * The printed report for one track.
+     *
+     * Both reports counted outcomes with $applications->where('status', 'Final
+     * Approved'). StageMachine writes status as $stage->label($type), which is
+     * "Admission approved" for APEL A and "Credit awarded" for APEL C, so any
+     * application decided through the current code counted as neither approved
+     * nor rejected and fell into pending. It matched on the existing data only
+     * because those rows predate the stage machine and still carry the old
+     * string. Counted from the stage, which is the field the workflow actually
+     * maintains.
+     *
+     * Names are resolved here in two queries rather than in the Blade loop.
+     * The report is the one screen guaranteed to render every application in
+     * the institution, so a query per row is felt here first.
+     */
+    private function buildReport(string $type, string $view)
+    {
+        $applications = Application::where('application_type', $type)
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        $total = $applications->count();
-        $approved = $applications->where('status', 'Final Approved')->count();
-        $rejected = $applications->where('status', 'Final Rejected')->count();
-        $pending = $total - $approved - $rejected;
+        $stageOf = fn (Application $a) => ApplicationCase::stageOf($a);
 
-        return view('admin.reports.apel_c', compact('applications', 'total', 'approved', 'rejected', 'pending'));
+        $approved = $applications->filter(fn ($a) => $stageOf($a) === ApelStage::APPROVED)->count();
+        $rejected = $applications->filter(
+            fn ($a) => in_array($stageOf($a), [ApelStage::REJECTED, ApelStage::ADVISOR_REJECTED], true)
+        )->count();
+
+        $total = $applications->count();
+
+        $names = User::whereIn('_id', $applications
+            ->flatMap(fn (Application $a) => [$a->user_id, $a->evaluator_id, $a->evaluator_2_id])
+            ->filter()
+            ->map(fn ($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->all())
+            ->get(['name'])
+            ->keyBy(fn (User $u) => (string) $u->_id)
+            ->map(fn (User $u) => $u->name);
+
+        $submissions = AssessmentSubmission::whereIn(
+            'application_id',
+            $applications->map(fn (Application $a) => (string) $a->_id)->all()
+        )->get()->keyBy(fn ($s) => (string) $s->application_id);
+
+        return view($view, [
+            'applications' => $applications,
+            'total' => $total,
+            'approved' => $approved,
+            'rejected' => $rejected,
+            'pending' => $total - $approved - $rejected,
+            'names' => $names,
+            'submissions' => $submissions,
+        ]);
     }
 
     /**

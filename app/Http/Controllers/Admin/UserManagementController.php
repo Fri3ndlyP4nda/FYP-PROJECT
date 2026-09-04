@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -27,6 +28,13 @@ use Illuminate\Validation\Rule;
  */
 class UserManagementController extends Controller
 {
+    /**
+     * Stages that do not count as live work: decided, refused, or never sent.
+     * Shared by the single-evaluator count and the batched one so the two can
+     * never disagree about what "assigned right now" means.
+     */
+    private const CLOSED_STAGES = ['approved', 'rejected', 'advisor_rejected', 'draft'];
+
     public function index(Request $request)
     {
         $query = User::query();
@@ -44,11 +52,15 @@ class UserManagementController extends Controller
 
         $users = $query->orderBy('name', 'asc')->get();
 
-        // Live workload, so an administrator can see what a demotion would strand.
-        $workload = [];
-        foreach ($users->where('role', 'evaluator') as $evaluator) {
-            $workload[(string) $evaluator->_id] = $this->activeAssignments((string) $evaluator->_id);
-        }
+        /*
+         | Live workload, so an administrator can see what a demotion would
+         | strand - counted for every evaluator in one pass rather than one
+         | query each. Measured: 4 users cost 7 queries and 34 cost 37, because
+         | this was a loop calling activeAssignments() per evaluator. A registry
+         | with a hundred assessors would have issued a hundred counts to render
+         | one page.
+         */
+        $workload = $this->workloadFor($users->where('role', 'evaluator'));
 
         return view('admin.users.index', [
             'users' => $users,
@@ -166,13 +178,52 @@ class UserManagementController extends Controller
     }
 
     /** Applications this evaluator holds that have not been decided. */
+    /**
+     * Active assignment counts for many evaluators, in one query.
+     *
+     * @param  Collection<int, User>  $evaluators
+     * @return array<string, int>
+     */
+    private function workloadFor($evaluators): array
+    {
+        $ids = $evaluators->map(fn (User $u) => (string) $u->_id)->values()->all();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $counts = array_fill_keys($ids, 0);
+
+        // One pass over the live applications assigned to any of them. Only the
+        // two evaluator fields are read back, so the size of an application
+        // document does not affect the cost of counting.
+        $applications = Application::where(function ($query) use ($ids) {
+            $query->whereIn('evaluator_id', $ids)
+                ->orWhereIn('evaluator_2_id', $ids);
+        })
+            ->whereNotIn('stage', self::CLOSED_STAGES)
+            ->get(['evaluator_id', 'evaluator_2_id']);
+
+        foreach ($applications as $application) {
+            foreach ([$application->evaluator_id, $application->evaluator_2_id] as $assigned) {
+                $assigned = (string) $assigned;
+
+                if ($assigned !== '' && array_key_exists($assigned, $counts)) {
+                    $counts[$assigned]++;
+                }
+            }
+        }
+
+        return $counts;
+    }
+
     private function activeAssignments(string $evaluatorId): int
     {
         return Application::where(function ($query) use ($evaluatorId) {
             $query->where('evaluator_id', $evaluatorId)
                 ->orWhere('evaluator_2_id', $evaluatorId);
         })
-            ->whereNotIn('stage', ['approved', 'rejected', 'advisor_rejected', 'draft'])
+            ->whereNotIn('stage', self::CLOSED_STAGES)
             ->count();
     }
 
